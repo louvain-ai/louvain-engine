@@ -1,11 +1,11 @@
-import { bm25Configured } from "../../kg/read/bm25.js";
-import type { ReadContext } from "../../kg/read/fence.js";
-import { hooksOf } from "../../kg/read/hooks.js";
-import type { KeywordLegRead, Row } from "../../kg/read/passages-types.js";
-import { stage } from "../../kg/read/question.js";
-import { sayOnce } from "../../observability/logging.js";
-import { type Tags, telemetry } from "../../telemetry.js";
-import { bm25Narrowing, bm25Rows } from "./bm25-rows.js";
+import { sayOnce } from "../../../observability/logging.js";
+import { type Tags, telemetry } from "../../../telemetry.js";
+import { bm25Configured } from "../bm25.js";
+import type { ReadContext } from "../fence.js";
+import { hooksOf } from "../hooks.js";
+import type { KeywordLegRead, Row } from "../passages-types.js";
+import { stage } from "../question.js";
+import { bm25Narrowing, bm25Rows } from "./rows.js";
 
 /**
  * THE KEYWORD LEG: the keyword index first, where it can carry the read's filters (`bm25Narrowing`); otherwise, or when
@@ -51,7 +51,7 @@ async function indexRows(
     "ask.bm25",
     async (): Promise<Row[] | null> => {
       try {
-        return await bm25Rows(context, fence, query, limit, filters.asOf, narrowing);
+        return await bm25Rows(context, { fence, query, limit, asOf: filters.asOf, narrowing });
       } catch {
         // swallowed: the sidecar being down or late costs this leg its ranking — the build's passes answer under
         // the same fence, or none do — and the leg names it in what it returns (`keyword:bm25`).

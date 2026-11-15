@@ -35,15 +35,21 @@ test("the most specific route answers, and a method the path does not take is to
   assert.equal(table.match("GET", "/elsewhere"), null);
 });
 
-test("two surfaces on one method and path, or a path the server keeps, stop the start by name", () => {
+test("two surfaces on one method and path, or two owners answering one path, stop the start by name", () => {
   assert.throws(
     () => routeTable([surface("a", [route("GET", "/x")]), surface("b", [route("GET", "/x")])]),
     (err: Error) =>
       err instanceof RouteClash && /"a" and "b" both declare GET \/x/.test(err.message),
   );
+  // The server's own routes are rows like any other: a surface's prefix over them clashes by the same rule.
+  const server = surface("server", [route("POST", "/session"), route("POST", "/ingest")]);
   assert.throws(
-    () => routeTable([surface("greedy", [route("POST", "/*")])]),
-    /the surface "greedy" declares POST \/\*, a path the server keeps/,
+    () => routeTable([server, surface("greedy", [route("POST", "/*")])]),
+    /the surfaces "server" and "greedy" both answer \/\* \(\/session\)/,
+  );
+  assert.throws(
+    () => routeTable([server, surface("other", [route("GET", "/ingest")])]),
+    /the surfaces "server" and "other" both answer \/ingest/,
   );
 });
 
@@ -158,13 +164,19 @@ const signIn = (token: string, headers: Record<string, string> = {}, server = lo
 const cookieOf = (res: Response) => (res.headers.get("set-cookie") ?? "").split(";")[0] ?? "";
 
 /** A GET sent byte for byte, path and Host as given: `fetch` would normalise the one and refuse the other. */
-const rawGet = (path: string, host = `127.0.0.1:${portOf(local)}`, token?: string) =>
+const rawGet = (
+  path: string,
+  host = `127.0.0.1:${portOf(local)}`,
+  token?: string,
+  method = "GET",
+) =>
   new Promise<number>((done, fail) =>
     httpRequest(
       {
         host: "127.0.0.1",
         port: portOf(local),
         path,
+        method,
         headers: { host, ...(token ? { authorization: `Bearer ${token}` } : {}) },
       },
       (res) => {
@@ -313,7 +325,7 @@ test("a browser is answered only at the hosts the server is reached at, which cl
   assert.equal(await rawGet("/page/"), 200);
   assert.equal(await rawGet("/page/", `localhost:${portOf(local)}`), 200);
   assert.equal(await rawGet("/page/", "attacker.example"), 421);
-  assert.equal(await rawGet("/session", `127.0.0.1:${portOf(local) + 1}`), 421);
+  assert.equal(await rawGet("/session", `127.0.0.1:${portOf(local) + 1}`, undefined, "POST"), 421);
 });
 
 test("a GET route answers HEAD with its headers and no body", async () => {
@@ -341,4 +353,23 @@ test("tells an unauthenticated caller nothing about which paths exist", {
     (await fetch(`${base()}/session`)).status,
     (await fetch(`${base()}/nothing`)).status,
   );
+});
+
+test("a write route takes the write token and nothing else: the read token, a sign-in or no door is the same 401", async () => {
+  const writes: Route = {
+    method: "POST",
+    path: "/w",
+    needs: "write",
+    maxBodyBytes: 1_000,
+    handle: async (_request, { writer }) => Response.json({ writer }),
+  };
+  const server = await serve(settings, [{ name: "w", plugin: { routes: [writes] } }], read);
+  try {
+    const at = (headers: Record<string, string>) =>
+      fetch(`${base(server)}/w`, { method: "POST", body: "{}", headers });
+    assert.equal((await at({ authorization: `Bearer ${TOKEN}` })).status, 401);
+    assert.equal((await at({})).status, 401);
+  } finally {
+    server.close();
+  }
 });

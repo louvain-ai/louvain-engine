@@ -33,7 +33,8 @@ nothing. Nothing binds it: each entry builds its engine with the host, and every
 - `passages-vector.ts`: the vector leg, over the embeddings the sidecar wrote (`question.ts` holds the query vector);
 - `keyword-index.ts`: what a build's keyword index answers, holds and asks, a second matcher's reads among them (its
   passes, its title and recency reads, its words test): the open build keeps none; `bm25.ts`: the keyword sidecar's
-  client (the keyword leg itself is `plugins/retriever-keyword`);
+  client; the keyword read the `keyword` retriever asks for: `keyword/leg.ts`, the index's hits as passage rows in
+  `keyword/rows.ts` and its tiers' client in `keyword/tiers.ts`;
 - `legs.ts`: each leg's scan settings;
 - `fuse.ts`: reciprocal-rank fusion; `decay.ts`: a recency weight;
 - `passages-filter.ts`: the one predicate every passage read states its fence, as-of and record filters through;

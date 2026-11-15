@@ -65,7 +65,7 @@ export type WordsTest = {
  *   `documents`  whether the index also holds ONE ENTRY PER DOCUMENT beside its records' entries
  *                (`sources/keyword-documents.ts`), for a listing read from the index. A build whose listing reads
  *                Postgres writes none.
- *   `tiers`      whether a keyword read asks the index's tiers (`bm25-tiers.ts`, Meilisearch's matching strategy,
+ *   `tiers`      whether a keyword read asks the index's tiers (`keyword/tiers.ts`, Meilisearch's matching strategy,
  *                with a word no readable document holds asked as a prefix or a typo) and a page names the words it
  *                searched another way. A build without them ranks by one BM25 query.
  *   `recent`     the recency read (`RecentRead`), the order a search asked as `order: "recent"` is read in: a second
@@ -111,7 +111,7 @@ async function noRecency(_context: ReadContext, leg: PassageLegRead): Promise<Ro
 /**
  * The open build's keyword index, REQUIRED: no Postgres passes answer in its place (a read it cannot answer has no
  * keyword leg, and says so); it holds one entry per document (`sources/keyword-documents.ts`), which its listing reads;
- * and its reads and words test ask its tiers (`bm25-tiers.ts`, `tier-words.ts`).
+ * and its reads and words test ask its tiers (`keyword/tiers.ts`, `tier-words.ts`).
  */
 export const OPEN_KEYWORD_INDEX: KeywordIndex = {
   passes: null,

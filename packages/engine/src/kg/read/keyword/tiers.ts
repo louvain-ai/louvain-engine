@@ -1,7 +1,7 @@
-import { sidecarAuthHeaders } from "../../config/sidecar-auth.js";
-import { bm25Settings } from "../../kg/read/bm25.js";
-import { sayOnce } from "../../observability/logging.js";
-import type { Bm25Narrowing } from "./bm25-rows.js";
+import { sidecarAuthHeaders } from "../../../config/sidecar-auth.js";
+import { sayOnce } from "../../../observability/logging.js";
+import { bm25Settings } from "../bm25.js";
+import type { Bm25Narrowing } from "./rows.js";
 
 /**
  * THE KEYWORD INDEX'S TIERS (`apps/nlp/bm25.py` `search_last`, `strategy: "last"`): Meilisearch's matching strategy

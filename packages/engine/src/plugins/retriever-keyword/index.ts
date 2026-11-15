@@ -2,7 +2,7 @@ import { definePlugin } from "@louvain/engine-core";
 
 /**
  * The keyword retriever: passages by the search's words alone, as one leg. The reading runs the keyword leg under its
- * own fence, filters and decay (`keyword-leg.ts`: the keyword index first, the Postgres passes where it cannot answer),
+ * own fence, filters and decay (the engine's keyword read, `kg/read/keyword/leg.ts`: the build's keyword index, or a build's own passes),
  * and this retriever hands its rows on in their rank order, for the engine to fuse with the other legs. A read that
  * fails comes back empty and named by the reading, never costing the search.
  */

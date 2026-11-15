@@ -1,6 +1,6 @@
 /**
  * The BM25 sidecar's client (`apps/nlp/bm25.py`), used by the passage keyword
- * leg (`plugins/retriever-keyword`) and the reindex loader.
+ * leg (`kg/read/keyword/`) and the reindex loader.
  *
  * Mirrors `packages/embeddings/src/remote.ts`: settings are read lazily and
  * memoised, not captured as module-level `const`s, for the same reason — a
@@ -55,7 +55,7 @@ export function bm25Configured(): boolean {
   return env().endpoint !== undefined;
 }
 
-/** Where the sidecar answers and how long a call to it may take, for its other clients (`bm25-tiers.ts`). */
+/** Where the sidecar answers and how long a call to it may take, for its other clients (`keyword/tiers.ts`). */
 export const bm25Settings = (): Bm25Settings => env();
 
 export type Bm25Hit = { id: string; score: number; snippet?: { text: string } | null };
@@ -68,7 +68,7 @@ export type Bm25SearchArgs = {
   limit: number;
   /** Bi-temporal bound: nothing recorded after this may be returned. */
   asOf?: string;
-  /** NARROWINGS, never the fence (`bm25-rows.ts` re-states each in SQL): any of these apps, a time range, and those
+  /** NARROWINGS, never the fence (`keyword/rows.ts` re-states each in SQL): any of these apps, a time range, and those
    * that state a figure. */
   apps?: string[];
   from?: string;
@@ -85,7 +85,7 @@ export type Bm25SearchArgs = {
  * never enters the ranked set this returns.
  *
  * Throws on any non-2xx response or a malformed body, like
- * `remoteEmbed`: the caller (the passage keyword leg, `plugins/retriever-keyword`)
+ * `remoteEmbed`: the caller (the passage keyword leg, `kg/read/keyword/leg.ts`)
  * lets a failure here cost the BM25 contribution (`keyword:bm25` degraded),
  * never the question — the same "degrade the leg, not the answer" contract
  * every other leg carries.

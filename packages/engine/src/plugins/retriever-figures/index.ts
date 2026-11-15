@@ -18,7 +18,7 @@ export const figuresRetriever = definePlugin({
       const limit = Math.ceil(ask.limit / 2);
       const page = await read.passages(ask.query, { mode: "hybrid", limit, digits: true });
       return {
-        legs: [{ leg: "passages.search:digits", rows: page.hits }],
+        legs: [{ leg: "figures", rows: page.hits }],
         degraded: page.degraded,
       };
     },

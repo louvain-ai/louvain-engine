@@ -1,10 +1,10 @@
 import { decayed, fuse, type Viewer } from "@louvain/engine-core";
-import { keywordLeg } from "../../plugins/retriever-keyword/keyword-leg.js";
 import { originsFor } from "../../sources/origin-reads.js";
 import { locateQuote } from "../packages/lib/text.js";
 import { fence, type ReadContext } from "./fence.js";
 import { agentWritten, instructionLikeRecords, labelOf, referenceRead } from "./generated.js";
 import { hooksOf } from "./hooks.js";
+import { keywordLeg } from "./keyword/leg.js";
 import { noteLegRanks } from "./leg-ranks.js";
 import { passageContextMode, readsPassageContext } from "./passage-context-mode.js";
 import { pageOf, readOffPages, recordTexts } from "./passages-by-id.js";

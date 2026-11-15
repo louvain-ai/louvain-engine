@@ -24,7 +24,7 @@ export function searchRelevanceSetting(): boolean | undefined {
 }
 
 /**
- * A BM25 hit's row is its document's best-matching passage, not its first (`plugins/retriever-keyword/bm25-rows.ts`, `firstChunkRows`
+ * A BM25 hit's row is its document's best-matching passage, not its first (`kg/read/keyword/rows.ts`, `firstChunkRows`
  * `bestFor`): the excerpt is the part that matched, for one ranked read of the document's passages. Every
  * `passages.search` the sidecar answers takes it. `settings.retrieval.bestPassage`.
  */

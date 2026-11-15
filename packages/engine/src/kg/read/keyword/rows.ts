@@ -1,16 +1,16 @@
-import { bm25BestPassageOn } from "../../config/engine-switches.js";
-import { recordsInNarrowing } from "../../kg/read/bm25/records-in-narrowing.sql.js";
-import { bm25Search } from "../../kg/read/bm25.js";
-import { instantOf, queryTerms } from "../../kg/read/context.js";
-import { firstChunkRows } from "../../kg/read/document-rows.js";
-import { bounded, type ReadContext, type Reader } from "../../kg/read/fence.js";
-import { hasRecordFilters, type RecordFilters } from "../../kg/read/filters.js";
-import { hooksOf } from "../../kg/read/hooks.js";
-import type { KeywordIndex } from "../../kg/read/keyword-index.js";
-import { stillCurrent } from "../../kg/read/passages-filter.js";
-import type { PassageFilters, Row } from "../../kg/read/passages-types.js";
-import { passageTieOrder } from "../../kg/read/passages-vector.js";
-import { bm25Tiers, type TierHit } from "./bm25-tiers.js";
+import { bm25BestPassageOn } from "../../../config/engine-switches.js";
+import { recordsInNarrowing } from "../bm25/records-in-narrowing.sql.js";
+import { bm25Search } from "../bm25.js";
+import { instantOf, queryTerms } from "../context.js";
+import { firstChunkRows } from "../document-rows.js";
+import { bounded, type ReadContext, type Reader } from "../fence.js";
+import { hasRecordFilters, type RecordFilters } from "../filters.js";
+import { hooksOf } from "../hooks.js";
+import type { KeywordIndex } from "../keyword-index.js";
+import { stillCurrent } from "../passages-filter.js";
+import type { PassageFilters, Row } from "../passages-types.js";
+import { passageTieOrder } from "../passages-vector.js";
+import { bm25Tiers, type TierHit } from "./tiers.js";
 
 /**
  * WHAT THE BM25 SIDECAR MAY NARROW BY, beside the fence it always applies (`apps/nlp/bm25.py`): nothing, as before,
@@ -73,63 +73,98 @@ export function bm25Narrowing(index: KeywordIndex, f: PassageFilters): Bm25Narro
  * built before a record changed app, or one rounded to seconds, never widens a page; a hit dropped there is a short
  * page too.
  */
-export async function bm25Rows(
-  context: ReadContext,
-  fence: Reader,
-  query: string,
-  limit: number,
-  asOf: PassageFilters["asOf"],
-  narrowing: Bm25Narrowing = {},
-): Promise<Row[] | null> {
+export async function bm25Rows(context: ReadContext, read: IndexRead): Promise<Row[] | null> {
+  const hits = await indexHits(context, read);
+  const kept = await stillReadable(context, read, hits);
+  // A short page goes to the build's passes, which apply the rule before their limit; with none, it is the page.
+  if (kept.length < Math.min(read.limit, hits.length) && hooksOf(context).keyword.passes !== null)
+    return null;
+  return passageRows(context, read, kept);
+}
+
+/** What a read of the keyword index asks: under this fence, for these words, this many, as of, narrowed. */
+export type IndexRead = {
+  fence: Reader;
+  query: string;
+  limit: number;
+  asOf: PassageFilters["asOf"];
+  narrowing?: Bm25Narrowing;
+};
+
+/** A hit of the index: its record, its score and the fragment where the search's words fell, if any. */
+type Hit = { id: string; score: number; snippet?: { text: string } | null };
+
+/** The index's hits, twice the page: a build whose index has tiers reads them, in their order (`keyword-index.ts`). */
+async function indexHits(context: ReadContext, read: IndexRead): Promise<Hit[]> {
+  const { fence, query, limit, asOf, narrowing = {} } = read;
   const at = instantOf(asOf, "passages.search").validAt;
   const ask = { orgId: fence.orgId, containers: fence.containers, query, limit: limit * 2 };
-  // A build whose index has tiers reads them, in their order: every word first (`keyword-index.ts` `tiers`).
-  const index = hooksOf(context).keyword;
-  const hits = index.tiers
+  return hooksOf(context).keyword.tiers
     ? (await bm25Tiers({ ...ask, asOf: at, narrow: narrowing })).hits.map(tierOrdered)
     : await bm25Search({ ...ask, asOf: at, ...narrowing });
+}
+
+/**
+ * The hits this reader still reads, at most the page: the sidecar ranks every stored version, and only a record's
+ * current one is a hit (`stillCurrent`); the given records and figures the index read only those of, and every other
+ * narrowing is re-checked here by id (`narrowedHere`).
+ */
+async function stillReadable(context: ReadContext, read: IndexRead, hits: Hit[]): Promise<Hit[]> {
+  const { fence, limit, asOf, narrowing = {} } = read;
   const ids = hits.map((h) => h.id);
-  // The sidecar ranks every stored version; only a record's current one is a hit (`stillCurrent`).
   const current = await stillCurrent(context, fence, ids, asOf);
-  // The given records and figures the index read only those of; every other narrowing is re-checked here by id.
   const { ids: _given, figures: _stated, ...filters } = narrowing;
   const narrowed =
-    Object.keys(filters).length > 0 ? await narrowedHere(context, fence, ids, filters) : null;
-  const kept = hits
+    Object.keys(filters).length > 0
+      ? await narrowedHere(context, { fence, ids, n: filters })
+      : null;
+  return hits
     .filter((h) => current.has(h.id) && (narrowed === null || narrowed.has(h.id)))
     .slice(0, limit);
-  // A short page goes to the build's passes, which apply the rule before their limit; with none, it is the page.
-  if (kept.length < Math.min(limit, hits.length) && index.passes !== null) return null;
+}
+
+/** Each kept hit as its passage row under the fence, its best passage where the build has one, ties on stable keys. */
+async function passageRows(context: ReadContext, read: IndexRead, kept: Hit[]): Promise<Row[]> {
+  const { fence, query, asOf, narrowing = {} } = read;
   const best = bestOf(context, query, kept);
   const byEvent = await firstChunkRows(context.sql, hooksOf(context).reading, {
     orgId: fence.orgId,
     eventIds: kept.map((h) => h.id),
     containers: fence.containers,
-    asOf: at,
+    asOf: instantOf(asOf, "passages.search").validAt,
     ...(best ? { best } : {}),
     // A figures read shows the passage that states the figure, as the passage legs read it.
     ...(narrowing.figures ? { digits: true } : {}),
   });
   const rows = kept.flatMap((h) => {
     const r = byEvent.get(h.id);
-    return r
-      ? [
-          {
-            id: r.id,
-            event_id: h.id,
-            seq: r.seq ?? 0,
-            text: r.text,
-            container: r.container,
-            author: r.author,
-            occurred_at: new Date(r.occurredAt),
-            score: h.score,
-          },
-        ]
-      : [];
+    return r ? [rowOf(h, r)] : [];
   });
   // An exact tie in the index's score breaks on stable keys, as every leg's does (`passageTieOrder`).
   return rows.sort((a, b) => b.score - a.score || passageTieOrder(a, b));
 }
+
+/** A hit and its passage as one row of the leg. */
+const rowOf = (
+  h: Hit,
+  r: {
+    id: string;
+    seq?: number;
+    text: string;
+    container: string;
+    author: string | null;
+    occurredAt: string;
+  },
+): Row & { score: number } => ({
+  id: r.id,
+  event_id: h.id,
+  seq: r.seq ?? 0,
+  text: r.text,
+  container: r.container,
+  author: r.author,
+  occurred_at: new Date(r.occurredAt),
+  score: h.score,
+});
 
 /**
  * A tier's hit as one score that keeps the tiers' order: its words, plus its BM25 squashed into [0, 1). Each tier is
@@ -145,9 +180,7 @@ const tierOrdered = (h: TierHit) => ({
 /** Of the sidecar's hits, those the passage legs' own filter keeps: by id, so bounded by the page. */
 async function narrowedHere(
   context: ReadContext,
-  fence: Reader,
-  ids: readonly string[],
-  n: Bm25Narrowing,
+  { fence, ids, n }: { fence: Reader; ids: readonly string[]; n: Bm25Narrowing },
 ): Promise<Set<string>> {
   if (ids.length === 0) return new Set();
   const filters: RecordFilters = {

@@ -1,10 +1,10 @@
-import { bm25Tiers, holdingEvery } from "../../plugins/retriever-keyword/bm25-tiers.js";
 import { telemetry } from "../../telemetry.js";
 import { bm25Configured } from "./bm25.js";
+import { bm25Tiers, holdingEvery } from "./keyword/tiers.js";
 import type { WordsTest } from "./keyword-index.js";
 
 /**
- * THE WORDS TEST OF AN INDEX WITH TIERS (`bm25-tiers.ts`), the open build's: a document holds the search's words when
+ * THE WORDS TEST OF AN INDEX WITH TIERS (`keyword/tiers.ts`), the open build's: a document holds the search's words when
  * the index's first tier holds it, asked of those records alone (`ids`), so every word searched, a word no readable
  * document holds read as a prefix or a typo of a held one, or left out. A word is held when its own tier finds a
  * readable document and nothing had to be completed, corrected or left out. An index that cannot answer holds nothing,

@@ -63,6 +63,8 @@ export function browserSessions(token: string, door: Door) {
   const d = doorOf(token, door);
   const live = new Set<string>();
   const of = (headers: Headers) => liveSignIn(d, live, headers);
+  const nameOf = (id: string) =>
+    `browser ${createHash("sha256").update(id).digest("base64url").slice(0, 16)}`;
   return {
     /** A request for a host this server is not reached at is refused before anything reads it. */
     knownHost: (headers: Headers) => d.hosts.has(headers.get("host") ?? ""),
@@ -72,7 +74,7 @@ export function browserSessions(token: string, door: Door) {
     /** Who a live sign-in reads as: a name derived from it, never the cookie, or null for none. */
     reader(headers: Headers): string | null {
       const id = of(headers);
-      return id && `browser ${createHash("sha256").update(id).digest("base64url").slice(0, 16)}`;
+      return id && nameOf(id);
     },
     signIn(now = Date.now()): string {
       const id = randomBytes(16).toString("base64url");
@@ -80,9 +82,9 @@ export function browserSessions(token: string, door: Door) {
       const body = `${Math.floor(now / 1000)}.${id}`;
       return `${d.name}=${body}.${sign(d.key, body)}; Max-Age=${LIFETIME_S}; ${d.attributes}`;
     },
-    signOut(headers: Headers): string {
-      const id = of(headers);
-      if (id) live.delete(id);
+    /** Ends the sign-in this reader name was derived from (`reader`), and clears the cookie. */
+    signOut(reader: string): string {
+      for (const id of live) if (nameOf(id) === reader) live.delete(id);
       return `${d.name}=; Max-Age=0; ${d.attributes}`;
     },
   };

@@ -2,12 +2,12 @@ import type { Viewer } from "@louvain/engine-core";
 import { bm25Configured } from "../../kg/read/bm25.js";
 import { fence, type ReadContext } from "../../kg/read/fence.js";
 import { hooksOf } from "../../kg/read/hooks.js";
-import { bm25Tiers, type Tiers } from "../../plugins/retriever-keyword/bm25-tiers.js";
+import { bm25Tiers, type Tiers } from "../../kg/read/keyword/tiers.js";
 import { telemetry } from "../../telemetry.js";
 
 /**
  * A WORD NO READABLE DOCUMENT HOLDS IS SEARCHED ANOTHER WAY, AND THE PAGE SAYS SO. The keyword index asks such a word
- * as a clause of the search itself (`bm25-tiers.ts`): the last word as the start of a longer one, as Meilisearch and
+ * as a clause of the search itself (`kg/read/keyword/tiers.ts`): the last word as the start of a longer one, as Meilisearch and
  * Elasticsearch's `match_bool_prefix` read it, and a word as the held words a typo away from it; one that finds
  * nothing readable even so is left out. The search runs as typed; this names the words, never what they matched, so
  * nothing is said about a document the reader cannot read. One fenced call, where the build's index has tiers.

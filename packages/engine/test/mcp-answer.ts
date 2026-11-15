@@ -1,6 +1,6 @@
 import { browserSessions } from "../src/open/browser-session.js";
 import type { ToolRun } from "../src/open/mcp-protocol.js";
-import { respond } from "../src/open/respond.js";
+import { admit, respond } from "../src/open/respond.js";
 import { routeTable } from "../src/open/routes.js";
 import { mcp } from "../src/plugins/surface-mcp/index.js";
 
@@ -33,7 +33,10 @@ export async function askServer(asked: Asked, token: string, run: ToolRun) {
     ...(carries ? { body: asked.body } : {}),
   });
   const sessions = browserSessions(token, { port: 0 });
-  const response = await respond(request, { token, sessions, routes, read });
+  const answering = { token, writeToken: null, sessions, routes, read };
+  // Admitted once, before the body, as the server does.
+  const admission = admit(answering, asked.method, asked.path.split("?")[0] ?? "/", headers);
+  const response = await respond(request, answering, admission);
   const text = await response.text();
   return {
     status: response.status,
