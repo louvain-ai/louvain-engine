@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { bindSettings, settingsOf } from "../src/config/settings.js";
+import { settingsOf } from "../src/config/settings.js";
 import { authorized } from "../src/open/engine-token.js";
 import { mcpRoute, type ToolRun } from "../src/open/mcp-protocol.js";
+import { listedTools } from "../src/open/source-tools/open-tool-schema.js";
 import { ToolInputError } from "../src/open/source-tools/tool-helpers.js";
 import { askServer } from "./mcp-answer.js";
 
@@ -72,42 +73,43 @@ test("tools/list names exactly search, lookup and read, with no collection, clie
 });
 
 test("the open server's words are for loaded files: no product, no person, no app, no unused question", async () => {
-  const searched = (searchQuestion: boolean) => {
-    const set = settingsOf({ retrieval: { searchQuestion } });
-    bindSettings(() => set);
-  };
-  const list = async () =>
-    (
-      (await post({ jsonrpc: "2.0", id: 9, method: "tools/list" })).body as {
+  // Each engine's tools follow its own settings: an engine that searches no question offers none.
+  const list = async (searchQuestion?: boolean) => {
+    const settings = settingsOf(
+      searchQuestion === undefined ? undefined : { retrieval: { searchQuestion } },
+    );
+    const reply = await askServer(
+      {
+        method: "POST",
+        path: "/mcp",
+        headers: sent(AUTH),
+        body: JSON.stringify({ jsonrpc: "2.0", id: 9, method: "tools/list" }),
+      },
+      TOKEN,
+      run,
+      listedTools(settings),
+    );
+    return (
+      reply.body as {
         result: {
           tools: { name: string; description: string; inputSchema: { properties: object } }[];
         };
       }
     ).result.tools;
-  try {
-    searched(false);
-    const off = await list();
-    const text = JSON.stringify(off);
-    for (const never of [/this person/i, /gmail|slack|google-drive|Drive file/i, /the deployment/i])
-      assert.doesNotMatch(text, never);
-    assert.equal(
-      "question" in (off[0]?.inputSchema.properties ?? {}),
-      false,
-      "nothing searches it",
-    );
-    assert.ok("container" in (off[0]?.inputSchema.properties ?? {}), "a folder narrows instead");
-    searched(true);
-    assert.ok(
-      "question" in ((await list())[0]?.inputSchema.properties ?? {}),
-      "offered when searched",
-    );
-    bindSettings(() => settingsOf(undefined));
-    const unset = await list();
-    assert.ok("question" in (unset[0]?.inputSchema.properties ?? {}), "searched by default");
-    assert.doesNotMatch(JSON.stringify(unset), /the deployment/i);
-  } finally {
-    bindSettings(() => settingsOf(undefined));
-  }
+  };
+  const off = await list(false);
+  const text = JSON.stringify(off);
+  for (const never of [/this person/i, /gmail|slack|google-drive|Drive file/i, /the deployment/i])
+    assert.doesNotMatch(text, never);
+  assert.equal("question" in (off[0]?.inputSchema.properties ?? {}), false, "nothing searches it");
+  assert.ok("container" in (off[0]?.inputSchema.properties ?? {}), "a folder narrows instead");
+  assert.ok(
+    "question" in ((await list(true))[0]?.inputSchema.properties ?? {}),
+    "offered when searched",
+  );
+  const unset = await list();
+  assert.ok("question" in (unset[0]?.inputSchema.properties ?? {}), "searched by default");
+  assert.doesNotMatch(JSON.stringify(unset), /the deployment/i);
 });
 
 test("initialize, ping, a notification and an unknown method, as the SDK answers them", async () => {
@@ -203,7 +205,7 @@ test("the transport's rules are the SDK's: the spec's Accept header, and a proto
 });
 
 test("MCP is the server's read route: POST /mcp, a web Request in and a JSON Response out", async () => {
-  const route = mcpRoute(run);
+  const route = mcpRoute({ tool: run, tools: () => listedTools(settingsOf(undefined)) });
   assert.deepEqual([route.method, route.path, route.needs], ["POST", "/mcp", "read"]);
   const response = await route.handle(
     new Request("http://127.0.0.1/mcp", {

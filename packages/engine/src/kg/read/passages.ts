@@ -65,8 +65,7 @@ export async function searchPassages(
   opts: PassageSearchOptions,
 ): Promise<PassageSearch> {
   const filters = opts.filters ?? {};
-  // `containers` narrows the reader before any leg runs, so every leg, the BM25 sidecar's own query included,
-  // carries the narrowed list and nothing is filtered after a top-k.
+  // `containers` narrows the reader before any leg runs: every leg carries it, and nothing is cut after a top-k.
   const reader = await fence(context, viewer, filters.containers);
   const recent = opts.order === "recent";
   // A recency question with no topic is answered by the clock alone.
@@ -100,6 +99,7 @@ export async function searchPassages(
           ...read,
           limit: legLimit,
           boundedRecall: opts.bounded === true,
+          bestPassage: opts.bestPassage !== false,
           decay,
           page: limit,
         }),

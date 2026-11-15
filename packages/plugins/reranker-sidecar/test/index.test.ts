@@ -84,3 +84,34 @@ test("a sidecar that is not there is a named failure", async () => {
 test("a setting that is wrong stops the configuration in a sentence", () => {
   assert.throws(() => sidecar({ url: "not a url" }), /the reranker "sidecar" refuses its settings/);
 });
+
+test("wide log-odds keep the model's strict order where the logistic rounds them to 1", async () => {
+  const raw = [56.5, 88.25, 35.5, 76.5, 56.5];
+  reply = () => ({
+    status: 200,
+    body: { model: "m", results: raw.map((score, i) => ({ id: String(i), score })) },
+  });
+  const got = await (await started()).rerank({ query: "q", texts: raw.map(String) });
+  assert.ok(got.ok);
+  const order = (scores: readonly number[]) =>
+    scores.map((_, i) => i).sort((a, b) => (scores[b] ?? 0) - (scores[a] ?? 0));
+  assert.deepEqual(order(got.scores), order(raw), "the engine's sort gives the model's order");
+  assert.ok((got.scores[1] ?? 0) > (got.scores[3] ?? 0), "88.25 above 76.5, strictly");
+  assert.ok((got.scores[3] ?? 0) > (got.scores[0] ?? 0), "76.5 above 56.5, strictly");
+  assert.equal(got.scores[0], got.scores[4], "equal raw scores stay equal");
+  assert.ok(got.scores.every((s) => s > 0.999 && s <= 1));
+});
+
+test("scores within ±36 are the plain logistic, bit for bit", async () => {
+  const raw = [9.5, -3.25, 0, 12, -10, 9.5, 35];
+  reply = () => ({
+    status: 200,
+    body: { model: "m", results: raw.map((score, i) => ({ id: String(i), score })) },
+  });
+  const got = await (await started()).rerank({ query: "q", texts: raw.map(String) });
+  assert.ok(got.ok);
+  assert.deepEqual(
+    got.scores,
+    raw.map((x) => 1 / (1 + Math.exp(-x))),
+  );
+});

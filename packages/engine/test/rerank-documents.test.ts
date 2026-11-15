@@ -3,6 +3,10 @@ import { test } from "node:test";
 import type { Reranked, Reranker } from "@louvain/engine-core";
 import type { AskRow } from "../src/ask/evidence.js";
 import { rerankedDocuments } from "../src/ask/rerank-documents.js";
+import { settingsOf } from "../src/config/settings.js";
+
+/** The default engine's reranking settings: its window, feed and blend. */
+const TUNING = settingsOf(undefined).rerank;
 
 /**
  * THE RERANKER CONTRACT, AS THE SEARCH READS IT: a planted reranker's scores decide the order (blended with the
@@ -31,7 +35,11 @@ const planted = (answer: (texts: readonly string[]) => Reranked): Reranker => ({
 
 test("a planted reranker's scores decide the order and each document carries its score", async () => {
   const reranker = planted(() => ({ ok: true, scores: [0.1, 0.99, 0.2] }));
-  const got = await rerankedDocuments([...ranked], [], { query: "q", reranker });
+  const got = await rerankedDocuments([...ranked], [], {
+    tuning: TUNING,
+    query: "q",
+    reranker,
+  });
   // Blended half and half with the legs' order: b, second by the legs and first by the reranker, leads.
   assert.deepEqual(
     got.order.map(([id]) => id),
@@ -48,6 +56,7 @@ test("a reranker that fails is named, and the legs' order stands with no score",
     (): Reranked => ({ ok: true, scores: [0.5, 1.5, 0.2] }),
   ]) {
     const got = await rerankedDocuments([...ranked], [], {
+      tuning: TUNING,
       query: "q",
       reranker: planted(answer),
     });
@@ -61,7 +70,11 @@ test("a reranker that fails is named, and the legs' order stands with no score",
 });
 
 test("with no reranker nothing is asked and nothing is scored", async () => {
-  const got = await rerankedDocuments([...ranked], [], { query: "q", reranker: null });
+  const got = await rerankedDocuments([...ranked], [], {
+    tuning: TUNING,
+    query: "q",
+    reranker: null,
+  });
   assert.deepEqual(
     got.order.map(([id]) => id),
     ["a", "b", "c"],

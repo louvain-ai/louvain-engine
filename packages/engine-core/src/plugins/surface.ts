@@ -29,12 +29,23 @@ export type WriteRoute = At & {
   handle(request: Request, write: { readonly writer: string }): Promise<Response>;
 };
 
+/** One of the engine's tools as a surface serves it: the schema of its arguments is the one a call is parsed by. */
+type ListedTool = {
+  readonly name: string;
+  readonly title: string;
+  readonly description: string;
+  readonly inputSchema: { readonly type: "object"; readonly [field: string]: unknown };
+  readonly annotations: { readonly [hint: string]: unknown };
+};
+
 /** What a read route is handed: the engine's tools, counts and answerer, bound to the reader the server authenticated. */
 export type Reading = {
   /** Who reads, as an opaque name: the same for one sign-in or for the read token, and never either one. */
   readonly reader: string;
   /** The answerer the configuration names: running, waiting for the setting it needs, or null when it names none. */
   readonly answerer: One<"answerer"> | null;
+  /** The engine's tools as its settings make them: a surface serves them, and never decides them. */
+  tools(): readonly ListedTool[];
   tool(name: string, args: Record<string, unknown>): Promise<{ readonly [field: string]: unknown }>;
   counts(): Promise<{ documents: number; collections: { name: string; documents: number }[] }>;
 };

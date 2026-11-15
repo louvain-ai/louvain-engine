@@ -11,7 +11,7 @@ export const mcp = definePlugin({
         method: "POST",
         path: "/mcp",
         needs: "read",
-        handle: (request, read) => mcpRoute(read.tool).handle(request),
+        handle: (request, read) => mcpRoute(read).handle(request),
       },
     ],
   }),

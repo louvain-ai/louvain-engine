@@ -47,11 +47,11 @@ export type SearchRequest = {
 export async function search(request: SearchRequest, using: SearchWith): Promise<DocumentSearch> {
   const { options } = request;
   const limit = Math.max(1, Math.min(searchHeadDepth(), Math.floor(options.limit)));
-  const question = questionFor(request.query, options.question);
+  const question = questionFor(request, using);
   const titling = stage("titled", () => titledDocuments(request));
   const legs = await stage("legs", () => legsOf(request, question, poolDepth(limit), using));
   const documents = await stage("documents", () =>
-    documentsOf(request, question, { found: legs.value, reranker: using.pool.reranker }),
+    documentsOf(request, question, { found: legs.value, using }),
   );
   const titled = await titling;
   const placed = withTitled(documents.value.order, titled.value, limit);
@@ -121,9 +121,10 @@ async function conversationOf(
 async function documentsOf(
   { context, reader, query, options }: SearchRequest,
   question: string | null,
-  legs: { found: Awaited<ReturnType<SearchPool>>; reranker?: Reranker | null | undefined },
+  legs: { found: Awaited<ReturnType<SearchPool>>; using: SearchWith },
 ) {
-  const { found } = legs;
+  const { found, using } = legs;
+  const { reranker } = using.pool;
   const page = pageOf(found.found);
   const { degraded, ...ordered } = await documentOrder({
     rows: page.rows,
@@ -131,8 +132,9 @@ async function documentsOf(
     query: rerankQueryOf(query, question, options.rerankWith),
     settings: { rerank: options.rerank },
     chunkBonus: AGENT_SEARCH_CHUNK_BONUS,
+    tuning: using.settings.rerank,
     feed: { context, viewer: reader, ...(options.asOf ? { asOf: options.asOf } : {}) },
-    ...(legs.reranker !== undefined ? { reranker: legs.reranker } : {}),
+    ...(reranker !== undefined ? { reranker } : {}),
   });
   return {
     value: { ...ordered, origin: page.origin, ranks: documentRanks(found.found) },

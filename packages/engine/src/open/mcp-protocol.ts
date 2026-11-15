@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import type { Reading } from "@louvain/engine-core";
 import {
   ProtocolError,
   ProtocolErrorCode,
@@ -6,14 +7,13 @@ import {
   WebStandardStreamableHTTPServerTransport,
 } from "@modelcontextprotocol/server";
 import { telemetry } from "../telemetry.js";
-import { openTools } from "./source-tools/open-tool-schema.js";
 import { ToolInputError } from "./source-tools/tool-helpers.js";
 
 /**
  * The tool server's protocol: MCP over Streamable HTTP through the official SDK, stateless and answered as JSON, so
- * initialize, the version agreed and the protocol-version header are the SDK's. The engine adds its three tools (search
- * and list, look up, read) and how a call runs (`ToolRun`), the one part that touches the database, so the whole
- * protocol is exercised by a test with no database. The token, the path and the method are the server's (`respond.ts`).
+ * initialize, the version agreed and the protocol-version header are the SDK's. The engine hands it its tools as its
+ * settings make them (`Reading.tools`) and how a call runs (`Reading.tool`), the one part that touches the database, so
+ * the whole protocol is exercised by a test with no database. The token, the path and the method are the server's (`respond.ts`).
  */
 
 /**
@@ -43,14 +43,17 @@ function toolResult(value: unknown) {
   };
 }
 
-/** One request's server: the engine's name and instructions, and the two tool methods over `run`. */
-function protocolServer(run: ToolRun): Server {
+/** The engine's tools a route serves (`Reading.tools`), and how one runs (`Reading.tool`). */
+type Served = Pick<Reading, "tools" | "tool">;
+
+/** One request's server: the engine's name and instructions, and the two tool methods over the engine's tools. */
+function protocolServer(read: Served): Server {
   const server = new Server(
     { name: "louvain-engine", title: "Louvain engine", version: ENGINE_VERSION },
     { capabilities: { tools: { listChanged: false } }, instructions: INSTRUCTIONS },
   );
-  server.setRequestHandler("tools/list", () => ({ tools: openTools() }));
-  server.setRequestHandler("tools/call", (request) => callTool(request.params, run));
+  server.setRequestHandler("tools/list", () => ({ tools: [...read.tools()] }));
+  server.setRequestHandler("tools/call", (request) => callTool(request.params, read));
   return server;
 }
 
@@ -61,13 +64,13 @@ function protocolServer(run: ToolRun): Server {
  */
 async function callTool(
   params: { name: string; arguments?: Record<string, unknown> | undefined },
-  run: ToolRun,
+  read: Served,
 ) {
   const name = params.name;
-  if (!openTools().some((tool) => tool.name === name))
+  if (!read.tools().some((tool) => tool.name === name))
     throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Unknown tool: ${name || "(none)"}`);
   try {
-    return toolResult(await run(name, params.arguments ?? {}));
+    return toolResult(await read.tool(name, params.arguments ?? {}));
   } catch (err) {
     if (!(err instanceof ToolInputError)) telemetry.error("open.mcp.tool", err, { tool: name });
     const text =
@@ -82,7 +85,7 @@ async function callTool(
  * MCP as the server's read route: `POST /mcp`, behind the read token, its body already capped. Each request gets its
  * own SDK server over a stateless transport that answers in JSON, never an event stream.
  */
-export function mcpRoute(run: ToolRun) {
+export function mcpRoute(read: Served) {
   return {
     method: "POST",
     path: "/mcp",
@@ -92,7 +95,7 @@ export function mcpRoute(run: ToolRun) {
         sessionIdGenerator: undefined,
         enableJsonResponse: true,
       });
-      const server = protocolServer(run);
+      const server = protocolServer(read);
       await server.connect(transport);
       try {
         return await transport.handleRequest(request);

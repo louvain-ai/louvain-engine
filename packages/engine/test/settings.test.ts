@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { defineEngine, PluginRefused } from "@louvain/engine-core";
-import { bindSettings, departures, settings, settingsOf } from "../src/config/settings.js";
+import { departures, settingsOf } from "../src/config/settings.js";
+import { keywordRetriever } from "../src/plugins/retriever-keyword/index.js";
 
 /**
  * THE SEARCH'S SETTINGS ARE THE CONFIGURATION'S: `settings` in `engine.config.ts`, one schema, each setting at its default
@@ -10,7 +11,7 @@ import { bindSettings, departures, settings, settingsOf } from "../src/config/se
 
 test("no settings is every setting at today's default", () => {
   assert.deepEqual(settingsOf(undefined), {
-    retrieval: { searchQuestion: true, bestPassage: true },
+    retrieval: { searchQuestion: true },
     rerank: { window: 30, feed: "passage", passageChars: 3_000, documentChars: 16_000, blend: 0.5 },
     server: { toolDeadlineMs: 60_000 },
   });
@@ -38,15 +39,24 @@ test("a value out of range, or a setting that does not exist, stops the start by
       return true;
     },
   );
-  assert.throws(() => settingsOf({ retrieval: { bestPassages: true } }), /settings\.retrieval/);
+  assert.throws(() => settingsOf({ retrieval: { searchQuestions: true } }), /settings\.retrieval/);
+  assert.throws(() => settingsOf({ retrieval: { bestPassage: true } }), /settings\.retrieval/);
 });
 
-test("the settings a search reads are the ones bound, at each call", () => {
-  const set = settingsOf({ retrieval: { bestPassage: false } });
-  bindSettings(() => set);
-  try {
-    assert.equal(settings().retrieval.bestPassage, false);
-  } finally {
-    bindSettings(() => settingsOf(undefined));
-  }
+test("how a keyword hit is shown is the keyword retriever's own setting, taken when it is created", async () => {
+  const asked: unknown[] = [];
+  const read = {
+    passages: async (_q: string, how: unknown) => {
+      asked.push(how);
+      return { hits: [], degraded: [] };
+    },
+  };
+  const ask = { query: "lease", limit: 5, mode: "keyword" as const, bounded: false };
+  await (await keywordRetriever().create()).candidates(ask, read);
+  await (await keywordRetriever({ bestPassage: false }).create()).candidates(ask, read);
+  assert.deepEqual(asked, [
+    { mode: "keyword", limit: 5, bestPassage: true },
+    { mode: "keyword", limit: 5, bestPassage: false },
+  ]);
+  assert.throws(() => keywordRetriever({ bestPassages: false } as never), /keyword/);
 });

@@ -28,9 +28,10 @@ runs used our own build's search, tool results and index, and the table at the e
   verbatim (`text/tools.json`), as a record of what the model read. They mention tools and fields this server does not
   have. Every search is made as of 2031-01-01, carries the question verbatim, and leaves out what earlier searches
   listed.
-- **The embedder:** `Louvain/embed-4b-erb` (Qwen3-Embedding-4B with a merged adapter), last-token pooling, 768
+- **The embedder:** [`Louvain/embed-4b-erb`](https://huggingface.co/Louvain/embed-4b-erb) at revision
+  `7b9a14bfa0e0942bfe70c525fc5261e8f0d56878` (Qwen3-Embedding-4B with a merged adapter), last-token pooling, 768
   dimensions, a query instruction. It was tuned on this corpus's documents with synthetic questions, none of the
-  benchmark's questions or answers. Its weights are not public yet.
+  benchmark's questions or answers. Its weights and model card are public on Hugging Face.
 - **The reranker:** Cohere's Rerank API, `rerank-v4.0-pro`, over the first 150 documents, each sent whole up to 16,000
   characters, its order used as it is. **Every search sends up to 150 documents' text to Cohere.**
 - **The index:** the corpus loaded as records with no model reading it, less the 976 documents the scored build's
@@ -41,9 +42,33 @@ runs used our own build's search, tool results and index, and the table at the e
 
 You need Docker, Node and Python, and `ANTHROPIC_API_KEY` and `COHERE_API_KEY` in your environment. Nothing here
 holds a key or any of the benchmark's text: `prepare` fetches the evaluator at its commit and the corpus archive, which
-it checks by its sha256. **Until the 4B weights are public, these steps index with the engine's default embedder,
-which is not the scored configuration, and `check` cannot tell:** the scored index needs the 4B built into the
-embedding service's image, and a GPU for its about 3.5 million passages.
+it checks by its sha256.
+
+**Every profile indexes and queries with the tuned embedder**, `Louvain/embed-4b-erb` at commit `7b9a14bf…`, served by
+the embedding sidecar on its torch backend, which you start yourself before `load`, on a GPU: the corpus is about 3.5
+million passages. `./engine up`'s own embedding service keeps the default model and is not called. `up` and `load`
+hand `./engine` the model's conventions (its name, last-token pooling, the cut to 768 dimensions and the query
+instruction), and `check` and `load` refuse to run unless the service the engine calls reports this model, its pooling,
+width and weights digest. Fetch it at its commit, check every file against its digests, and serve it as its model card
+says, with the token `up` made for the profile and on a port of its own:
+
+```bash
+hf download Louvain/embed-4b-erb --revision 7b9a14bfa0e0942bfe70c525fc5261e8f0d56878 --local-dir embed-4b-erb
+(cd embed-4b-erb && shasum -a 256 -c SHA256SUMS)   # model.safetensors is 771b1d5b…
+LOUVAIN_EMBEDDING_BACKEND=torch LOUVAIN_EMBEDDING_MODEL=Louvain/embed-4b-erb \
+LOUVAIN_EMBEDDING_TORCH_MODEL="$PWD/embed-4b-erb" LOUVAIN_EMBEDDING_MODEL_DIR="$PWD/embed-4b-erb" \
+LOUVAIN_EMBEDDING_POOLING=last LOUVAIN_EMBEDDING_MATRYOSHKA=true LOUVAIN_EMBEDDING_DIM=768 \
+LOUVAIN_EMBEDDING_MODEL_SHA256=771b1d5b1419e49b588febfc655e469e27ebd3d72031a5a00624f711cade530b \
+LOUVAIN_SIDECAR_TOKEN="$(cat .engine/profiles/erb/sidecar-token)" PORT=8098 \
+python apps/nlp/embed.py   # from the engine's root
+```
+
+Its Python needs what `apps/nlp/Dockerfile.gpu` installs for it: `requirements-embed.txt`'s onnxruntime, torch, and
+`transformers==5.17.0`, the version its card names (it brings its own tokenizers and hub client; a 4.x reader embeds
+this checkpoint wrong without an error).
+
+Then set `LOUVAIN_EMBEDDINGS_URL=http://localhost:8098` and `LOUVAIN_EMBEDDINGS_BULK_URL=http://localhost:8098` in the
+engine's `.env`. For `erb-louvain` or `erb-oss`, read that profile's own token.
 
 ```bash
 cd profiles/erb
@@ -63,6 +88,65 @@ from the cache, 4.3 million written to it), about 7 turns, 3.4 searches and 3.6 
 prices and never assumes them, and stops before a question that could pass `--budget-usd`. Cohere bills a rerank a
 search; the judge is billed on top.
 
+## The other two profiles
+
+Two profiles beside this one change one provider each and share everything else: the loop, the tools, the texts, the
+question sample and the judge (`run/variants.ts` holds the differences). Neither has been scored.
+
+| Profile | Embedder | Reranker | Answerer |
+|---|---|---|---|
+| `erb` (this one) | the tuned 4B | Cohere `rerank-v4.0-pro` | Claude Sonnet 5.5 |
+| `erb-louvain` | the tuned 4B | `Louvain/rerank-4b-erb`, in the rerank sidecar | Claude Sonnet 5.5 |
+| `erb-oss` | the tuned 4B | `Louvain/rerank-4b-erb`, in the rerank sidecar | Qwen3-235B-A22B-Instruct-2507, OpenAI-compatible |
+
+Each keeps its own state and stack, so `prepare` and `load` run once per profile, from its own folder
+(`cd profiles/erb-louvain`, then the same steps as above).
+
+**The reranker** is [`Louvain/rerank-4b-erb`](https://huggingface.co/Louvain/rerank-4b-erb) at revision
+`d64b19e32cd36c4a055a88d4c7e226e736a4751e`, Qwen3-Reranker-4B with a merged adapter, served by `apps/nlp/rerank.py` with its model card's prompt and scored as logit("yes") − logit("no").
+`./engine up` does not build it (its image is CPU-only) and says the reranker is not running. Start it yourself after
+`up`, on a GPU, with the token `up` made for the profile (`erb-oss` reads its own folder), on a port of its own: `up`
+refuses to start while anything holds the port it keeps for its own reranker (`LOUVAIN_RERANK_HOST_PORT`, 8096). Put
+`LOUVAIN_RERANK_URL=http://localhost:8097` in the engine's `.env`, so the engine and `check` both call it there. Apple
+silicon serves it for `check` and a try, but one search's 150 whole documents took about ten minutes there:
+
+```bash
+LOUVAIN_RERANK_KIND=qwen3-reranker LOUVAIN_RERANK_MODEL=Louvain/rerank-4b-erb \
+LOUVAIN_RERANK_MODEL_REVISION=d64b19e32cd36c4a055a88d4c7e226e736a4751e LOUVAIN_RERANK_DTYPE=bfloat16 \
+LOUVAIN_SIDECAR_TOKEN="$(cat .engine/profiles/erb-louvain/sidecar-token)" PORT=8097 \
+python apps/nlp/rerank.py     # from the engine's root, with apps/nlp/requirements-rerank.txt installed
+```
+
+The engine refuses its scores if it names another model. Each document goes to it whole up to 8,000 characters, the
+length it was tuned and measured at. bfloat16 is the precision its card's table was scored in, and takes about 8 GB; float32, the sidecar's default, removes the
+near-ties bfloat16 can order differently by batch.
+
+**The open answerer** is called through any OpenAI-compatible chat-completions endpoint. By default that is
+OpenRouter's, `https://openrouter.ai/api/v1`, where the model is `qwen/qwen3-235b-a22b-2507`;
+`ANSWERER_BASE_URL` and `ANSWERER_MODEL` point it elsewhere, your own vLLM or SGLang server included (which names the
+model `Qwen/Qwen3-235B-A22B-Instruct-2507`), and `ANSWERER_API_KEY` holds its key. Only text and tool calls cross: the
+model gets no thinking setting and no cache markers. `ask` still takes your prices; its cache prices assume
+Anthropic's ratios, so give the provider's uncached input price.
+
+**The keys**, from the environment as always. With 1Password's CLI, put the references in an env file (each line
+`NAME=op://<vault>/<item>/<field>`) and run each step under `op run`, which resolves them for that command only:
+
+```bash
+# erb:         ANTHROPIC_API_KEY, COHERE_API_KEY
+# erb-louvain: ANTHROPIC_API_KEY (the judge reads it too)
+# erb-oss:     ANSWERER_API_KEY, and ANTHROPIC_API_KEY for the judge only
+cd profiles/erb-louvain
+op run --env-file=../erb-louvain.env -- npx tsx run.ts check
+op run --env-file=../erb-louvain.env -- npx tsx run.ts ask --sample every-fifth --budget-usd <cap> --price-in <$/M> --price-out <$/M>
+op run --env-file=../erb-louvain.env -- npx tsx run.ts judge
+cd ../erb-oss
+op run --env-file=../erb-oss.env -- npx tsx run.ts check
+op run --env-file=../erb-oss.env -- npx tsx run.ts ask --sample every-fifth --budget-usd <cap> --price-in 0.14 --price-out 0.80
+op run --env-file=../erb-oss.env -- npx tsx run.ts judge
+```
+
+(OpenRouter's listed price for the model is US$0.14 a million input tokens and US$0.80 output; check yours.)
+
 ## What differs
 
 | What | Scored | This build |
@@ -72,6 +156,6 @@ search; the judge is billed on top.
 | Search results | our build's fields (`louvainUrl`, `app`, `url`) | this server's fields (`container`, `kind`); the relevance split turned off |
 | Arguments | the scored schema's `app`, `space`, `client`, `knownAt` | not taken: `run.ts` removes and counts them. In v4b `app` was a no-op (every listed document had the same app) and `client` came once |
 | Index vectors | the passage's text only | the passage's text searched; its context's vector also written, and not read |
-| The embedder | the 4B, float16 index, float32 queries | the service's model is a build argument of its image; float32 on both sides |
+| The embedder | the 4B, float16 index, float32 queries | the 4B served by the sidecar on torch, float32 on both sides |
 | A mail's header and thread | kept, so a read listed the thread | the same text; no header or thread kept |
 | The agent | our build's harness | `run/agent/`, the same loop reduced to the scored flags, until the engine has its own |

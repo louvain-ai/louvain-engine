@@ -1,5 +1,5 @@
 import type { Reranker, Viewer } from "@louvain/engine-core";
-import { settings } from "../config/settings.js";
+import type { Settings } from "../config/settings.js";
 import type { ReadContext } from "../kg/read/fence.js";
 import { passages } from "../kg/read/passages-api.js";
 import { type Attempted, attempt } from "./degrade.js";
@@ -27,8 +27,8 @@ export type Reranked<T> = {
 async function documentTexts(
   ids: readonly string[],
   feed: DocumentFeed | undefined,
+  { feed: fed, documentChars: maxChars }: Settings["rerank"],
 ): Promise<Attempted<Map<string, string>>> {
-  const { feed: fed, documentChars: maxChars } = settings().rerank;
   if (!feed || fed !== "document" || ids.length === 0) return { value: new Map(), degraded: [] };
   return attempt("rerank:document_text", new Map<string, string>(), () =>
     passages.asDocuments(feed.context, feed.viewer, ids, {
@@ -64,21 +64,30 @@ async function scored(
 }
 
 /**
- * The reranker's order blended with the page's own (the reranker's `blend`, else `settings.rerank.blend`), or the
+ * The reranker's order blended with the page's own (the reranker's `blend`, else the engine's `tuning.blend`), or the
  * page's own where there is no reranker or it failed. Handed the page outright, a reranker promotes look-alikes missing the query's exact token.
  */
+/** What a rerank is asked with: the query, the reranker, where a whole document is read, and the engine's tuning. */
+type RerankAsk = {
+  query: string;
+  reranker: Reranker | null;
+  feed?: DocumentFeed;
+  tuning: Settings["rerank"];
+};
+
 export async function rerankedDocuments<T extends Ranked>(
   ranked: T[],
   loose: readonly AskRow[],
-  ask: { query: string; reranker: Reranker | null; feed?: DocumentFeed },
+  ask: RerankAsk,
 ): Promise<Reranked<T>> {
-  const { query } = ask;
+  const { query, tuning } = ask;
   if (!ask.reranker) return { order: ranked, relevance: null, degraded: [] };
-  const { window, passageChars, blend: stated } = settings().rerank;
+  const { window, passageChars, blend: stated } = tuning;
   const head = ranked.slice(0, window);
   const whole = await documentTexts(
     head.map(([id]) => id),
     ask.feed,
+    tuning,
   );
   const candidates = [
     ...head.map(([id, d]) => ({

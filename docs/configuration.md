@@ -54,20 +54,23 @@ prints the settings that depart from their defaults (`settings: rerank.window 10
 
 ```ts
 export default defineEngine({
-  settings: { retrieval: { bestPassage: false }, rerank: { window: 10 } },
+  settings: { retrieval: { searchQuestion: false }, rerank: { window: 10 } },
 });
 ```
 
 | Setting | Default | What it does |
 | --- | --- | --- |
 | `retrieval.searchQuestion` | `true` | The search tool takes `question`, the person's question, and searches it beside the query; `false` removes the argument, and a call that sends it is refused by name |
-| `retrieval.bestPassage` | `true` | A keyword hit is shown by its best-matching passage; `false` shows its first |
 | `rerank.window` | 30 | How many documents go to the reranker |
 | `rerank.feed` | `"passage"` | `"document"` sends each document's whole text instead of its best passage |
 | `rerank.passageChars` | 3000 (at least 200) | Characters of a passage sent |
 | `rerank.documentChars` | 16000 (at least 200) | Characters of a document sent under `"document"` |
 | `rerank.blend` | 0.5 | The reranker's weight in a reciprocal-rank blend with the fused order, from 0 to 1; 1 takes the reranker's order alone. A reranker that states its own blend uses that (the shipped local model: 1) |
 | `server.toolDeadlineMs` | 60000 (at least 1000) | How long a tool call's reply may take; work already under way runs on |
+
+The settings are a value of the engine a command builds, fixed when it starts: a search reads its engine's, and nothing
+re-reads them while it runs. How a keyword hit is shown is the keyword retriever's own setting (`bestPassage`,
+[Plugins](plugins.md)), not one of these.
 
 The engine reads further settings that tune it for a particular deployment. Each is declared, with why it is internal,
 in `packages/engine/src/config/environment.ts`; they are not offered here.

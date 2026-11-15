@@ -6,13 +6,15 @@ import {
 } from "@louvain/engine-core";
 import { z } from "zod";
 import { DEFAULT_MODEL, MODELS } from "./models.js";
+import { squashed } from "./squash.js";
 
 export { DEFAULT_MODEL, MODELS } from "./models.js";
 
 /**
  * The local reranker: a small open-weights cross-encoder in the rerank sidecar, on this machine. The search and the candidates' texts go to it and nothing leaves the machine. The sidecar answers a raw
- * score per text, squashed here into [0, 1] by the logistic function the model is trained with, and names its model,
- * so a cut-off measured on one model is never applied to another's scores.
+ * score per text, squashed here into [0, 1] by the logistic function the model is trained with, keeping the model's
+ * strict order where float64 rounds two scores to 1 (`squash.ts`), and names its model, so a cut-off measured on one
+ * model is never applied to another's scores.
  */
 const Settings = z.object({
   url: z.url(),
@@ -57,11 +59,11 @@ async function scoredBySidecar(settings: Settings, ask: RerankAsk): Promise<Rera
       ok: false,
       failure: `the rerank sidecar runs ${answer.model ?? "an unnamed model"}, not ${settings.model}`,
     };
-  const scores: number[] = ask.texts.map(() => Number.NaN);
-  for (const hit of answer.results) scores[Number(hit.id)] = 1 / (1 + Math.exp(-hit.score));
-  if (scores.some(Number.isNaN))
+  const raw: number[] = ask.texts.map(() => Number.NaN);
+  for (const hit of answer.results) raw[Number(hit.id)] = hit.score;
+  if (raw.some(Number.isNaN))
     return { ok: false, failure: "the rerank sidecar did not score every text" };
-  return { ok: true, scores };
+  return { ok: true, scores: squashed(raw) };
 }
 
 async function asked(settings: Settings, ask: RerankAsk) {

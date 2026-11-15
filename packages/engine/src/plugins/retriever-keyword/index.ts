@@ -1,4 +1,5 @@
 import { definePlugin } from "@louvain/engine-core";
+import { z } from "zod";
 
 /**
  * The keyword retriever: passages by the search's words alone, as one leg. The reading runs the keyword leg under its
@@ -9,9 +10,19 @@ import { definePlugin } from "@louvain/engine-core";
 export const keywordRetriever = definePlugin({
   kind: "retriever",
   name: "keyword",
-  create: () => ({
+  settings: z
+    .object({
+      /** A hit shown by its best-matching passage, the part that matched; `false`, by its first. */
+      bestPassage: z.boolean().default(true),
+    })
+    .strict(),
+  create: ({ bestPassage }) => ({
     candidates: async (ask, read) => {
-      const page = await read.passages(ask.query, { mode: "keyword", limit: ask.limit });
+      const page = await read.passages(ask.query, {
+        mode: "keyword",
+        limit: ask.limit,
+        bestPassage,
+      });
       return { legs: [{ leg: "keyword", rows: page.hits }], degraded: page.degraded };
     },
   }),

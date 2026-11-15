@@ -30,13 +30,17 @@ export type RetrieverAsk = {
 export type Candidate = { readonly recordId: string };
 
 type ReadMode = RetrieverAsk["mode"] | "vector";
+type PassagesShown = { readonly digits: boolean; readonly bestPassage: boolean };
 /** The reads a retriever may make, each inside the asker's scope. */
 export type FencedReading = {
   readonly scope: ReadingScope;
-  /** Passages for these words: both ways fused (`hybrid`) or one (`vector`, `keyword`); `digits`: those stating a figure. */
+  /**
+   * Passages for these words: both ways fused (`hybrid`) or one (`vector`, `keyword`); `digits`: those stating a figure;
+   * `bestPassage: false`: a keyword hit shown by its first passage, not its best-matching one.
+   */
   passages(
     query: string,
-    opts: { readonly mode: ReadMode; readonly limit: number; readonly digits?: boolean },
+    opts: { readonly mode: ReadMode; readonly limit: number } & Partial<PassagesShown>,
   ): Promise<{ readonly hits: readonly Candidate[]; readonly degraded: readonly string[] }>;
 };
 

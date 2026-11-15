@@ -45,6 +45,8 @@ export type PassageSearchOptions = {
    * legs narrowing which may enter, since those keep long rows nearest the words over short newer ones.
    */
   timeAlone?: boolean;
+  /** A keyword hit shown by its best-matching passage; `false`, by its first. Absent, the best (the default). */
+  bestPassage?: boolean;
   /**
    * The topic is its rare words (with `timeAlone`). Words are weighed by how many readable passages hold them, inside
    * this viewer's fence (`topicTerms`): a word in more than `GENERIC_SHARE` of them is dropped, and of the rest only
@@ -115,6 +117,8 @@ export type PassageLegRead = {
 
 /** A keyword leg's read: the passage read, and how its passes are paged. */
 export type KeywordLegRead = PassageLegRead & {
+  /** A hit shown by its best-matching passage, not its first (`keyword/rows.ts` `bestOf`). */
+  bestPassage: boolean;
   /** Recall bounded to one pass: a build's passes run their narrow pass alone, unless none can be built. */
   boundedRecall: boolean;
   /** A decaying read's re-sort, applied to each ranking on its own: the sidecar's, the narrow pass, the wide. */

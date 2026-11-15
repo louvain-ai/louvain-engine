@@ -43,7 +43,7 @@ export async function keywordLeg(
  */
 async function indexRows(
   context: ReadContext,
-  { fence, query, limit, filters }: KeywordLegRead,
+  { fence, query, limit, filters, bestPassage: best }: KeywordLegRead,
   narrowing: NonNullable<ReturnType<typeof bm25Narrowing>>,
 ): Promise<Row[] | null> {
   const tags: Tags = { up: "yes" };
@@ -51,7 +51,14 @@ async function indexRows(
     "ask.bm25",
     async (): Promise<Row[] | null> => {
       try {
-        return await bm25Rows(context, { fence, query, limit, asOf: filters.asOf, narrowing });
+        return await bm25Rows(context, {
+          fence,
+          query,
+          limit,
+          asOf: filters.asOf,
+          narrowing,
+          best,
+        });
       } catch {
         // swallowed: the sidecar being down or late costs this leg its ranking — the build's passes answer under
         // the same fence, or none do — and the leg names it in what it returns (`keyword:bm25`).

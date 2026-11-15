@@ -15,6 +15,7 @@ import { app } from "../src/index.js";
 
 const TOKEN = "k".repeat(40);
 const tools = {
+  tools: () => [],
   tool: async (name: string) =>
     name === "louvain_search_sources"
       ? {

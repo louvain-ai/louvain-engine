@@ -158,8 +158,9 @@ async function surface({ engine, sql, readContext, orgId, ids }: Awaited<ReturnT
           : plugins.list(kind)) as typeof plugins.list,
     },
   });
-  const pool = { pool: retrieverPool(plugins.list("retriever")) };
-  const reranking = { pool: retrieverPool(plugins.list("retriever"), standInReranker) };
+  const { settings } = engine;
+  const pool = { pool: retrieverPool(plugins.list("retriever")), settings };
+  const reranking = { pool: retrieverPool(plugins.list("retriever"), standInReranker), settings };
   const owner = (reader: Reader) => ({
     orgId,
     principal: reader === "everyone" ? OPEN_PRINCIPAL : reader,

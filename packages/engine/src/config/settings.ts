@@ -5,7 +5,9 @@ import { z } from "zod";
  * The engine's settings: how a search reads and ranks, set in `engine.config.ts` under `settings`, never in the
  * environment, which carries addresses, keys and ports only (`environment.ts`). One schema, validated at the start; a
  * setting left out keeps its default, and the start says which depart from theirs. Anything nobody should set is a
- * constant beside its one reader, not a setting.
+ * constant beside its one reader, not a setting. They are a value of the engine a configuration builds
+ * (`EngineParts.settings`), fixed when it is built: a search reads its engine's (`SearchWith.settings`), and a plugin
+ * takes its own in `create()`.
  */
 export const Settings = z
   .object({
@@ -13,8 +15,6 @@ export const Settings = z
       .object({
         /** The person's question is searched beside an agent's rewrite of it, which drops words the question had. */
         searchQuestion: z.boolean().default(true),
-        /** A keyword hit is shown by the passage that matched, not by the document's first. */
-        bestPassage: z.boolean().default(true),
       })
       .strict()
       .prefault({}),
@@ -68,14 +68,4 @@ export function departures(set: Settings, from: Settings = DEFAULTS): string[] {
       return value === preset ? [] : [`${group}.${name} ${value} (default ${preset})`];
     }),
   );
-}
-
-let read: () => Settings = () => DEFAULTS;
-
-/** The settings in force, read at each call: what every search stage asks. */
-export const settings = (): Settings => read();
-
-/** Where the settings come from: the configuration's, once, at the start; a host may bind its own source instead. */
-export function bindSettings(source: () => Settings): void {
-  read = source;
 }

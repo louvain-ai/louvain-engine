@@ -175,9 +175,11 @@ def _ensure_loaded() -> None:
             return
         device = _resolve_device()
         if QWEN3:
-            tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, padding_side="left")
+            tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, revision=MODEL_REVISION, padding_side="left")
             # float32 unless bfloat16 is asked for, on every device: the same pool, the same order.
-            model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, dtype=getattr(torch, QWEN3_DTYPE))
+            model = AutoModelForCausalLM.from_pretrained(
+                MODEL_NAME, revision=MODEL_REVISION, dtype=getattr(torch, QWEN3_DTYPE)
+            )
         else:
             tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, revision=MODEL_REVISION)
             model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, revision=MODEL_REVISION)

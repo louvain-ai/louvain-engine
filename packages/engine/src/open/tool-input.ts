@@ -10,8 +10,12 @@ import { ToolInputError } from "./source-tools/tool-helpers.js";
 type Issue = z.core.$ZodIssue;
 
 /** The arguments `name` declares, parsed; an argument left `undefined` is as if it were not sent. */
-export function toolArgs(name: string, args: Record<string, unknown>): Record<string, unknown> {
-  const schema = openToolArgs(name);
+export function toolArgs(
+  name: string,
+  args: Record<string, unknown>,
+  settings: Parameters<typeof openToolArgs>[1],
+): Record<string, unknown> {
+  const schema = openToolArgs(name, settings);
   if (!schema) throw new Error(`unknown tool: ${name}`);
   const asked = Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined));
   const result = schema.safeParse(asked);

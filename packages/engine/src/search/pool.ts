@@ -90,7 +90,7 @@ async function fencedReading(context: ReadContext, viewer: Viewer, opts: SearchO
           mode: how.mode,
           filters: how.digits ? { ...filters, digits: true } : filters,
           limit: how.limit,
-          ...(how.digits ? {} : { bounded }),
+          ...(how.digits ? {} : { bounded, bestPassage: how.bestPassage !== false }),
           ...(opts.embedder ? { embedder: opts.embedder } : {}),
         }),
       );

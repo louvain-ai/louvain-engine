@@ -1,10 +1,11 @@
-import type { PluginRegistry } from "@louvain/engine-core";
 import type { Engine } from "../engine.js";
 import type { ReadContext } from "../kg/read/fence.js";
+import type { SearchWith } from "../search/document.js";
 import { retrieverPool } from "../search/pool.js";
 import type { ToolResult, ToolRun } from "./mcp-protocol.js";
 import { OPEN_PRINCIPAL, openOrgId } from "./org.js";
 import { lookupSource } from "./source-tools/lookup.js";
+import { listedTools } from "./source-tools/open-tool-schema.js";
 import { readSourcePage } from "./source-tools/read-page.js";
 import { searchOrList } from "./source-tools/search-apps.js";
 import { str, ToolInputError } from "./source-tools/tool-helpers.js";
@@ -16,13 +17,13 @@ import { toolArgs } from "./tool-input.js";
  * with a sentence, never dropped.
  */
 type ReaderId = { orgId: string; principal: string };
-type Pool = { pool: ReturnType<typeof retrieverPool> };
+type Pool = SearchWith;
 /** What a tool call runs on: the engine's read context, the one reader, and the search pool. */
 type ToolCall = { context: ReadContext; reader: ReaderId; pool: Pool };
 type OpenTool = (asked: Record<string, unknown>, call: ToolCall) => Promise<ToolResult>;
 
-/** What the tools read: the engine's context, its plugins, and its store, whose database names the one org. */
-export type ToolEngine = Pick<Engine, "context" | "plugins" | "store">;
+/** What the tools read: the engine's context, plugins and settings, and its store, whose database names the one org. */
+export type ToolEngine = Pick<Engine, "context" | "plugins" | "store" | "settings">;
 
 /** Each tool by its name: what it runs with the arguments it declared. */
 const TOOLS = new Map<string, OpenTool>([
@@ -35,17 +36,18 @@ const TOOLS = new Map<string, OpenTool>([
 ]);
 
 /** The configuration's retrievers and its reranker (one, or none), as one search pool (`search/pool.ts`). */
-export const poolOf = (plugins: PluginRegistry): Pool => ({
+export const poolOf = ({ plugins, settings }: Pick<Engine, "plugins" | "settings">): Pool => ({
   pool: retrieverPool(plugins.list("retriever"), plugins.list("reranker")[0]?.plugin ?? null),
+  settings,
 });
 
 /** The open tools over this engine: a search reads the configuration's retrievers and reranker (`search/pool.ts`). */
 export function openTools(engine: ToolEngine): ToolRun {
   // Made once: with no retriever configured the start is refused, never the first search.
-  const pool = poolOf(engine.plugins);
+  const pool = poolOf(engine);
   return async (name, args) => {
     const reader = { orgId: await openOrgId(engine.store.sql), principal: OPEN_PRINCIPAL };
-    const asked = toolArgs(name, args);
+    const asked = toolArgs(name, args, engine.settings);
     const tool = TOOLS.get(name);
     if (!tool) throw new Error(`unknown tool: ${name}`);
     return tool(asked, { context: engine.context, reader, pool });
@@ -54,12 +56,12 @@ export function openTools(engine: ToolEngine): ToolRun {
 
 /** One search as the search tool runs it, for a caller in this process (the terminal's `search`). */
 export function openSearch(engine: ToolEngine) {
-  const pool = poolOf(engine.plugins);
+  const pool = poolOf(engine);
   return async (args: Record<string, unknown>) => {
     const reader = { orgId: await openOrgId(engine.store.sql), principal: OPEN_PRINCIPAL };
     return searchOrList(
       engine.context,
-      toolArgs("louvain_search_sources", args),
+      toolArgs("louvain_search_sources", args, engine.settings),
       reader,
       undefined,
       pool,
@@ -80,3 +82,6 @@ function readOne(
     offset: asked.offset,
   });
 }
+
+/** The tools this engine serves, by its settings: what a surface lists (`Reading.tools`) and what `toolArgs` parses by. */
+export const toolList = (engine: Pick<Engine, "settings">) => listedTools(engine.settings);

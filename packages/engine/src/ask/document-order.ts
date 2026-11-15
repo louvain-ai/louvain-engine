@@ -4,6 +4,7 @@
  */
 import type { Reranker } from "@louvain/engine-core";
 import { envSetting } from "../config/env-setting.js";
+import type { Settings as EngineSettings } from "../config/settings.js";
 import { rankDocuments } from "../kg/read/documents.js";
 import type { AskSettings } from "../kg/read/question.js";
 import type { AskRow } from "./evidence.js";
@@ -24,6 +25,8 @@ type OrderInput = {
   feed?: DocumentFeed;
   /** The reranker, used where the mode reranks (`settings.rerank`); left out or `null`, none. */
   reranker?: Reranker | null;
+  /** The engine's reranking settings: its window, what stands for a document, and the blend. */
+  tuning: EngineSettings["rerank"];
 };
 
 /**
@@ -38,6 +41,7 @@ export async function documentOrder(input: OrderInput) {
   const reranked = await rerankedDocuments(ranked, loose, {
     query: input.query,
     reranker,
+    tuning: input.tuning,
     ...(input.feed ? { feed: input.feed } : {}),
   });
   const by = reranked.relevance ? reranker : null;

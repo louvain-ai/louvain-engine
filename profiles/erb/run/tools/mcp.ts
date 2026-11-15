@@ -9,14 +9,28 @@ export type ToolServer = {
   call(name: string, args: Record<string, unknown>, signal: AbortSignal): Promise<CallResult>;
 };
 
-/** The token the environment names, else the one the server wrote to `.engine/token`. */
-export function engineToken(engineRoot: string): string {
+/** The token the environment names, else the one the server wrote into the profile's state folder (`Place.state`). */
+export function engineToken(state: string): string {
   const named = process.env.LOUVAIN_ENGINE_TOKEN?.trim();
   if (named) return named;
-  const file = join(engineRoot, ".engine/token");
+  const file = join(state, "token");
   if (!existsSync(file))
     throw new Error(`no engine token: ${file} does not exist (run ./engine up first)`);
   return readFileSync(file, "utf8").trim();
+}
+
+/** The JSON-RPC message in a reply: the body itself, or the last `data:` line of an event stream; else none. */
+function messageOf(said: string): unknown {
+  const data = said
+    .split("\n")
+    .filter((line) => line.startsWith("data:"))
+    .map((line) => line.slice(5).trim());
+  const text = data.length > 0 ? (data.at(-1) ?? "") : said;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {};
+  }
 }
 
 export function mcpServer(url: string, token: string): ToolServer {
@@ -24,13 +38,19 @@ export function mcpServer(url: string, token: string): ToolServer {
   const rpc = async (method: string, params: object, signal: AbortSignal): Promise<unknown> => {
     const res = await fetch(`${url.replace(/\/$/, "")}/mcp`, {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+      // Streamable HTTP: the client accepts both, and the server answers JSON or one event.
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+        authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ jsonrpc: "2.0", id: ++seq, method, params }),
       signal,
     });
-    const body = (await res.json()) as { result?: unknown; error?: { message?: string } };
+    const said = await res.text();
+    const body = messageOf(said) as { result?: unknown; error?: { message?: string } };
     if (!res.ok || body.error)
-      throw new Error(`mcp ${method}: ${res.status} ${body.error?.message ?? ""}`);
+      throw new Error(`mcp ${method}: ${res.status} ${body.error?.message ?? said.slice(0, 200)}`);
     return body.result;
   };
   return {

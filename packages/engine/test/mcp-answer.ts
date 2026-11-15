@@ -1,7 +1,10 @@
+import type { Reading } from "@louvain/engine-core";
+import { settingsOf } from "../src/config/settings.js";
 import { browserSessions } from "../src/open/browser-session.js";
 import type { ToolRun } from "../src/open/mcp-protocol.js";
 import { admit, respond } from "../src/open/respond.js";
 import { routeTable } from "../src/open/routes.js";
+import { listedTools } from "../src/open/source-tools/open-tool-schema.js";
 import { mcp } from "../src/plugins/surface-mcp/index.js";
 
 /** A request as a test writes it: its method, path, headers and body text. */
@@ -16,9 +19,15 @@ export type Asked = {
  * One request as the tool server answers it, with `mcp()` its one surface and `run` its tools (`respond.ts`): the
  * status, the headers and the JSON body, with no database and no socket.
  */
-export async function askServer(asked: Asked, token: string, run: ToolRun) {
+export async function askServer(
+  asked: Asked,
+  token: string,
+  run: ToolRun,
+  tools: ReturnType<Reading["tools"]> = listedTools(settingsOf(undefined)),
+) {
   const routes = routeTable([{ name: "mcp", plugin: await mcp().create() }]);
   const read = {
+    tools: () => tools,
     tool: run,
     counts: async () => ({ documents: 0, collections: [] }),
     answerer: null,

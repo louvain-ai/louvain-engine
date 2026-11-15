@@ -3,7 +3,6 @@ import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { settings as settingsInForce } from "@louvain/engine/config/settings";
 import { openHost } from "@louvain/engine/kg/read/open-readable-set";
 import { fileReaderLane } from "@louvain/engine/open/file-readers/index";
 import { IngestDoorRefused, ingestDoor } from "@louvain/engine/open/ingest-http";
@@ -53,7 +52,7 @@ test("with no engine.config.ts the defaults run: two readers, two sources, MCP a
       ["vector", "keyword", "figures"],
     );
     assert.deepEqual(plugins.list("answerer"), []);
-    assert.deepEqual(settings.retrieval, { searchQuestion: true, bestPassage: true });
+    assert.deepEqual(settings.retrieval, { searchQuestion: true });
     assert.equal(settings.server.toolDeadlineMs, 60_000);
     assert.deepEqual(
       plugins.list("surface").map((s) => s.name),
@@ -83,7 +82,7 @@ test("a setting the configuration states is the one the engine reads; the others
     "settings: { retrieval: { searchQuestion: false }, server: { toolDeadlineMs: 5000 } }";
   await withConfig(configWith(stated), async (root) => {
     const { settings } = await openEngine(openHost, root);
-    assert.equal(settingsInForce().retrieval.searchQuestion, false);
+    assert.equal(settings.retrieval.searchQuestion, false);
     assert.equal(settings.server.toolDeadlineMs, 5000);
     assert.equal(settings.rerank.window, 30);
   });
@@ -99,20 +98,21 @@ const withSidecar = shipped
 
 test("the shipped configuration runs no reranker", async () => {
   await withConfig(shipped, async (root) => {
-    const { plugins } = await openEngine(openHost, root);
-    assert.deepEqual(plugins.list("reranker"), []);
-    assert.equal(poolOf(plugins).pool.reranker, null);
+    const engine = await openEngine(openHost, root);
+    assert.deepEqual(engine.plugins.list("reranker"), []);
+    assert.equal(poolOf(engine).pool.reranker, null);
   });
 });
 
 test("its sidecar line, uncommented, puts the local reranker on the search pool", async () => {
   assert.match(withSidecar, /^ {2}reranker: sidecar\(\{$/m, "the shipped file carries the lines");
   await withConfig(withSidecar, async (root) => {
-    const { plugins } = await openEngine(openHost, root);
+    const engine = await openEngine(openHost, root);
+    const { plugins } = engine;
     const [started] = plugins.list("reranker");
     assert.equal(started?.name, "sidecar");
     assert.equal(started?.plugin.model, "BAAI/bge-reranker-v2-m3");
-    assert.equal(poolOf(plugins).pool.reranker, started?.plugin);
+    assert.equal(poolOf(engine).pool.reranker, started?.plugin);
   });
 });
 

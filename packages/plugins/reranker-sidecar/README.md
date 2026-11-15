@@ -29,5 +29,8 @@ worded differently from its question near zero, as low as a word no document hol
 it adds a match and never hides one.
 
 The sidecar answers a raw score per text, which this plugin squashes into [0, 1] with the logistic function, and names
-its model: a sidecar running another model than the one configured is a failure, never scores. A sidecar that does not
+its model. A model scored as wide log-odds (a Qwen3 reranker answers +88 and +56 for documents it ranks apart) rounds
+to exactly 1 there, so where a strictly lower raw score would tie the one above it, it takes the next float down: the
+model's order is kept, and a model whose scores stay within about ±36 gets the plain logistic. A sidecar running another
+model than the one configured is a failure, never scores. a sidecar running another model than the one configured is a failure, never scores. A sidecar that does not
 answer is a named failure too, and the search is then ranked without it and says so (`degraded: ["rerank:documents"]`).

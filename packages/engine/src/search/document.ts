@@ -1,5 +1,6 @@
 import type { RelevanceCutoffs, Reranker, Viewer } from "@louvain/engine-core";
 import type { WithIds } from "../ask/evidence.js";
+import type { Settings } from "../config/settings.js";
 import type { Embedder } from "../kg/read/context.js";
 import type { ReadContext } from "../kg/read/fence.js";
 import type { RecordFilters } from "../kg/read/filters.js";
@@ -77,8 +78,15 @@ export type ConversationOptions = {
   ancestry?: (orgId: string, recordId: string) => Promise<string[]>;
 };
 
-/** What a search reads with: its pool, and what the caller tells its conversation stage. */
-export type SearchWith = { pool: SearchPool; conversation?: ConversationOptions };
+/**
+ * What a search reads with: its pool, the engine's settings (whether a question is searched, how the reranker is fed),
+ * and what the caller tells its conversation stage.
+ */
+export type SearchWith = {
+  pool: SearchPool;
+  settings: Pick<Settings, "retrieval" | "rerank">;
+  conversation?: ConversationOptions;
+};
 
 /** One fused row of the pool, with the legs that found it. */
 export type Pooled = { evidence: WithIds; score: number; legs: string[] };

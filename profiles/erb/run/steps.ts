@@ -3,14 +3,17 @@ import { createHash } from "node:crypto";
 import { createReadStream, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { writeRecords } from "./corpus/records.js";
+import { EMBEDDER_ENV, embedderAnswers } from "./embedder.js";
 import { BENCHMARK, SCORED_SEARCH } from "./scored.js";
 
 /**
  * The steps that set a run up, each a command this install already has: fetch the benchmark into the profile's state
  * folder (never into the repository), write its corpus as one records file, start the engine as this profile, and
- * load the records. Each refuses rather than run on something other than what was scored.
+ * load the records. Each refuses rather than run on something other than what was scored. `profile` is the folder
+ * `./engine profile set` runs (its engine.config.ts and state); `data` is the scored
+ * profile's folder, whose `data/` every profile of this run reads.
  */
-export type Place = { engineRoot: string; state: string; profile: string };
+export type Place = { engineRoot: string; state: string; profile: string; data: string };
 
 export function sh(
   command: string,
@@ -36,7 +39,7 @@ export async function prepare(p: Place, keepHeldOut: boolean): Promise<void> {
     throw new Error(`${archive} is not the scored corpus (sha256 ${sha})`);
   const corpus = join(p.state, "corpus");
   if (!existsSync(corpus)) sh("unzip", ["-q", archive, "-d", corpus], { cwd: p.state });
-  const heldOut = keepHeldOut ? new Set<string>() : heldOutOf(p.profile);
+  const heldOut = keepHeldOut ? new Set<string>() : heldOutOf(p.data);
   const count = await writeRecords(corpus, join(p.state, "records.jsonl"), heldOut);
   console.log(
     `${count.documents} documents as ${count.items} items; ${count.heldOut} held out, as the scored index held them`,
@@ -47,16 +50,24 @@ export async function prepare(p: Place, keepHeldOut: boolean): Promise<void> {
 /** `./engine up` as this profile: its engine.config.ts, its own state and stack, and the one setting still in the environment. */
 export function up(p: Place): void {
   sh("./engine", ["profile", "set", basename(p.profile)], { cwd: p.engineRoot });
-  sh("./engine", ["up"], { cwd: p.engineRoot, env: { ...process.env, ...SCORED_SEARCH } });
+  sh("./engine", ["up"], { cwd: p.engineRoot, env: runEnv() });
 }
 
-/** `./engine ingest records --records`: each record's keyword entry is written as it loads, so no reindex follows. */
-export function load(p: Place): void {
+/** What every `./engine` step of the run carries: the scored search setting and the tuned embedder's conventions. */
+const runEnv = (): NodeJS.ProcessEnv => ({ ...process.env, ...SCORED_SEARCH, ...EMBEDDER_ENV });
+
+/**
+ * `./engine ingest records --records`: each record's keyword entry is written as it loads, so no reindex follows. It
+ * refuses to start unless the embedding service is the tuned embedder: an index made with another is another system.
+ */
+export async function load(p: Place): Promise<void> {
   const records = join(p.state, "records.jsonl");
   if (!existsSync(records))
     throw new Error(`${records} does not exist: run the prepare step first`);
+  await embedderAnswers(p, AbortSignal.timeout(30_000));
   sh("./engine", ["ingest", "records", "--records", records, "--collection", "benchmark"], {
     cwd: p.engineRoot,
+    env: runEnv(),
   });
 }
 

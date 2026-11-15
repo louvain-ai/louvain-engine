@@ -12,4 +12,7 @@ index cannot answer (down, or a filter it does not carry) has no keyword leg and
 This plugin owns none of that: it is the leg, over the reading every retriever is handed (`FencedReading`), and the
 engine imports nothing from it. A read that fails is reported in `degraded` and costs this leg only.
 
-It takes no settings. The engine runs it by default, beside the vector and figures retrievers, and fuses their legs.
+One setting, `bestPassage` (default `true`): a hit is shown by the passage the search's words matched best, the part
+that matched; `keywordRetriever({ bestPassage: false })` shows it by its document's first passage. It asks the reading
+for that (`FencedReading.passages` `bestPassage`), taken when it is created. The engine runs it by default, beside the
+vector and figures retrievers, and fuses their legs.

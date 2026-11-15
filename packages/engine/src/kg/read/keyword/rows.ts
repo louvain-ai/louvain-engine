@@ -1,4 +1,3 @@
-import { bm25BestPassageOn } from "../../../config/engine-switches.js";
 import { recordsInNarrowing } from "../bm25/records-in-narrowing.sql.js";
 import { bm25Search } from "../bm25.js";
 import { instantOf, queryTerms } from "../context.js";
@@ -89,6 +88,8 @@ export type IndexRead = {
   limit: number;
   asOf: PassageFilters["asOf"];
   narrowing?: Bm25Narrowing;
+  /** A hit shown by its best-matching passage (`bestOf`), not its first. */
+  best: boolean;
 };
 
 /** A hit of the index: its record, its score and the fragment where the search's words fell, if any. */
@@ -126,7 +127,7 @@ async function stillReadable(context: ReadContext, read: IndexRead, hits: Hit[])
 /** Each kept hit as its passage row under the fence, its best passage where the build has one, ties on stable keys. */
 async function passageRows(context: ReadContext, read: IndexRead, kept: Hit[]): Promise<Row[]> {
   const { fence, query, asOf, narrowing = {} } = read;
-  const best = bestOf(context, query, kept);
+  const best = read.best ? bestOf(context, query, kept) : null;
   const byEvent = await firstChunkRows(context.sql, hooksOf(context).reading, {
     orgId: fence.orgId,
     eventIds: kept.map((h) => h.id),
@@ -196,13 +197,12 @@ async function narrowedHere(
   return new Set(rows.map((r) => r.id));
 }
 
-/** The order that shows each kept document by its best passage (`keyword-index.ts` `best`), where the setting asks it. */
+/** The order that shows each kept document by its best passage (`keyword-index.ts` `best`). */
 function bestOf(
   context: ReadContext,
   query: string,
   kept: { id: string; snippet?: { text: string } | null }[],
 ) {
-  if (!bm25BestPassageOn()) return null;
   const snippets = new Map(
     kept.flatMap((h) => (h.snippet?.text ? [[h.id, h.snippet.text] as const] : [])),
   );

@@ -404,6 +404,8 @@ export type FencedReading = {
       readonly mode: RetrieverAsk["mode"] | "vector";
       readonly limit: number;
       readonly digits?: boolean;
+      /** A keyword hit shown by its best-matching passage; `false`, by its first. Absent, the best. */
+      readonly bestPassage?: boolean;
     },
   ): Promise<{ readonly hits: readonly Candidate[]; readonly degraded: readonly string[] }>;
 };
@@ -431,3 +433,29 @@ export type Retrieved = {
   (`search.retriever_foreign_dropped`); nothing a retriever says reaches the page but which records, in which order.
 - The legs of every retriever are fused by reciprocal rank. A leg that cannot answer reports it in `degraded`
   (`passages:<mode>`) and returns no rows.
+- A plugin takes what it needs in its own settings, given where it is named and handed to `create`. The keyword
+  retriever's `bestPassage` (`keywordRetriever({ bestPassage: false })`) shows a keyword hit by its first passage
+  instead of its best-matching one, and it asks the reading for that.
+
+### A surface
+
+A surface serves the engine to something outside it: `mcp` serves its tools at `/mcp`, `app` serves Search and Ask at
+`/app/`. It is a list of routes. A read route is handed a `Reading`, bound to the reader the server authenticated:
+
+```ts
+// packages/engine-core/src/plugins/surface.ts
+export type Reading = {
+  readonly reader: string;
+  readonly answerer: One<"answerer"> | null;
+  tools(): readonly ListedTool[];
+  tool(name: string, args: Record<string, unknown>): Promise<{ readonly [field: string]: unknown }>;
+  counts(): Promise<{ documents: number; collections: { name: string; documents: number }[] }>;
+};
+```
+
+- A surface serves the engine's tools and never decides them. `tools()` is the list as the engine's settings make it
+  (each tool's name, description and argument schema), and `tool` parses a call by those same schemas. So a setting
+  that changes a tool's arguments, such as `retrieval.searchQuestion`, changes what every surface serves, at once.
+- `mcp` answers `tools/list` with `tools()` and `tools/call` with `tool`; a surface of your own does the same, so a
+  client sees exactly the tools a call accepts.
+

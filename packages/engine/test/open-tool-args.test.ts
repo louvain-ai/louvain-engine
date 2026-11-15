@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { settingsOf } from "../src/config/settings.js";
+
+/** The default engine's settings, which its tools' arguments follow. */
+const DEFAULTS = settingsOf(undefined);
 
 /**
  * An argument the open tool does not declare is refused by name, never dropped (`tool-input.ts` `toolArgs`): dropped,
@@ -11,7 +15,7 @@ const { ToolInputError } = await import("../src/open/source-tools/tool-helpers.j
 
 test("a declared argument passes, and an undefined one is left out", () => {
   assert.deepEqual(
-    toolArgs("louvain_search_sources", { query: "budget", limit: 5, mode: undefined }),
+    toolArgs("louvain_search_sources", { query: "budget", limit: 5, mode: undefined }, DEFAULTS),
     {
       query: "budget",
       limit: 5,
@@ -21,7 +25,12 @@ test("a declared argument passes, and an undefined one is left out", () => {
 
 test("an undeclared argument is refused, naming it and what the tool takes", () => {
   assert.throws(
-    () => toolArgs("louvain_search_sources", { query: "budget", app: "chat", collection: "board" }),
+    () =>
+      toolArgs(
+        "louvain_search_sources",
+        { query: "budget", app: "chat", collection: "board" },
+        DEFAULTS,
+      ),
     (err: unknown) =>
       err instanceof ToolInputError &&
       err.name === "ToolInputError" &&
@@ -32,7 +41,7 @@ test("an undeclared argument is refused, naming it and what the tool takes", () 
 test("a declared argument that does not fit the served schema is refused, naming it and what it takes", () => {
   const refused = (name: string, args: Record<string, unknown>, said: RegExp) =>
     assert.throws(
-      () => toolArgs(name, args),
+      () => toolArgs(name, args, DEFAULTS),
       (err: unknown) => err instanceof ToolInputError && said.test(err.message),
     );
   refused("louvain_search_sources", { query: 42 }, /"query" must be text, not number 42/);
@@ -59,9 +68,12 @@ test("a declared argument that does not fit the served schema is refused, naming
     { query: "x", asOf: "yesterday" },
     /"asOf" must be a date or a datetime/,
   );
-  assert.deepEqual(toolArgs("louvain_search_sources", { query: "x", limit: 5, view: "list" }), {
-    query: "x",
-    limit: 5,
-    view: "list",
-  });
+  assert.deepEqual(
+    toolArgs("louvain_search_sources", { query: "x", limit: 5, view: "list" }, DEFAULTS),
+    {
+      query: "x",
+      limit: 5,
+      view: "list",
+    },
+  );
 });

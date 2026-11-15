@@ -4,7 +4,7 @@
  * refuses the start, naming it; the reply deadline is the configuration's (`settings.server.toolDeadlineMs`).
  */
 import { environment } from "./environment.js";
-import { settings } from "./settings.js";
+import type { Settings } from "./settings.js";
 
 /** Bytes, characters and milliseconds a file read may take (`file-readers/bounded.ts`), read once at load. */
 export const fileReadLimits = {
@@ -13,12 +13,12 @@ export const fileReadLimits = {
   deadlineMs: environment("LOUVAIN_FILE_READ_DEADLINE_MS"),
 };
 
-/** The tool server's port (a whole number from 1 to 65535) and how long a tool call's reply may take. */
-export function serverSettings(): { port: number; toolDeadlineMs: number } {
+/** The tool server's port (a whole number from 1 to 65535), and how long a tool call's reply may take (its engine's). */
+export function serverSettings(settings: Settings): { port: number; toolDeadlineMs: number } {
   const port = environment("LOUVAIN_ENGINE_PORT");
   if (!Number.isInteger(port) || port > 65_535)
     throw new Error(
       `LOUVAIN_ENGINE_PORT must be a port number from 1 to 65535, got "${process.env.LOUVAIN_ENGINE_PORT}"`,
     );
-  return { port, toolDeadlineMs: settings().server.toolDeadlineMs };
+  return { port, toolDeadlineMs: settings.server.toolDeadlineMs };
 }

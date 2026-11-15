@@ -13,7 +13,7 @@ import type { Engine } from "../engine.js";
 import { EngineTokenRefused, engineToken } from "./engine-token.js";
 import { type IngestDoor, IngestDoorRefused, ingestDoor } from "./ingest-http.js";
 import { loadedCounts } from "./loaded-counts.js";
-import { openTools, type ToolEngine } from "./mcp-tools.js";
+import { openTools, type ToolEngine, toolList } from "./mcp-tools.js";
 import { openOrgId } from "./org.js";
 import { serve } from "./serve.js";
 import { useCursorToken } from "./source-tools/cursor-key.js";
@@ -30,7 +30,7 @@ export type ServedEngine = ToolEngine & Pick<Engine, "writes">;
 /** The tool server for this engine, its token kept in `state` (the install's `.engine/`, or a profile's). */
 export async function startToolServer(engine: ServedEngine, state: string): Promise<Server> {
   const { plugins } = engine;
-  const { port, toolDeadlineMs } = serverSettings();
+  const { port, toolDeadlineMs } = serverSettings(engine.settings);
   const doors = openDoors(engine, state);
   // The cursor key derives from the token, handed over as a value, so a cursor this server issued outlives a restart.
   useCursorToken(doors.token);
@@ -40,6 +40,7 @@ export async function startToolServer(engine: ServedEngine, state: string): Prom
   const { token, door } = doors;
   const surfaces = plugins.list("surface");
   const server = await serve({ port, toolDeadlineMs, token, door, publicOrigin }, surfaces, {
+    tools: () => toolList(engine),
     tool: openTools(engine),
     counts: () => loadedCounts(engine.store.sql),
     answerer: plugins.one("answerer"),
