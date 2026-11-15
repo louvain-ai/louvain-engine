@@ -3,12 +3,17 @@
  * documents one a line, the page the tool server returns, ids shortened unless `--full-ids`.
  */
 
-import type { Engine } from "@louvain/engine/engine";
-import { openHost } from "@louvain/engine/kg/read/open-readable-set";
-import { openSearch } from "@louvain/engine/open/mcp-tools";
-import { SEARCH_USAGE, type SearchArgs, searchArgs } from "@louvain/engine/open/search-args";
-import { type SearchLineHit, searchLine } from "@louvain/engine/open/search-line";
-import { counted } from "@louvain/engine/open/terminal-text";
+import type { Engine } from "@louvain/engine";
+import {
+  counted,
+  openHost,
+  openSearch,
+  SEARCH_USAGE,
+  type SearchArgs,
+  type SearchLineHit,
+  searchArgs,
+  searchLine,
+} from "@louvain/engine";
 import { PluginRefused } from "@louvain/engine-core";
 import { openEngine } from "./engine.js";
 import { stopOn, usage } from "./stop.js";

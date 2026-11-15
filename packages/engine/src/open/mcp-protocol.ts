@@ -17,12 +17,15 @@ import { ToolInputError } from "./source-tools/tool-helpers.js";
  */
 
 /**
- * The engine's version, read from its own manifest (`src/open` and `dist/open` are both two levels under the package),
- * so the version a client displays is the one the package declares.
+ * The engine's version, read from its own manifest (`src/open` and `dist/open` are both two levels under the package)
+ * when a server first answers, never at import, so the version a client displays is the one the package declares.
  */
-const ENGINE_VERSION: string = JSON.parse(
-  readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
-).version;
+let version: string | undefined;
+const engineVersion = (): string => {
+  version ??= JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"))
+    .version as string;
+  return version;
+};
 
 /** What a tool returns: one JSON object, carried to the client as text and as structured content. */
 export type ToolResult = { readonly [field: string]: unknown };
@@ -49,7 +52,7 @@ type Served = Pick<Reading, "tools" | "tool">;
 /** One request's server: the engine's name and instructions, and the two tool methods over the engine's tools. */
 function protocolServer(read: Served): Server {
   const server = new Server(
-    { name: "louvain-engine", title: "Louvain engine", version: ENGINE_VERSION },
+    { name: "louvain-engine", title: "Louvain engine", version: engineVersion() },
     { capabilities: { tools: { listChanged: false } }, instructions: INSTRUCTIONS },
   );
   server.setRequestHandler("tools/list", () => ({ tools: [...read.tools()] }));

@@ -4,7 +4,7 @@
  * runs the defaults; a file that throws stops the start at its line. Nothing here starts a plugin or opens a pool.
  */
 import { join } from "node:path";
-import { departures, type Settings, settingsOf } from "@louvain/engine/config/settings";
+import { departures, type Settings, settingsOf } from "@louvain/engine";
 import type { Plugins } from "@louvain/engine-core";
 import { readConfig } from "./config-file.js";
 import { defaults } from "./defaults.js";

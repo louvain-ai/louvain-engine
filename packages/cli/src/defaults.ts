@@ -4,10 +4,14 @@
  * and the search's three legs (vector, keyword, figures, fused by `search/fused.ts`), which no configuration names yet.
  */
 
-import { folder, mcp, records } from "@louvain/engine";
-import { figuresRetriever } from "@louvain/engine/plugins/retriever-figures/index";
-import { keywordRetriever } from "@louvain/engine/plugins/retriever-keyword/index";
-import { vectorRetriever } from "@louvain/engine/plugins/retriever-vector/index";
+import {
+  figuresRetriever,
+  folder,
+  keywordRetriever,
+  mcp,
+  records,
+  vectorRetriever,
+} from "@louvain/engine";
 import { app } from "@louvain/engine-app";
 import { defineEngine } from "@louvain/engine-core";
 import { documents } from "@louvain/reader-documents";

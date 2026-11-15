@@ -3,10 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { openHost } from "@louvain/engine/kg/read/open-readable-set";
-import { fileReaderLane } from "@louvain/engine/open/file-readers/index";
-import { IngestDoorRefused, ingestDoor } from "@louvain/engine/open/ingest-http";
-import { poolOf } from "@louvain/engine/open/mcp-tools";
+import { fileReaderLane, IngestDoorRefused, ingestDoor, openHost, poolOf } from "@louvain/engine";
 import { openEngine } from "../src/engine.js";
 
 /**

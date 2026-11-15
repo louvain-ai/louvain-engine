@@ -351,15 +351,22 @@ export const quotedRetriever = definePlugin({
 });
 ```
 
-2. Add it to the defaults in **`packages/cli/src/defaults.ts`**:
+2. Export it from the engine's one door, **`packages/engine/src/index.ts`**, where every other plugin is: the package
+   exports nothing else, so a name it does not list cannot be imported.
 
 ```ts
-import { quotedRetriever } from "@louvain/engine/plugins/retriever-quoted/index";
+export { quotedRetriever } from "./plugins/retriever-quoted/index.js";
+```
+
+3. Add it to the defaults in **`packages/cli/src/defaults.ts`**:
+
+```ts
+import { quotedRetriever } from "@louvain/engine";
 // …
   retriever: [vectorRetriever(), keywordRetriever(), figuresRetriever(), quotedRetriever()],
 ```
 
-3. Run **`./engine up`**. It rebuilds and restarts the tool server.
+4. Run **`./engine up`**. It rebuilds and restarts the tool server.
 
 ```text
 $ ./engine up

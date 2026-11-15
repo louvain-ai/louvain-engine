@@ -2,8 +2,7 @@
  * `./engine reindex`: the keyword index rebuilt from what is loaded. Prints the count; a record the index still missed
  * after its passes is named, and the command exits 1, as it does when no keyword index is configured.
  */
-import { openHost } from "@louvain/engine/kg/read/open-readable-set";
-import { NoKeywordIndex, PASSES, reindexKeywords } from "@louvain/engine/open/reindex";
+import { NoKeywordIndex, openHost, PASSES, reindexKeywords } from "@louvain/engine";
 import { PluginRefused } from "@louvain/engine-core";
 import { openEngine } from "./engine.js";
 import { stopOn } from "./stop.js";

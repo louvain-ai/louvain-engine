@@ -1,8 +1,8 @@
 /**
  * The in-process model: bge-base-en-v1.5 through transformers.js (ONNX, CPU), loaded on first use and held by the
- * embedder that made it. A configured sidecar is the endpoint, so nothing here routes back through it.
+ * embedder that made it, its library imported then too (`pipelineFor`). A configured sidecar is the endpoint, so
+ * nothing here routes back through it.
  */
-import { env as hfEnv, pipeline } from "@huggingface/transformers";
 import { EMBEDDING_DIM, type EmbeddingSettings } from "./settings.js";
 
 /**
@@ -41,6 +41,49 @@ export type LocalSettings = {
   cacheDir: string | undefined;
 };
 
+/**
+ * The model's pipeline, the library imported here on the first local embed: it loads native code and probes the machine
+ * as it loads, which a process that only imports the engine, or embeds through a sidecar, never pays.
+ */
+async function pipelineFor({ model, threads, cacheDir }: LocalSettings) {
+  const { env: hfEnv, pipeline } = await import("@huggingface/transformers");
+  // The library's default cache sits inside its own package, ignores `HF_HOME` and `TRANSFORMERS_CACHE`, and is not
+  // writable by a container's runtime user, so the mounted cache is named explicitly.
+  if (cacheDir) hfEnv.cacheDir = cacheDir;
+  return pipeline("feature-extraction", model.model, {
+    dtype: "fp32",
+    // Bound native threads to the deployment's CPU allocation when configured.
+    ...(threads !== undefined
+      ? { session_options: { intraOpNumThreads: threads, interOpNumThreads: 1 } }
+      : {}),
+  });
+}
+
+/** A loaded pipeline whose tokenizer is bound to `MAX_TOKENS`, or a throw where the library will not be bound. */
+function boundTokenizer<T>(loaded: T): T {
+  // Both paths cut at MAX_TOKENS: the tokenizer's own maximum differs by model, so a long text would embed two ways.
+  // The pipeline takes no `max_length`, so the tokenizer config is set and read back; a library that ignores it fails here.
+  const tokenizer = (
+    loaded as unknown as {
+      tokenizer?: {
+        model_max_length: number;
+        _tokenizerConfig?: { model_max_length?: number };
+      };
+    }
+  ).tokenizer;
+  const config = tokenizer?._tokenizerConfig;
+  if (!tokenizer || !config)
+    throw new Error("embedding: the tokenizer exposes no config to bound its length");
+  config.model_max_length = Math.min(
+    config.model_max_length ?? Number.POSITIVE_INFINITY,
+    MAX_TOKENS,
+  );
+  if (tokenizer.model_max_length > MAX_TOKENS) {
+    throw new Error(`embedding: could not bound the tokenizer to ${MAX_TOKENS} tokens`);
+  }
+  return loaded;
+}
+
 /** The in-process model, loaded on its first embed and held for the embedder's life. */
 export function createLocal(
   settings: () => LocalSettings,
@@ -48,39 +91,7 @@ export function createLocal(
   let extractor: Promise<Extractor> | undefined;
 
   function load(): Promise<Extractor> {
-    const { model, threads, cacheDir } = settings();
-    // The library's default cache sits inside its own package, ignores `HF_HOME` and `TRANSFORMERS_CACHE`, and is not
-    // writable by a container's runtime user, so the mounted cache is named explicitly.
-    if (cacheDir) hfEnv.cacheDir = cacheDir;
-    extractor ??= pipeline("feature-extraction", model.model, {
-      dtype: "fp32",
-      // Bound native threads to the deployment's CPU allocation when configured.
-      ...(threads !== undefined
-        ? { session_options: { intraOpNumThreads: threads, interOpNumThreads: 1 } }
-        : {}),
-    }).then((loaded) => {
-      // Both paths cut at MAX_TOKENS: the tokenizer's own maximum differs by model, so a long text would embed two ways.
-      // The pipeline takes no `max_length`, so the tokenizer config is set and read back; a library that ignores it fails here.
-      const tokenizer = (
-        loaded as unknown as {
-          tokenizer?: {
-            model_max_length: number;
-            _tokenizerConfig?: { model_max_length?: number };
-          };
-        }
-      ).tokenizer;
-      const config = tokenizer?._tokenizerConfig;
-      if (!tokenizer || !config)
-        throw new Error("embedding: the tokenizer exposes no config to bound its length");
-      config.model_max_length = Math.min(
-        config.model_max_length ?? Number.POSITIVE_INFINITY,
-        MAX_TOKENS,
-      );
-      if (tokenizer.model_max_length > MAX_TOKENS) {
-        throw new Error(`embedding: could not bound the tokenizer to ${MAX_TOKENS} tokens`);
-      }
-      return loaded;
-    }) as unknown as Promise<Extractor>;
+    extractor ??= pipelineFor(settings()).then(boundTokenizer) as unknown as Promise<Extractor>;
     return extractor;
   }
 

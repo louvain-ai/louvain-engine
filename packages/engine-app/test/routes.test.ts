@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, it } from "node:test";
-import { serve as listen } from "@louvain/engine/open/serve";
+import { serve as listen } from "@louvain/engine";
 import { createPluginRegistry, defineEngine, type Plugin } from "@louvain/engine-core";
 import { agent, anthropic, scripted } from "../src/ask/plugins.js";
 import { app } from "../src/index.js";

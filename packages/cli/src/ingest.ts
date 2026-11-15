@@ -7,18 +7,20 @@
 import { realpathSync } from "node:fs";
 import { isAbsolute, relative } from "node:path";
 import { parseArgs } from "node:util";
-import type { Engine } from "@louvain/engine/engine";
-import { openHost } from "@louvain/engine/kg/read/open-readable-set";
-import { fileReaderLane } from "@louvain/engine/open/file-readers/index";
-import { IngestRefused, OriginRefused } from "@louvain/engine/open/ingest/ownership";
-import { ingestFrom } from "@louvain/engine/open/ingest/run";
-import { itemLine, summaryLines } from "@louvain/engine/open/ingest/terminal";
+import type { Engine } from "@louvain/engine";
 import {
+  fileReaderLane,
+  IngestRefused,
   IngestSourceRefused,
+  ingestFrom,
+  itemLine,
+  OriginRefused,
+  openHost,
   openSource,
+  printable,
   sourceNamed,
-} from "@louvain/engine/open/ingest-sources/index";
-import { printable } from "@louvain/engine/open/terminal-text";
+  summaryLines,
+} from "@louvain/engine";
 import { PluginRefused, type PluginRegistry } from "@louvain/engine-core";
 import { z } from "zod";
 import { openEngine } from "./engine.js";

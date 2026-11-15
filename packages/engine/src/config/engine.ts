@@ -70,9 +70,12 @@ export const engineConfig = () => ({
 /** The engine's settings, read once at import: the object an application extends with its own. */
 export const config = engineConfig();
 
+/** The database an engine's own entry opens its store on (`DATABASE_URL`, read by the one environment reader). */
+export const databaseUrl = (): string => environment("DATABASE_URL");
+
 /**
- * The store an engine's own entry opens on `config.databaseUrl` (`store.ts` `openStore`): the database settings above
- * and every read's statement timeout, read once, at import.
+ * The store an engine's own entry opens on `databaseUrl()` (`store.ts` `openStore`): the database settings above and
+ * every read's statement timeout, read once, at import.
  */
 export const storeSettings: Parameters<typeof openStore>[1] = {
   prepare: config.dbPrepare,

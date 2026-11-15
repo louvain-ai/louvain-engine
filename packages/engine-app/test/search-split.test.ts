@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
-import type { ToolResult } from "@louvain/engine/open/mcp-protocol";
+import type { ToolResult } from "@louvain/engine";
 import { search } from "../src/library.js";
 
 /**

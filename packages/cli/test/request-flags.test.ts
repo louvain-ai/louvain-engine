@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { folder } from "@louvain/engine/plugins/source-folder/index";
-import { records } from "@louvain/engine/plugins/source-records/index";
+import { folder, records } from "@louvain/engine";
 import { z } from "zod";
 import { fieldsOf, helpOf, optionsOf, requestOf } from "../src/request-flags.js";
 

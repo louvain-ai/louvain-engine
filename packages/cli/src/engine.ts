@@ -5,10 +5,15 @@
  * closes the engine when it is done. The reads and writes that embed ask the engine's own (`embedderOf`), never a
  * process binding.
  */
-import { config, storeSettings } from "@louvain/engine/config/engine";
-import { createEngine, type Engine, type EngineParts } from "@louvain/engine/engine";
-import { embedderFor } from "@louvain/engine/open/embedder";
-import { openStore } from "@louvain/engine/store";
+import {
+  createEngine,
+  databaseUrl,
+  type Engine,
+  type EngineParts,
+  embedderFor,
+  openStore,
+  storeSettings,
+} from "@louvain/engine";
 import { createPluginRegistry } from "@louvain/engine-core";
 import { configuration } from "./configuration.js";
 import type { Profile } from "./profile.js";
@@ -24,7 +29,7 @@ export async function openEngine(
   const { plugins, settings, profile } = await configuration(root);
   const registry = await createPluginRegistry(plugins);
   // Opened once the plugins have started, so a start they refuse leaves no pool behind; nothing connects until a read.
-  const store = openStore(config.databaseUrl, storeSettings);
+  const store = openStore(databaseUrl(), storeSettings);
   const host = hostOf(store.sql);
   const engine = createEngine({
     store,

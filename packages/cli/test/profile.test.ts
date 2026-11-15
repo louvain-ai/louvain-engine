@@ -3,8 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { openHost } from "@louvain/engine/kg/read/open-readable-set";
-import { fileReaderLane } from "@louvain/engine/open/file-readers/index";
+import { fileReaderLane, openHost } from "@louvain/engine";
 import { openEngine } from "../src/engine.js";
 import { over } from "../src/profile.js";
 
