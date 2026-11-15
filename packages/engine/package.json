@@ -1,0 +1,40 @@
+{
+  "name": "@louvain/engine",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "node ../../scripts/clean-dist.mjs && tsc -p tsconfig.json && node scripts/copy-runtime-assets.mjs && node scripts/source-hash.mjs --write",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "node scripts/dev-watch.mjs",
+    "test": "node --import tsx --test --test-concurrency=4 test/*.test.ts",
+    "test:db": "node --import tsx --test test/db/*.test.ts",
+    "test:table": "node --import tsx --test test/db/search.table*.test.ts",
+    "test:db:record": "GOLDEN=write node --import tsx --test test/db/*.test.ts && biome format --write test/db"
+  },
+  "dependencies": {
+    "@louvain/doctext": "workspace:*",
+    "@louvain/embeddings": "workspace:*",
+    "@louvain/engine-core": "workspace:*",
+    "@louvain/netguard": "workspace:*",
+    "@modelcontextprotocol/server": "2.4.0",
+    "lru-cache": "^11.5.3",
+    "postgres": "^3.4.9",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@louvain/reader-documents": "workspace:*",
+    "@louvain/reader-text": "workspace:*"
+  }
+}

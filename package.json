@@ -1,0 +1,45 @@
+{
+  "name": "louvain-engine",
+  "version": "0.1.0",
+  "description": "Open-source retrieval for agents and RAG. Hybrid search over your company’s documents, with a permission fence in every query, running from one command.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/louvain-ai/louvain-engine.git"
+  },
+  "homepage": "https://louvain.ai",
+  "bugs": {
+    "url": "https://github.com/louvain-ai/louvain-engine/issues"
+  },
+  "author": "Louvain AI Ltd",
+  "type": "module",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10.23.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present run build",
+    "typecheck": "pnpm -r --filter \"./packages/**\" run build && pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "lint": "biome check .",
+    "db:load": "psql -v ON_ERROR_STOP=1 -1 -f db/baseline.sql \"$DATABASE_URL\""
+  },
+  "dependencies": {
+    "@louvain/engine": "workspace:*",
+    "@louvain/engine-app": "workspace:*",
+    "@louvain/engine-core": "workspace:*",
+    "@louvain/reader-documents": "workspace:*",
+    "@louvain/reader-text": "workspace:*",
+    "@louvain/reranker-cohere": "workspace:*",
+    "@louvain/reranker-sidecar": "workspace:*",
+    "@louvain/source-http": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "22.20.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  },
+  "packageManager": "pnpm@10.23.0"
+}

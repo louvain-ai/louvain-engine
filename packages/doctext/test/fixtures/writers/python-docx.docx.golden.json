@@ -1,0 +1,5 @@
+{
+  "kind": "docx",
+  "readerVersion": 3,
+  "text": "Reading pipeline\nQuarterly review of the reading pipeline.\nEvery sheet, paragraph and slide must reach the text.\nOwner: the platform team.\nid\tissue\tpriority\topened\tblocking\n1\tParser drops inline strings\tP0\t2026-09-01\tTrue\n2\tEmpty cell shifts columns\t\t2026-09-02\tFalse\n7\tTotals row counted twice\tP2\t2026-09-07\tFalse"
+}

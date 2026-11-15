@@ -1,0 +1,1279 @@
+#!/usr/bin/env bash
+# The Louvain Engine, from one command. `./engine help` lists the commands.
+#
+# The wrapper installs and builds this checkout, keeps the install's secrets, runs the services with Docker Compose,
+# loads and upgrades the schema with psql inside the Postgres container, and starts the engine's own entry files.
+# Read top to bottom: what it names, the commands (one function each), then the helpers they share, by subject.
+# The dispatch is the last lines of the file.
+# shellcheck disable=SC2016  # single quotes on purpose: the container's own shell expands its Postgres settings
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+
+# ---- The commands, and the function that runs each. ----
+#
+#   up        cmd_up        install and build on the first run, start the services, the reranker and the tool server
+#   ingest    cmd_ingest    load a folder, a JSON Lines file of records, or a configured source (the loader entry)
+#   search    cmd_search    one search, printed (the search entry)
+#   reindex   cmd_reindex   upgrade the schema in place, then rebuild the keyword index (the reindex entry)
+#   status    cmd_status    what runs, on which ports, how many documents are loaded
+#   app       cmd_app       open the app in a browser, or print its address
+#   logs      cmd_logs      recent output of the tool server or one service
+#   down      cmd_down      stop everything; --volumes also deletes the data
+#   plugin    cmd_plugin    a new plugin of one kind, written from that kind's template
+#   profile   cmd_profile   the profile every command runs: printed, or set
+#   help      cmd_help      the commands, as a person reads them
+
+# ---- The one place the wrapper names what it runs, and every file it keeps. ----
+STATE_ROOT=".engine"                         # this install's own directory, mode 0700
+PROFILE_FILE="$STATE_ROOT/profile"           # the profile every command runs, once one is set; none runs the root's
+PROFILES="profiles"                          # each profile a folder holding its own engine.config.ts
+PROFILE="$(cat "$PROFILE_FILE" 2>/dev/null || true)"   # the remembered name; checked by startup before anything uses it
+STATE="$STATE_ROOT${PROFILE:+/profiles/$PROFILE}"      # the running profile's own secrets, pid and logs; mode 0700
+CONFIG="${PROFILE:+$PROFILES/$PROFILE/}engine.config.ts"  # what the commands run
+ENV_FILE=".env"                              # the person's settings, read as data
+SETTINGS=".env.example"                      # every setting .env may hold is named here, set or commented out
+COMPOSE_FILE="docker-compose.yml"            # the engine's stack: Postgres with pgvector, embeddings, keyword index
+DB_SERVICE="postgres"                        # its Postgres service
+DB_ROLE="engine"                             # the role and the database the stack creates
+DB_NAME="engine"
+SCHEMA="db/baseline.sql"                     # the schema, loaded once into an empty database, whose hash it then records
+ENGINE_PACKAGE="packages/engine"             # its build output (dist/) is what the entries below load from
+BUILD_STAMP="$ENGINE_PACKAGE/dist/.source-hash"        # written last by a build; the sources' hash it was built from
+SERVER_ENTRY="packages/cli/src/serve.ts"     # the tool server: /mcp on LOUVAIN_ENGINE_PORT, bearer from the token file
+LOADER_ENTRY="packages/cli/src/ingest.ts"    # ingest: <source> and its request's fields as flags
+SEARCH_ENTRY="packages/cli/src/search.ts"    # one louvain_search_sources call, printed
+REINDEX_ENTRY="packages/cli/src/reindex.ts"  # the keyword index rebuilt from the records loaded
+UPGRADES="db/upgrades"                                 # what reindex applies to a database the release before made
+RERANK_ENTRY="packages/cli/src/reranker.ts"  # which reranker engine.config.ts runs: <plugin> <model>, or none
+RERANK_SERVICE="rerank"                      # the local reranker's service (Compose profile "rerank"), started when configured
+TOKEN_FILE="$STATE/token"                    # written by the server at first start; printed as a path, never read out
+DB_PASSWORD_FILE="$STATE/db-password"        # this install's Postgres password, made by the first `up`, never printed
+SIDECAR_TOKEN_FILE="$STATE/sidecar-token"    # this install's sidecar token, made by the first `up`, never printed
+PASSWORD_APPLIED_FILE="$STATE/db-password.applied"     # touched once the database holds the password above
+PID_FILE="$STATE/server.pid"                 # the tool server this wrapper started
+SERVER_LOG="$STATE/server.log"
+COMPOSE_LOG="$STATE/compose.err"             # what Compose said on its last start
+RERANK_STATE="$STATE/rerank"                 # the reranker this install runs (its model, or why it is off); written on change
+RERANK_LOG="$STATE/rerank.err"               # what building or starting the local reranker said, last time
+PLUGINS="packages/plugins"                   # the plugin packages; `plugin new` writes a new one here
+TEMPLATES="$PLUGINS/templates"               # one folder per kind of plugin, each file a template (.tmpl)
+SCRATCH_DB="engine_baseline_check"           # the one database made besides the install's own, dropped by this exact name
+NODE_MIN="22"                                # what package.json's `engines` asks for
+PNPM_MIN="10.23"
+# ---------------------------------------------------------
+
+# A line of output, and a failure that says what it is and exits.
+say() { printf '%s\n' "$*"; }
+die() { printf 'engine: %s\n' "$*" >&2; exit 1; }
+
+# ==== The commands. ====
+
+# Install, build, start the services, load the schema and start the tool server; each step does only what is missing.
+cmd_up() {
+  [ "$#" -eq 0 ] || die "usage: ./engine up"
+  [ -f "$COMPOSE_FILE" ] || die "this checkout is incomplete: $COMPOSE_FILE is missing"
+  prerequisites
+  alone
+  prepare
+  settings_ok
+  use_secrets
+  own_database_url
+  rerank_wanted
+  check_ports
+  start_services
+  sync_db_password
+  start_reranker
+  load_schema
+  refresh_keyword_index
+  start_server
+  announce_ready
+}
+
+# The entry checks its own arguments and says its usage: a source engine.config.ts names, its fields as flags.
+cmd_ingest() {
+  [ "$#" -ge 1 ] || die "usage: ./engine ingest <source> [--<field> <value> …] [--keep] [--yes] [--take-over] [--files <folder>]; ./engine ingest <source> --help lists its fields"
+  need "$LOADER_ENTRY"
+  ready_for_entry
+  run_ts "$LOADER_ENTRY" "$@"
+}
+
+# One search, the way the tool prints it.
+cmd_search() {
+  [ "$#" -ge 1 ] || die "usage: ./engine search [--full-ids] [--question \"<question>\"] \"<words>\""
+  need "$SEARCH_ENTRY"
+  ready_for_entry
+  run_ts "$SEARCH_ENTRY" "$@"
+}
+
+# THE UPGRADE AND THE KEYWORD INDEX: a database the release before made is upgraded in place, then the keyword index is
+# rebuilt, so both hold what this release gives. The documents and their passages stay. Run again, it changes nothing
+# in the schema and rebuilds the index again.
+cmd_reindex() {
+  [ "$#" -eq 0 ] || die "usage: ./engine reindex"
+  need "$REINDEX_ENTRY"
+  ready_for_database
+  schema_loaded || die "nothing is loaded yet. Run ./engine up first."
+  upgrade_in_place
+  rebuild_keyword_index
+  run_ts "$REINDEX_ENTRY"
+}
+
+# What is running, on which ports, how many documents are loaded.
+cmd_status() {
+  [ "$#" -eq 0 ] || die "usage: ./engine status"
+  settings_ok
+  row "Profile:" "${PROFILE:-default} ($CONFIG)"
+  status_server
+  status_services
+  if [ -f "$TOKEN_FILE" ]; then row "Token file:" "$TOKEN_FILE"; else row "Token file:" "$TOKEN_FILE (made when the tool server first starts)"; fi
+}
+
+# The app in this machine's browser: `open` on a Mac, `xdg-open` where a desktop session runs; elsewhere (a server, an
+# ssh session) the address is printed for a browser that can reach it. Signing in stays the page's: no token in a URL.
+cmd_app() {
+  [ "$#" -eq 0 ] || die "usage: ./engine app"
+  settings_ok
+  find_server
+  server_up || die "the tool server is not running. ./engine up starts it."
+  app_on || die "the app is off: $CONFIG's surfaces leave out app()."
+  say "App: $APP_URL (sign in once with the token in $TOKEN_FILE)"
+  open_in_browser "$APP_URL"
+}
+
+# Recent output: one service, or all; --follow keeps going and takes one service.
+cmd_logs() {
+  local service="" follow="" arg usage="usage: ./engine logs [server|postgres|embeddings|bm25|rerank] [--follow]"
+  for arg in "$@"; do
+    case "$arg" in
+      -f | --follow) follow=1 ;;
+      server | postgres | embeddings | bm25 | rerank) [ -z "$service" ] || die "$usage"; service="$arg" ;;
+      *) die "$usage" ;;
+    esac
+  done
+  [ -z "$follow" ] || [ -n "$service" ] || die "follow one service at a time. $usage"
+  if [ "$service" = server ]; then logs_server "$follow"; else logs_services "$service" "$follow"; fi
+}
+
+# Stop the tool server, then the services; --volumes also deletes the data, after asking.
+cmd_down() {
+  local volumes="" yes="" arg
+  for arg in "$@"; do
+    case "$arg" in
+      --volumes) volumes=1 ;;
+      --yes) yes=1 ;;
+      *) die "usage: ./engine down [--volumes] [--yes]" ;;
+    esac
+  done
+  [ -z "$yes" ] || [ -n "$volumes" ] || die "usage: ./engine down [--volumes] [--yes] (--yes confirms --volumes)"
+  need_docker
+  use_secrets
+  if [ -n "$volumes" ] && [ -z "$yes" ]; then confirm_deletion; fi
+  stop_server
+  if [ -n "$volumes" ]; then remove_everything; else stop_services; fi
+}
+
+# A new plugin package from its kind's template, its name put in; it prints the lines that configure it and never
+# edits engine.config.ts, which is the person's own code.
+cmd_plugin() {
+  [ "$#" -eq 3 ] && [ "$1" = new ] || die "usage: ./engine plugin new <kind> <name> (kinds: $(plugin_kinds))"
+  local kind="$2" name="$3" dir="$PLUGINS/$2-$3" factory
+  [ -d "$TEMPLATES/$kind" ] || die "there is no plugin kind '$kind': the kinds are $(plugin_kinds)."
+  plugin_name "$name"
+  factory="$(camel_case "$name")"
+  [ ! -e "$dir" ] || die "$dir already exists; nothing was written."
+  write_template "$TEMPLATES/$kind" "$dir" "$name" "$factory"
+  say "Wrote $dir/. Link it at the root, so engine.config.ts imports it by name: pnpm add -w @louvain/$kind-$name@workspace:*"
+  say "Its test passes as written: pnpm --filter @louvain/$kind-$name test. To run it, add to engine.config.ts:"
+  say "  import { $factory } from \"@louvain/$kind-$name\";"
+  say "  $(configured_as "$kind" "$factory")"
+}
+
+# The profile every command runs: with no argument, the one in use; `set <name>` remembers another, and `set default`
+# returns to the root's engine.config.ts. Each keeps its own state and stack, so the one in use is stopped first.
+cmd_profile() {
+  local name="${2:-}" names
+  names="default $(profile_names | tr '\n' ' ')"
+  if [ "$#" -eq 0 ]; then say "${PROFILE:-default} ($CONFIG)"; return 0; fi
+  [ "$#" -eq 2 ] && [ "$1" = set ] || die "usage: ./engine profile [set <name>] (profiles: ${names% })"
+  [ "$name" != "${PROFILE:-default}" ] || { say "Profile: $name, already."; return 0; }
+  [ "$name" = default ] || [ -f "$PROFILES/$name/engine.config.ts" ] || die "there is no profile '$name': the profiles are ${names% } (a folder under $PROFILES/ with its own engine.config.ts)."
+  load_env
+  root_project
+  ! stack_running "${PROFILE:-default}" || die "the ${PROFILE:-default} profile is running: stop it with ./engine down, then set the profile."
+  STATE="$STATE_ROOT" state_dir
+  if [ "$name" = default ]; then rm -f "$PROFILE_FILE"; else printf '%s\n' "$name" > "$PROFILE_FILE"; fi
+  say "Profile: $name. Every command runs it; ./engine up starts its own stack."
+}
+
+# The commands, as the help page lists them.
+cmd_help() {
+  cat <<'HELP'
+Louvain Engine: open-source retrieval for agents and RAG.
+
+Usage: ./engine <command>
+
+  up                       Install and build on the first run, start the services, the local reranker when
+                           engine.config.ts names it, and the tool server.
+                           ./engine up
+  ingest <source> --…      Run a source engine.config.ts names, its request's fields as flags (ingest <source> --help
+                           lists them). folder keeps a collection in step with a folder: new and changed files are
+                           loaded, gone ones removed (--keep removes nothing; --collection names it, else the folder's
+                           name; --yes removes past the limit; --take-over feeds it from another folder). records loads
+                           a JSON Lines file, one item a line (- reads standard input; --files <folder> is where the
+                           files its items name may be read).
+                           ./engine ingest folder --folder examples/sample-corpus
+                           ./engine ingest records --records tickets.jsonl
+  search "<words>"         Print the matching documents, best first (--full-ids prints whole ids;
+                           --question "<question>" also searches the question the words were chosen for).
+                           ./engine search "When does the lease renew?"
+  reindex                  Upgrade a database the release before made, in place, keeping the documents, and rebuild
+                           the keyword index from them. Run once after an upgrade that asks for it.
+                           ./engine reindex
+  status                   Show what is running, on which ports, how many documents are loaded.
+                           ./engine status
+  app                      Open the app (Search and Ask) in this machine's browser, or print its address.
+                           ./engine app
+  logs [service]           Show recent output: server, postgres, embeddings, bm25 or rerank (--follow keeps going).
+                           ./engine logs server
+  down                     Stop the tool server and the services; --volumes also deletes the data.
+                           ./engine down --volumes
+  plugin new <kind> <name> Write a new plugin package from its kind's template (reader, reranker or source), with a
+                           test that passes and a README that walks it.
+                           ./engine plugin new reader csv
+  profile [set <name>]     Print the profile every command runs, or set it: profiles/<name>/engine.config.ts with its
+                           own state and stack (default is the root's engine.config.ts). Stop the one in use first.
+                           ./engine profile set default
+  help                     Print this.
+
+Ports and settings are in .env (written from .env.example on the first run).
+HELP
+}
+
+# ==== What the commands share. ====
+
+# ---- Before a command: the checks, in the order they run. ----
+
+# The settings are read first and the ports fixed from them, so every command sees the same ones.
+startup() {
+  load_env
+  root_project
+  in_profile
+  ports
+}
+
+# The root's Compose project: the setting, or the name Compose gives the directory (lower case, its letters, digits,
+# dashes and underscores). Each profile's stack is that name and its own, so its database and index are its own.
+root_project() {
+  [ -z "${COMPOSE_PROJECT_NAME:-}" ] || valid_name COMPOSE_PROJECT_NAME "$COMPOSE_PROJECT_NAME"
+  ROOT_PROJECT="${COMPOSE_PROJECT_NAME:-$(basename "$ROOT" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9_-' | sed 's/^[^a-z0-9]*//')}"
+}
+
+# A remembered profile runs only as a name of its own with its own folder; its stack is its own Compose project, and
+# every command says, on the error stream, which profile it acts on.
+in_profile() {
+  [ -n "$PROFILE" ] || return 0
+  valid_name "the profile in $PROFILE_FILE" "$PROFILE"
+  [ -f "$CONFIG" ] || die "the profile '$PROFILE' has no $CONFIG: ./engine profile set default returns to the root's engine.config.ts."
+  export COMPOSE_PROJECT_NAME="$ROOT_PROJECT-$PROFILE"
+  printf 'engine: profile %s\n' "$PROFILE" >&2
+}
+
+# The profiles there are: each folder under profiles/ with its own engine.config.ts, by name.
+profile_names() {
+  local config
+  for config in "$PROFILES"/*/engine.config.ts; do
+    [ -f "$config" ] || continue
+    config="${config%/engine.config.ts}"
+    printf '%s\n' "${config##*/}"
+  done
+}
+
+# Where a profile keeps its state, and its stack's Compose project; `default` is the root's.
+state_of() { if [ "$1" = default ]; then printf '%s' "$STATE_ROOT"; else printf '%s' "$STATE_ROOT/profiles/$1"; fi; }
+stack_of() { if [ "$1" = default ]; then printf '%s' "$ROOT_PROJECT"; else printf '%s' "$ROOT_PROJECT-$1"; fi; }
+
+# Whether a profile's stack runs: its tool server, by its own pid file, or any container of its Compose project.
+stack_running() {
+  local pid
+  pid="$(cat "$(state_of "$1")/${PID_FILE##*/}" 2>/dev/null || true)"
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && is_server_process "$pid"; then return 0; fi
+  command -v docker >/dev/null 2>&1 || return 1
+  [ -n "$(docker ps -q --filter "label=com.docker.compose.project=$(stack_of "$1")" 2>/dev/null)" ]
+}
+
+# One profile's stack at a time: they share this machine's ports.
+alone() {
+  local other
+  for other in default $(profile_names); do
+    [ "$other" != "${PROFILE:-default}" ] || continue
+    stack_running "$other" || continue
+    die "the $other profile's stack is running, and profiles share this machine's ports: stop it with ./engine profile set $other, then ./engine down."
+  done
+}
+
+# What every command that opens the database checks first, in this order.
+ready_for_database() {
+  need_ready
+  settings_ok
+  use_secrets
+  own_database_url
+  db_password_applied
+}
+
+# The commands that read or write documents also ask the schema the same question `up` asks.
+ready_for_entry() {
+  ready_for_database
+  need_schema
+}
+
+# A file this wrapper runs that the checkout lacks is a broken checkout.
+need() {
+  [ -f "$1" ] || die "this checkout is incomplete: $1 is missing"
+}
+
+# Up to <tries> more checks, <pause> seconds apart, until the command given succeeds; false if it never does.
+wait_until() {
+  local tries="$1" pause="$2" n=0
+  shift 2
+  until "$@"; do
+    [ "$n" -lt "$tries" ] || return 1
+    sleep "$pause"
+    n=$((n + 1))
+  done
+}
+
+# ---- Settings: .env is read as data, and only the engine's own settings are taken from it. ----
+
+# The names .env may set: those .env.example lists, set or commented out. Any other name with a value is taken
+# nowhere, because a variable such as NODE_OPTIONS or PATH changes what code a program loads, and no list of such
+# variables is ever complete.
+setting_names() {
+  [ -f "$SETTINGS" ] || return 0
+  LC_ALL=C sed -nE 's/^#? ?([A-Z][A-Z0-9_]*)=.*/\1/p' "$SETTINGS" | tr '\n' ' '
+}
+
+# A value as written, less one pair of matching outer quotes: nothing inside it is expanded or run.
+unquoted() {
+  case "$1" in
+    \"*\" | \'*\') printf '%s' "${1:1:${#1}-2}" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+UPPER="ABCDEFGHIJKLMNOPQRSTUVWXYZ"  # spelled out: a bracket range such as A-Z follows the locale's collation
+LOWER="abcdefghijklmnopqrstuvwxyz"
+UNREADABLE=""  # the numbers of .env's lines that are not NAME=value
+UNKNOWN=""     # the names .env gives a value that .env.example does not list
+
+# The name of a settings line, or nothing when the line is not NAME=value with a name of capitals, digits and underscores.
+setting_key() {
+  local line="$1" key
+  key="${line%%=*}"
+  case "$line" in *=*) ;; *) key="" ;; esac
+  case "$key" in ["$UPPER"]*) ;; *) key="" ;; esac
+  case "$key" in *[!"$UPPER"0123456789_]*) key="" ;; esac
+  printf '%s' "$key"
+}
+
+# One line of .env (an `export ` prefix and a CRLF ending allowed). The shell's own value wins, and a name the engine
+# does not know, left empty (as an older .env.example wrote its lines), is skipped without a word.
+setting_line() {
+  local line="$1" number="$2" allowed="$3" key value
+  line="${line%$'\r'}"
+  while [ "${line# }" != "$line" ]; do line="${line# }"; done
+  case "$line" in '' | \#*) return 0 ;; esac
+  line="${line#export }"
+  key="$(setting_key "$line")"
+  [ -n "$key" ] || { UNREADABLE="$UNREADABLE $number"; return 0; }
+  value="$(unquoted "${line#*=}")"
+  [ -n "$value" ] || return 0
+  case "$allowed" in *" $key "*) ;; *) UNKNOWN="$UNKNOWN $key"; return 0 ;; esac
+  [ -z "$(printenv "$key" || true)" ] || return 0
+  export "$key=$value"
+}
+
+# Every line of .env, through the one parser. A line it cannot take is noted, never exported.
+load_env() {
+  [ -f "$ENV_FILE" ] || return 0
+  local allowed number=0 line
+  allowed=" $(setting_names) "
+  while IFS= read -r line || [ -n "$line" ]; do
+    number=$((number + 1))
+    setting_line "$line" "$number" "$allowed"
+  done < "$ENV_FILE"
+}
+
+# Every command that acts on the settings refuses a .env it could not take whole, naming every such line at once;
+# `help` and `down` never ask, so the help can always be read and the stack always stopped.
+settings_ok() {
+  [ -f "$SETTINGS" ] || die "this checkout is incomplete: $SETTINGS is missing"
+  local problems=""
+  [ -z "$UNKNOWN" ] || problems="it sets$UNKNOWN, which $SETTINGS does not list"
+  [ -z "$UNREADABLE" ] || problems="${problems:+$problems; }its line(s)$UNREADABLE are not NAME=value"
+  [ -z "$problems" ] ||
+    die "$ENV_FILE holds what the engine does not take ($problems): remove those lines or empty their values, then run this again."
+}
+
+# A name that becomes a Compose project name (so the names of its containers and volumes): lowercase letters, digits
+# and hyphens, at most 40, not starting with a hyphen.
+valid_name() {
+  local setting="$1" value="$2"
+  case "$value" in
+    '' | -* | *[!"$LOWER"0123456789-]*) die "$setting must be lowercase letters, digits and hyphens, not starting with a hyphen." ;;
+  esac
+  [ "${#value}" -le 40 ] || die "$setting must be at most 40 characters."
+}
+
+# ---- Ports: one setting each, and every URL built from them. ----
+
+# A port setting holds a port number, or the failure says which setting is wrong.
+port_setting() {
+  local name="$1" value="$2"
+  case "$value" in '' | *[!0-9]*) die "$name must be a port number from 1 to 65535, not '$value'" ;; esac
+  [ "$value" -ge 1 ] && [ "$value" -le 65535 ] || die "$name must be a port number from 1 to 65535, not '$value'"
+}
+
+# The services Compose runs, one row each: its name, the label `status` prints, its port and the setting that moves it.
+# Every command that names a service or its port reads this table; the reranker's runs only when engine.config.ts says.
+service_rows() {
+  printf '%s\n' \
+    "postgres|Postgres:|$PG_PORT|LOUVAIN_PG_HOST_PORT" \
+    "embeddings|Embeddings:|$EMBED_PORT|LOUVAIN_EMBEDDINGS_HOST_PORT" \
+    "bm25|Keyword index:|$BM25_PORT|LOUVAIN_BM25_HOST_PORT" \
+    "$RERANK_SERVICE|Reranker:|$RERANK_PORT|LOUVAIN_RERANK_HOST_PORT"
+}
+
+# The ports this machine uses (in .env or the shell) and the URLs built from them, so moving a port is one line.
+# Compose reads the same settings for what it publishes. A URL set by hand still wins.
+ports() {
+  local port setting
+  PG_PORT="${LOUVAIN_PG_HOST_PORT:-5434}"
+  EMBED_PORT="${LOUVAIN_EMBEDDINGS_HOST_PORT:-8091}"
+  BM25_PORT="${LOUVAIN_BM25_HOST_PORT:-8095}"
+  ENGINE_PORT="${LOUVAIN_ENGINE_PORT:-8080}"
+  RERANK_PORT="${LOUVAIN_RERANK_HOST_PORT:-8096}"
+  while IFS='|' read -r _ _ port setting; do port_setting "$setting" "$port"; done < <(service_rows)
+  port_setting LOUVAIN_ENGINE_PORT "$ENGINE_PORT"
+  export LOUVAIN_EMBEDDINGS_URL="${LOUVAIN_EMBEDDINGS_URL:-http://localhost:$EMBED_PORT}"
+  export LOUVAIN_BM25_URL="${LOUVAIN_BM25_URL:-http://localhost:$BM25_PORT}"
+  export LOUVAIN_RERANK_URL="${LOUVAIN_RERANK_URL:-http://localhost:$RERANK_PORT}"
+  export LOUVAIN_ENGINE_PORT="$ENGINE_PORT"
+  SERVER_URL="http://127.0.0.1:$ENGINE_PORT/mcp"
+  APP_URL="http://127.0.0.1:$ENGINE_PORT/app/"
+}
+
+# Whether anything listens on this machine's port (bash's own /dev/tcp; nothing to install).
+listening() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+
+# The process listening on a port, when lsof is there to say; nothing otherwise.
+port_holder() {
+  command -v lsof >/dev/null 2>&1 || return 0
+  lsof -nP -t -iTCP:"$1" -sTCP:LISTEN 2>/dev/null | head -n 1 || true
+}
+
+# A busy port is said with the setting that moves it, and the process holding it where lsof can name it, before
+# Docker reports it in its own words.
+port_taken() {
+  local pid name holder="something other than the engine"
+  pid="$(port_holder "$1")"
+  if [ -n "$pid" ]; then
+    name="$(ps -p "$pid" -o comm= 2>/dev/null || true)"
+    holder="another program (pid $pid${name:+, ${name##*/}})"
+  fi
+  die "port $1 is in use on this machine by $holder. Set $2 to a free port in $ENV_FILE (or the shell) and run ./engine up again."
+}
+
+# A port something else holds is refused before Docker is asked, naming the setting that moves it. The services this
+# stack already runs, and a tool server of its own, are not "something else".
+check_ports() {
+  local running service port setting
+  running="$(running_services)"
+  while IFS='|' read -r service _ port setting; do
+    grep -qx "$service" <<<"$running" && continue
+    [ "$service" != "$RERANK_SERVICE" ] || [ "$RERANK_KIND" = sidecar ] || continue
+    listening "$port" && port_taken "$port" "$setting"
+  done < <(service_rows)
+  server_up || adopt_server || ! listening "$ENGINE_PORT" || port_taken "$ENGINE_PORT" LOUVAIN_ENGINE_PORT
+}
+
+# ---- This install's secrets: no service on this machine takes a default credential. ----
+
+# The directory the secrets live in is this user's alone (0700), a real directory, never a link.
+state_dir() {
+  local dir
+  mkdir -p "$STATE"
+  for dir in "$STATE_ROOT" "$STATE"; do
+    [ -d "$dir" ] && [ ! -L "$dir" ] || die "$dir is not a directory of its own (a link, or a file); remove it and run ./engine up again."
+    [ -O "$dir" ] || die "$dir belongs to another user; this user keeps its secrets only in a directory it owns."
+    chmod 700 "$dir"
+  done
+}
+
+# A draft names the process writing it; one whose process is gone (a run interrupted mid-way) is removed.
+drop_stale_drafts() {
+  local draft pid
+  for draft in "$1".draft.*; do
+    [ -e "$draft" ] || continue
+    pid="${draft##*.draft.}"
+    case "$pid" in '' | *[!0123456789]*) continue ;; esac
+    kill -0 "$pid" 2>/dev/null || rm -f "$draft"
+  done
+}
+
+# A new secret: 32 random bytes as hex, checked to be exactly 64 characters before it takes the file's name. The hard
+# link puts it in place only if no other start did first (the loser then reads the winner's); with no hard links, a rename.
+make_secret() {
+  local file="$1" draft="$1.draft.$$" made
+  (umask 077 && od -An -tx1 -N32 /dev/urandom | tr -d ' \n' >"$draft") || true
+  made="$(cat "$draft" 2>/dev/null || true)"
+  case "$made" in *[!0123456789abcdef]*) made="" ;; esac
+  if [ "${#made}" -ne 64 ]; then
+    rm -f "$draft"
+    die "could not make $file: /dev/urandom did not give 32 bytes. Run the command again."
+  fi
+  if ! ln "$draft" "$file" 2>/dev/null && [ ! -e "$file" ]; then
+    mv "$draft" "$file" || { rm -f "$draft"; die "could not put $file in place (neither a hard link nor a rename worked)."; }
+  fi
+  rm -f "$draft"
+}
+
+# The file has one name; while it has two, a draft of a dead process is removed. Another start's draft can be the
+# file's second name for a moment, between its link and its remove.
+one_name_now() {
+  [ -n "$(find "$1" -links 1)" ] && return 0
+  drop_stale_drafts "$1"
+  return 1
+}
+
+# The file is the install's own: a file (not a link), owned by this user, with one name, readable by this user alone.
+check_secret_file() {
+  local file="$1"
+  [ -f "$file" ] && [ ! -L "$file" ] || die "$file is not a file of its own (a link, or a directory); remove it and run ./engine up again."
+  [ -O "$file" ] || die "$file belongs to another user; remove it and run ./engine up again."
+  wait_until 40 0.05 one_name_now "$file" || die "$file has a second name elsewhere (a hard link); remove it and run ./engine up again."
+  chmod 600 "$file" || die "could not make $file readable by this user alone."
+}
+
+# The secret in a file, made first if there is none. $2 is the fewest characters it may hold. It is used in a URL, so
+# it holds only characters a URL carries as they are. A secret reaches a program by its environment, never its command line.
+secret() {
+  local file="$1" fewest="$2" value
+  state_dir
+  drop_stale_drafts "$file"
+  if [ ! -e "$file" ] && [ ! -L "$file" ]; then make_secret "$file"; fi
+  check_secret_file "$file"
+  value="$(cat "$file")" || die "could not read $file."
+  case "$value" in *[!0123456789"$UPPER$LOWER"._~-]*) die "$file holds a character a password in a URL cannot carry as it is; remove it and run ./engine up again." ;; esac
+  [ -n "$value" ] || die "$file is empty; remove it and run ./engine up again."
+  [ "${#value}" -ge "$fewest" ] || die "$file holds fewer than $fewest characters; remove it and run ./engine up again."
+  printf '%s' "$value"
+}
+
+# Compose reads LOUVAIN_PG_PASSWORD and LOUVAIN_SIDECAR_TOKEN, which its file requires; the engine's entries read the
+# token and DATABASE_URL. A sidecar token or a database URL set in .env or the shell wins, and a database URL the
+# person set is theirs: its password is never changed (`own_database_url`).
+use_secrets() {
+  [ -z "${SECRETS_READY:-}" ] || return 0
+  DB_PASSWORD="$(secret "$DB_PASSWORD_FILE" 1)" || exit 1
+  export LOUVAIN_PG_PASSWORD="$DB_PASSWORD"
+  if [ -z "${LOUVAIN_SIDECAR_TOKEN:-}" ]; then
+    LOUVAIN_SIDECAR_TOKEN="$(secret "$SIDECAR_TOKEN_FILE" 32)" || exit 1
+  fi
+  export LOUVAIN_SIDECAR_TOKEN
+  if [ -n "${DATABASE_URL:-}" ]; then
+    OWN_DATABASE_URL=1
+  else
+    export DATABASE_URL="postgres://$DB_ROLE:$DB_PASSWORD@localhost:$PG_PORT/$DB_NAME"
+  fi
+  SECRETS_READY=1
+}
+
+# A database URL the person set that names this stack's Postgres with another password would be locked out by a change
+# of the role's password, so the commands that use the database refuse it and say the two ways out.
+own_database_url() {
+  [ -n "${OWN_DATABASE_URL:-}" ] || return 0
+  local rest userinfo hostport host port
+  rest="${DATABASE_URL#*://}"
+  case "$rest" in *@*) ;; *) return 0 ;; esac
+  userinfo="${rest%%@*}" hostport="${rest#*@}"
+  hostport="${hostport%%/*}" host="${hostport%:*}" port="${hostport##*:}"
+  case "$host" in localhost | 127.0.0.1 | '[::1]') ;; *) return 0 ;; esac
+  [ "$port" = "$PG_PORT" ] || return 0
+  [ "${userinfo#*:}" != "$DB_PASSWORD" ] || return 0
+  die "DATABASE_URL (set in $ENV_FILE or the shell) names this install's Postgres with a password other than the one in $DB_PASSWORD_FILE, and ./engine never changes a password your own setting relies on: remove the DATABASE_URL line to use the install's own password, or keep it and write its password into $DB_PASSWORD_FILE."
+}
+
+# The entries need the database to hold this install's password, which only `up` sets.
+db_password_applied() {
+  [ -z "${OWN_DATABASE_URL:-}" ] || return 0
+  [ -f "$PASSWORD_APPLIED_FILE" ] && [ ! "$DB_PASSWORD_FILE" -nt "$PASSWORD_APPLIED_FILE" ] ||
+    die "this install's database password ($DB_PASSWORD_FILE) is not yet the database's: run ./engine up, which sets it."
+}
+
+# The role's password reaches Postgres as a SCRAM verifier made here, never as itself: a statement that fails is
+# written to the server's log, and a verifier of a random secret gives nothing back.
+scram_verifier() {
+  SCRAM_SECRET="$DB_PASSWORD" node -e '
+    const c = require("node:crypto");
+    const salt = c.randomBytes(16), rounds = 4096;
+    const salted = c.pbkdf2Sync(process.env.SCRAM_SECRET, salt, rounds, 32, "sha256");
+    const key = (name) => c.createHmac("sha256", salted).update(name).digest();
+    const stored = c.createHash("sha256").update(key("Client Key")).digest();
+    const b64 = (b) => b.toString("base64");
+    process.stdout.write(`SCRAM-SHA-256$${rounds}:${b64(salt)}$${b64(stored)}:${b64(key("Server Key"))}`);'
+}
+
+# Postgres takes its password only when it first creates its data, so a volume made earlier is brought to this
+# install's on every start, over the container's own socket, the statement on stdin.
+sync_db_password() {
+  local verifier
+  [ -z "${OWN_DATABASE_URL:-}" ] || return 0
+  verifier="$(scram_verifier)" || die "could not make the database password's verifier (node failed)."
+  case "$verifier" in SCRAM-SHA-256\$4096:*) ;; *) die "could not make the database password's verifier." ;; esac
+  printf "alter role %s password '%s';\n" "$DB_ROLE" "$verifier" | db_psql -q -v ON_ERROR_STOP=1 -f - >/dev/null
+  touch "$PASSWORD_APPLIED_FILE"
+}
+
+# ---- Prerequisites, checked once before anything is installed or started. ----
+
+# True when the dotted version $1 is at least $2 (major and minor; a patch level never decides).
+version_ge() {
+  local a b c d
+  IFS=. read -r a b _ <<<"$1"
+  IFS=. read -r c d _ <<<"$2"
+  b="${b:-0}"; d="${d:-0}"
+  [ "$a" -gt "$c" ] || { [ "$a" -eq "$c" ] && [ "$b" -ge "$d" ]; }
+}
+
+# The first version number in a command's output, or nothing.
+version_in() { grep -oE '[0-9]+(\.[0-9]+)+' | head -1 || true; }
+
+# One line of what is missing, kept to be said all at once.
+note_missing() { MISSING="$MISSING  $1"$'\n'; }
+
+# One line per tool: found-or-not, at its minimum.
+need_version() {
+  local label="$1" minimum="$2" found="$3"
+  if [ -z "$found" ]; then note_missing "$label $minimum or newer: not found"
+  elif ! version_ge "$found" "$minimum"; then note_missing "$label $minimum or newer: found $found"
+  fi
+}
+
+# Docker, Compose and the daemon, each said if it is the one missing.
+check_docker() {
+  if ! command -v docker >/dev/null 2>&1; then
+    note_missing "Docker with Compose 2 or newer: not found"
+    return 0
+  fi
+  need_version "Docker Compose" "2" "$(docker compose version --short 2>/dev/null | version_in)"
+  docker info >/dev/null 2>&1 || note_missing "Docker: installed but not running (start it, then run this again)"
+}
+
+# Every prerequisite at once, so one run says everything that is missing.
+prerequisites() {
+  MISSING=""
+  local node_v="" pnpm_v=""
+  if command -v node >/dev/null 2>&1; then node_v="$(node --version | version_in)"; fi
+  if command -v pnpm >/dev/null 2>&1; then pnpm_v="$(pnpm --version 2>/dev/null | version_in)"; fi
+  need_version "Node" "$NODE_MIN" "$node_v"
+  need_version "pnpm" "$PNPM_MIN" "$pnpm_v"
+  check_docker
+  command -v curl >/dev/null 2>&1 || note_missing "curl: not found"
+  [ -z "$MISSING" ] || { printf 'engine: these prerequisites are not met:\n%s' "$MISSING" >&2; exit 1; }
+}
+
+# Docker is installed and its daemon answers.
+docker_running() { command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; }
+
+# A command that only talks to Docker names that one prerequisite.
+need_docker() {
+  command -v docker >/dev/null 2>&1 || die "Docker is not installed (Docker with Compose 2 or newer is required)"
+  docker info >/dev/null 2>&1 || die "Docker is not running"
+}
+
+# ---- The build: installed, built, and the entries ready to run. ----
+
+# The engine is built when its own build finished and matches the source of every package the workspace builds (the
+# build writes the stamp last).
+built() {
+  [ -d node_modules ] && [ -f "$BUILD_STAMP" ] &&
+    (cd "$ENGINE_PACKAGE" && node scripts/source-hash.mjs --check)
+}
+
+# A pull that moved the lockfile needs its packages before the build: node_modules records the lockfile it holds.
+install_if_lockfile_moved() {
+  [ -f pnpm-lock.yaml ] && [ -f node_modules/.pnpm/lock.yaml ] || return 0
+  cmp -s pnpm-lock.yaml node_modules/.pnpm/lock.yaml && return 0
+  say "Installing (the lockfile changed)..."
+  pnpm install --frozen-lockfile --silent
+}
+
+# The first run writes .env from its template, so a person has every setting in front of them to change.
+write_settings_file() {
+  [ ! -f "$ENV_FILE" ] || return 0
+  cp "$SETTINGS" "$ENV_FILE"
+  say "Settings: wrote $ENV_FILE from $SETTINGS."
+  load_env
+  ports
+}
+
+# Install and build only what is missing or changed, and say so.
+prepare() {
+  if [ ! -d node_modules ]; then
+    say "Installing (the lockfile pins every version)..."
+    pnpm install --frozen-lockfile --silent
+  fi
+  if ! built; then
+    install_if_lockfile_moved
+    say "Building the workspace packages..."
+    pnpm run --silent build >/dev/null
+  fi
+  write_settings_file
+}
+
+# The entries run from the build `up` leaves, so a command before `up` says so rather than failing inside Node.
+need_ready() {
+  built || die "the engine is not set up yet. Run ./engine up first."
+}
+
+# The engine's own entries, run from the build.
+run_ts() { node --import tsx "$@"; }
+
+# ---- The services: Docker Compose, with the settings load_env took. ----
+
+# Compose reads no .env of its own (--env-file /dev/null): what it sees is what load_env took, through one parser.
+compose() {
+  use_secrets
+  docker compose --env-file /dev/null -f "$COMPOSE_FILE" "$@"
+}
+
+# Every service, the local reranker's included: what stops, lists or shows the stack sees all of it.
+compose_all() { compose --profile "$RERANK_SERVICE" "$@"; }
+
+# The services running now, one name a line; nothing when Compose cannot say.
+running_services() { compose_all ps --status running --services 2>/dev/null || true; }
+
+# The image a built service's container runs, by the platform's own answer; nothing while it has no container.
+service_image() {
+  compose images -q "$1" 2>/dev/null | head -n 1 || true
+}
+
+# One "service image" line for each service this checkout builds, as the containers run them now.
+service_images() {
+  local service
+  while IFS='|' read -r service _; do
+    [ "$service" = "$DB_SERVICE" ] || printf '%s %s\n' "$service" "$(service_image "$service")"
+  done < <(service_rows)
+}
+
+# A service whose container now runs another image than before was rebuilt from this checkout, and the start says so.
+say_rebuilt() {
+  local before="$1" service label old
+  while IFS='|' read -r service label _; do
+    [ "$service" != "$DB_SERVICE" ] || continue
+    old="$(sed -n "s/^$service //p" <<<"$before")"
+    [ -z "$old" ] || [ "$old" = "$(service_image "$service")" ] || say "$label rebuilt from this checkout."
+  done < <(service_rows)
+}
+
+# If Compose still fails on a port (another program took it in the meantime), say which setting moves it.
+explain_compose_failure() {
+  local port found setting
+  port="$(grep -oE '(:|port )[0-9]{2,5}[^0-9].*(already allocated|address already in use)' "$1" | grep -oE '[0-9]{2,5}' | head -1 || true)"
+  while IFS='|' read -r _ _ found setting; do
+    [ -z "$port" ] || [ "$port" != "$found" ] || port_taken "$port" "$setting"
+  done < <(service_rows)
+  cat "$1" >&2
+  die "the services did not start (Docker's own message above)"
+}
+
+# Compose builds the named services' images (all of them when none is named) from this checkout's sources, starts them
+# and waits for them to be healthy; an unchanged image comes from the build cache and keeps its container. A terminal
+# shows Compose's own progress; a log or a pipe gets its errors only, not a line per build step. The one place `up`
+# and `reindex` build.
+up_built() {
+  local before
+  before="$(service_images)"
+  if [ -t 1 ]; then
+    compose up -d --build --wait "$@" 2> >(tee "$COMPOSE_LOG" >&2) || explain_compose_failure "$COMPOSE_LOG"
+  else
+    compose --progress quiet up -d --build --wait "$@" 2>"$COMPOSE_LOG" || explain_compose_failure "$COMPOSE_LOG"
+  fi
+  say_rebuilt "$before"
+}
+
+# The engine's services are running on images built from this checkout.
+start_services() {
+  say "Starting the engine's services (the first run builds their images)..."
+  state_dir
+  up_built
+}
+
+# The services stop; their data stays for the next `up`.
+stop_services() {
+  compose_all down
+  say "Services: stopped. Your data is kept; ./engine up starts it again."
+}
+
+# The services stop and their volumes go, with the logs and the reranker state this wrapper kept.
+remove_everything() {
+  compose_all down --volumes
+  rm -f "$SERVER_LOG" "$COMPOSE_LOG" "$RERANK_LOG" "$RERANK_STATE"
+  say "Services: stopped, and the data removed."
+}
+
+# Deleting the data is confirmed by a person at a terminal, or by --yes; anything else deletes nothing.
+confirm_deletion() {
+  local answer
+  say "This deletes the engine's database and keyword index, and every document loaded into them."
+  [ -t 0 ] || die "not a terminal, so nothing was deleted. Run it again with --yes to confirm."
+  printf 'Continue? [y/N] '
+  read -r answer
+  case "$answer" in y | Y | yes | YES) ;; *) die "not confirmed; nothing was deleted." ;; esac
+}
+
+# ---- The local reranker: it runs when the configuration names it. ----
+
+# Which one, read once from engine.config.ts.
+rerank_wanted() {
+  local wanted
+  need "$RERANK_ENTRY"
+  wanted="$(run_ts "$RERANK_ENTRY")" || die "could not read which reranker engine.config.ts runs (see the message above)."
+  IFS=$'\t' read -r RERANK_KIND RERANK_MODEL <<<"$wanted"
+}
+
+# The hub commit a shipped model's weights are fetched at, from the plugin's own table; nothing for any other model.
+rerank_revision() {
+  MODEL="$1" node --import tsx --input-type=module -e \
+    'const { MODELS } = await import("./packages/plugins/reranker-sidecar/src/models.ts"); process.stdout.write(MODELS[process.env.MODEL]?.revision ?? "")'
+}
+
+# What the reranker is, kept for the tool server's freshness: written only when it changes, so an `up` that changes
+# nothing restarts nothing.
+rerank_state() {
+  [ "$(cat "$RERANK_STATE" 2>/dev/null)" = "$1" ] || printf '%s\n' "$1" > "$RERANK_STATE"
+}
+
+# A machine that cannot run the local reranker is told why in one sentence; the engine ranks without it.
+rerank_off() {
+  rerank_state "off: $1"
+  say "Reranker: not running, because $1; the engine works without it, and each search says it was not reranked."
+}
+
+# Build the local reranker with the model the configuration names, then start it. The first build fetches the
+# weights once; anything that fails is said in one sentence, from Compose's last line.
+build_reranker() {
+  local revision
+  revision="$(rerank_revision "$RERANK_MODEL")"
+  [ -n "$revision" ] || { rerank_off "$RERANK_MODEL is not a model this build pins (start a sidecar for it yourself, at the url engine.config.ts names)"; return 0; }
+  say "Reranker: building $RERANK_MODEL, as engine.config.ts names it. The first build downloads its weights from Hugging Face"
+  say "once (2.3 GB for the shipped model) so it can rank on this machine; to skip it, comment out the reranker line."
+  if compose_all --progress quiet build --build-arg "RERANK_MODEL=$RERANK_MODEL" \
+    --build-arg "RERANK_MODEL_REVISION=$revision" "$RERANK_SERVICE" 2>"$RERANK_LOG" &&
+    compose_all --progress quiet up -d --wait "$RERANK_SERVICE" 2>>"$RERANK_LOG"; then
+    rerank_state "$RERANK_MODEL"
+    say "Reranker: $RERANK_MODEL, on port $RERANK_PORT."
+  else
+    rerank_off "the local model would not build or start here ($(tail -n 1 "$RERANK_LOG" | cut -c1-160))"
+  fi
+}
+
+# The reranker engine.config.ts names: none, the local one (built and started here), or a remote one (nothing to start).
+# A change of name is an edit to engine.config.ts, which the tool server's freshness already watches.
+start_reranker() {
+  case "$RERANK_KIND" in
+    none | "") say "Reranker: off (engine.config.ts names none)." ;;
+    sidecar) build_reranker ;;
+    *) say "Reranker: $RERANK_KIND ($RERANK_MODEL), as engine.config.ts names it." ;;
+  esac
+}
+
+# ---- The database: psql inside the Postgres container. ----
+
+# One psql run inside the Postgres container, as its own role. TARGET_DB names another database than the install's.
+db_psql() {
+  compose exec -T -e "TARGET_DB=${TARGET_DB:-}" "$DB_SERVICE" sh -c \
+    'psql -U "$POSTGRES_USER" -d "${TARGET_DB:-$POSTGRES_DB}" "$@"' sh "$@"
+}
+
+# One statement, its answer bare: the statement is $1 and the database ($2) the install's own unless named.
+db_query() {
+  TARGET_DB="${2:-}" db_psql -tAq -v ON_ERROR_STOP=1 -c "$1"
+}
+
+# How many documents are loaded; nothing when the database cannot say.
+document_count() {
+  db_query "select count(*) from source_document" 2>/dev/null | tr -d '[:space:]'
+}
+
+# ---- The schema: loaded once, stamped with the baseline's hash, and never started on when it is another. ----
+
+# Whether the schema has been loaded into this install's database.
+schema_loaded() {
+  db_query "select to_regclass('public.event_log') is not null" | grep -q '^t$'
+}
+
+# What the baseline is, as the loaded schema records it: the baseline file's own hash, kept as the schema's comment.
+schema_fingerprint() {
+  printf 'louvain-engine-baseline:%s' "$(node -e '
+    const { createHash } = require("node:crypto");
+    process.stdout.write(createHash("sha256").update(require("node:fs").readFileSync(process.argv[1])).digest("hex"));
+  ' "$SCHEMA")"
+}
+
+# The loaded schema carries this release's baseline hash.
+schema_stamped() {
+  [ "$(db_query "select coalesce(obj_description('public'::regnamespace), '')")" = "$(schema_fingerprint)" ]
+}
+
+# The schema records the baseline it was made from.
+stamp_schema() {
+  db_query "comment on schema public is '$(schema_fingerprint)'" >/dev/null
+}
+
+# The shape of a schema (columns, indexes, constraints, functions), so two can be compared by one value.
+STRUCTURE_SQL="select md5(coalesce(string_agg(l, ' ' order by l), '')) from (
+  select 'c ' || table_name || '.' || column_name || ' ' || udt_name || ' ' || is_nullable || ' ' || coalesce(column_default, '') as l
+    from information_schema.columns where table_schema = 'public'
+  union all select 'i ' || indexdef from pg_indexes where schemaname = 'public'
+  union all select 'k ' || conrelid::regclass || ' ' || pg_get_constraintdef(oid) from pg_constraint where connamespace = 'public'::regnamespace
+  union all select 'f ' || pg_get_functiondef(oid) from pg_proc where pronamespace = 'public'::regnamespace and prokind = 'f'
+) s"
+
+# The shape this release's baseline gives, from a scratch database it is loaded into and which is dropped again.
+baseline_structure() {
+  local out="" ok=1
+  db_query "drop database if exists $SCRATCH_DB" postgres >/dev/null 2>&1 || return 1
+  db_query "create database $SCRATCH_DB" postgres >/dev/null || return 1
+  if TARGET_DB="$SCRATCH_DB" db_psql -q -v ON_ERROR_STOP=1 -1 -f - < "$SCHEMA" >/dev/null 2>&1; then
+    out="$(db_query "$STRUCTURE_SQL" "$SCRATCH_DB")" && [ -n "$out" ] && ok=0
+  fi
+  db_query "drop database if exists $SCRATCH_DB" postgres >/dev/null 2>&1 || true
+  [ "$ok" -eq 0 ] && printf '%s' "$out"
+}
+
+# Whether the loaded schema has the shape the baseline gives. Anything that fails along the way says "not the same".
+same_structure() {
+  local live scratch
+  live="$(db_query "$STRUCTURE_SQL")" || return 1
+  scratch="$(baseline_structure)" || return 1
+  [ -n "$live" ] && [ "$live" = "$scratch" ]
+}
+
+# A schema that is not the baseline this release carries is never started on, and never changed: the fix is the
+# person's. An install from before the schema recorded its baseline is the baseline's own if its structure says so.
+check_schema() {
+  schema_stamped && return 0
+  if same_structure; then stamp_schema; return 0; fi
+  die "the database holds a schema other than the one this release was built for (or one that could not be compared with it). Nothing was changed or deleted. If it was made by the release before this one, run ./engine reindex: it upgrades the schema in place, keeping your documents, and rebuilds the keyword index. Otherwise run ./engine down --volumes (it deletes this install's database), then ./engine up, and load your documents again with ./engine ingest."
+}
+
+# The commands that read or write documents ask the same question as `up`, so nothing is loaded into a database this
+# release cannot read correctly. No schema at all is left to the entry, which says what it lacks.
+need_schema() {
+  if schema_loaded; then check_schema; fi
+}
+
+# An empty database gets the baseline and records its hash; a loaded one must be the baseline's own.
+load_schema() {
+  need "$SCHEMA"
+  if schema_loaded; then
+    check_schema
+    say "Schema: already loaded."
+  else
+    db_psql -q -v ON_ERROR_STOP=1 -1 -f - < "$SCHEMA" >/dev/null
+    stamp_schema
+    say "Schema: loaded."
+  fi
+}
+
+# ---- The upgrade in place, and the keyword index rebuilt after it. ----
+
+# Every file in db/upgrades (each idempotent), in one transaction that ends with a check of the result against this
+# release's own shape, so it commits only when the database has exactly that shape and otherwise rolls back whole.
+upgrade_schema() {
+  local expected
+  expected="$(baseline_structure)" || return 1
+  {
+    printf 'begin;\n'
+    for upgrade in "$UPGRADES"/*.sql; do cat "$upgrade"; printf '\n'; done
+    printf 'do $upgrade$ begin if (%s) is distinct from %s then raise exception %s; end if; end $upgrade$;\n' \
+      "$STRUCTURE_SQL" "'$expected'" "'not this release''s schema'"
+    printf 'commit;\n'
+  } | db_psql -q -v ON_ERROR_STOP=1 -f - >/dev/null 2>&1
+}
+
+# A schema already this release's is stamped again; another is upgraded, or left as it was when the upgrade fails.
+upgrade_in_place() {
+  if schema_stamped || same_structure; then
+    stamp_schema
+    say "Schema: already this release's."
+    return 0
+  fi
+  say "Schema: upgrading in place (one transaction)..."
+  upgrade_schema || die "the upgrade did not give this release's schema, so it was rolled back: nothing was changed. This database was not made by the release before this one. To go on, run ./engine down --volumes (it deletes this install's database), then ./engine up, and load your documents again with ./engine ingest."
+  stamp_schema
+  say "Schema: upgraded."
+}
+
+# The keyword sidecar's index is emptied and its image built again from this release, since the analyzer is the
+# sidecar's own code; the reindex entry then writes every loaded record's entry again.
+rebuild_keyword_index() {
+  say "${1:-Keyword index: emptying and rebuilding it from the records loaded...}"
+  compose stop bm25 >/dev/null 2>&1
+  compose run --rm --no-deps -T --entrypoint sh bm25 -c 'rm -rf /index/* /index/.[!.]* 2>/dev/null; true' >/dev/null
+  up_built bm25
+}
+
+# THE KEYWORD INDEX IS DERIVED: one an earlier release built, which this release's sidecar cannot open or reads only in
+# part (its `/healthz` says `rebuild`), is rebuilt from the records loaded, so an upgrade never stops `up`.
+keyword_index_stale() {
+  curl -s --max-time 5 "$LOUVAIN_BM25_URL/healthz" 2>/dev/null | grep -q '"rebuild": *true'
+}
+refresh_keyword_index() {
+  keyword_index_stale || return 0
+  need "$REINDEX_ENTRY"
+  rebuild_keyword_index "Keyword index: an earlier release built it; rebuilding it from the records loaded..."
+  run_ts "$REINDEX_ENTRY"
+}
+
+# ---- The tool server: started in the background, found again by its pid file or its port. ----
+
+# The running tool server serves the app: it says so when it starts, unless engine.config.ts turned the app off.
+app_on() { grep -q '^Its app is at ' "$SERVER_LOG" 2>/dev/null; }
+
+# A process's working directory, where /proc or lsof can say; nothing otherwise.
+process_cwd() {
+  readlink "/proc/$1/cwd" 2>/dev/null && return 0
+  command -v lsof >/dev/null 2>&1 || return 0
+  lsof -a -nP -p "$1" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -n 1
+}
+
+# Whether a process is this install's tool server: Node, run from this checkout, whatever entry the release that
+# started it ran, so an upgrade finds the server the release before started (a pid reused by another program is not).
+is_server_process() {
+  local cwd
+  ps -p "$1" -o command= 2>/dev/null | grep -q node || return 1
+  cwd="$(process_cwd "$1")"
+  [ -z "$cwd" ] || [ "$cwd" = "$(pwd -P)" ]
+}
+
+# Whether the server runs this release's entry; one an earlier release started runs what this one replaced.
+runs_this_release() { ps -p "$1" -o command= 2>/dev/null | grep -q 'cli/src/serve'; }
+
+# The tool server this wrapper started, by its pid file: its pid if that process is alive and is the server.
+server_pid() {
+  local pid
+  [ -f "$PID_FILE" ] || return 1
+  pid="$(cat "$PID_FILE")"
+  kill -0 "$pid" 2>/dev/null || return 1
+  is_server_process "$pid" || return 1
+  printf '%s' "$pid"
+}
+
+# The engine's own tool server answers: something answering on the port that this wrapper did not start is not it.
+server_up() {
+  server_pid >/dev/null && curl -s -o /dev/null --max-time 2 "$SERVER_URL" 2>/dev/null
+}
+
+# A running server holds from its start the install's secrets, the build and the settings, so one of them newer than
+# its pid file means it runs old code or old values. (.env is compared by its time alone, never read here.)
+server_stale() {
+  local held pid
+  pid="$(server_pid)" || return 1
+  runs_this_release "$pid" || return 0
+  for held in "$DB_PASSWORD_FILE" "$SIDECAR_TOKEN_FILE" "$BUILD_STAMP" "$ENV_FILE" engine.config.ts "$CONFIG" "$RERANK_STATE"; do
+    [ ! -e "$held" ] || [ ! "$held" -nt "$PID_FILE" ] || return 0
+  done
+  return 1
+}
+
+# A tool server of this checkout already serving the port is the wrapper's own, whatever its pid file says (missing,
+# or naming a process long gone): it is taken back, so `up` does not start a second one and `status` does not lose it.
+adopt_server() {
+  local pid cwd
+  pid="$(port_holder "$ENGINE_PORT")"
+  [ -n "$pid" ] || return 1
+  runs_this_release "$pid" || return 1
+  cwd="$(process_cwd "$pid")"
+  [ "$cwd" = "$(pwd -P)" ] || return 1
+  mkdir -p "$STATE" && printf '%s\n' "$pid" > "$PID_FILE"
+}
+
+# Take the running server back if there is one, so the commands below see it whatever the pid file said.
+find_server() {
+  server_pid >/dev/null || adopt_server || true
+}
+
+# A server started before the build, the settings or the secrets changed runs what they replaced: it is stopped here,
+# and started again below.
+restart_if_stale() {
+  server_up && server_stale || return 0
+  stop_server >/dev/null
+  say "Tool server: started again; it was running from before the build, settings or secrets changed."
+}
+
+# Start the tool server in the background and wait up to a minute for it to answer; it serves the app unless
+# engine.config.ts says otherwise.
+launch_server() {
+  nohup node --import tsx "$SERVER_ENTRY" >"$SERVER_LOG" 2>&1 &
+  echo $! > "$PID_FILE"
+  wait_until 60 1 server_up || die "the tool server did not start (see $SERVER_LOG)"
+}
+
+# The tool server is running on this build, once.
+start_server() {
+  need "$SERVER_ENTRY"
+  state_dir
+  restart_if_stale
+  server_up || launch_server
+}
+
+# The process is gone.
+process_gone() { ! kill -0 "$1" 2>/dev/null; }
+
+# Stop the tool server this wrapper started, then wait for it to go; a server that will not leave is killed.
+stop_server() {
+  local pid
+  find_server
+  if ! pid="$(server_pid)"; then
+    rm -f "$PID_FILE"
+    say "Tool server: not running."
+    return 0
+  fi
+  kill "$pid" 2>/dev/null || true
+  wait_until 20 0.5 process_gone "$pid" || kill -KILL "$pid" 2>/dev/null || true
+  rm -f "$PID_FILE"
+  say "Tool server: stopped."
+}
+
+# Where the engine is, and that it is ready.
+announce_ready() {
+  say "Tools: $SERVER_URL"
+  if app_on; then say "App:   $APP_URL"; fi
+  say "Token: $TOKEN_FILE"
+  say "Ready."
+}
+
+# An address in this machine's browser where one can be opened, or the address to open by hand.
+open_in_browser() {
+  if [ "$(uname)" = Darwin ] && command -v open >/dev/null 2>&1; then
+    open "$1"
+  elif [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$1" >/dev/null 2>&1 || say "The browser did not open: open that address in one."
+  else
+    say "No browser can be opened from here: open that address in one."
+  fi
+}
+
+# ---- New plugins, from their kind's template. ----
+
+# The kinds with a template, as one line.
+plugin_kinds() { find "$TEMPLATES" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort | tr '\n' ' ' | sed 's/ $//'; }
+
+# A plugin's name becomes a folder, a package and a factory: lowercase letters, digits and inner hyphens, at most 40,
+# starting with a letter, and never a word JavaScript reserves.
+plugin_name() {
+  case "$1" in
+    [!"$LOWER"]* | *[!"$LOWER"0123456789-]* | *- | *--*) die "a plugin's name is lowercase letters, digits and single hyphens, starting with a letter: not '$1'." ;;
+  esac
+  [ "${#1}" -le 40 ] || die "a plugin's name is at most 40 characters."
+  case " $RESERVED " in *" $1 "*) die "'$1' is a word JavaScript reserves, so it cannot name a factory: choose another." ;; esac
+}
+
+RESERVED="break case catch class const continue debugger default delete do else enum export extends false finally for
+function if implements import in instanceof interface let new null package private protected public return static
+super switch this throw true try typeof var void while with yield await"
+RESERVED="$(printf '%s' "$RESERVED" | tr '\n' ' ')"
+
+# The factory's name: the plugin's, its hyphens dropped and the letter after each made a capital (by-title: byTitle).
+camel_case() { printf '%s' "$1" | awk -F- '{ s = $1; for (i = 2; i <= NF; i++) s = s toupper(substr($i, 1, 1)) substr($i, 2); printf "%s", s }'; }
+
+# Every template file copied to its place in the new package, less `.tmpl`, with the plugin's name and factory put in.
+write_template() {
+  local from="$1" to="$2" name="$3" factory="$4" file target
+  while IFS= read -r file; do
+    target="$to/${file#"$from"/}"
+    target="${target%.tmpl}"
+    mkdir -p "$(dirname "$target")"
+    sed -e "s/__camelName__/$factory/g" -e "s/__name__/$name/g" "$file" >"$target"
+  done < <(find "$from" -type f -name '*.tmpl' | sort)
+}
+
+# The configuration line that runs a plugin of this kind.
+configured_as() {
+  case "$1" in
+    reader) printf 'readers: [documents(), %s()],' "$2" ;;
+    reranker) printf 'reranker: %s(),' "$2" ;;
+    source) printf 'sources: [folder(), records(), %s()],' "$2" ;;
+    *) printf '%s: %s(),' "$1" "$2" ;;
+  esac
+}
+
+# ---- What `status` and `logs` print. ----
+
+# One line of `status`: a label and what it says.
+row() { printf '%-16s%s\n' "$1" "$2"; }
+
+# The tool server and the app, as `status` says them.
+status_server() {
+  local pid=""
+  find_server
+  if pid="$(server_pid)"; then row "Tool server:" "running at $SERVER_URL (pid $pid)"; else row "Tool server:" "not running"; fi
+  if [ -z "$pid" ]; then row "App:" "not running"; elif app_on; then row "App:" "$APP_URL"; else row "App:" "off ($CONFIG's surfaces leave out app())"; fi
+}
+
+# The services, and how many documents are loaded; nothing about Docker if Docker is not there to ask.
+status_services() {
+  local running service label port count
+  docker_running || { row "Services:" "Docker is not running"; return 0; }
+  use_secrets
+  running="$(running_services)"
+  while IFS='|' read -r service label port _; do
+    if grep -qx "$service" <<<"$running"; then row "$label" "running on port $port"; else row "$label" "not running"; fi
+  done < <(service_rows)
+  if grep -qx "$DB_SERVICE" <<<"$running" && count="$(document_count)" && [ -n "$count" ]; then
+    if [ "$count" = 0 ]; then row "Documents:" "none loaded (./engine ingest folder --folder <path> loads a folder)"; else row "Documents:" "$count loaded"; fi
+  fi
+}
+
+# The tool server's own log, which is a file this wrapper keeps.
+logs_server() {
+  [ -f "$SERVER_LOG" ] || die "the tool server has no log yet. ./engine up starts it."
+  if [ -n "$1" ]; then tail -n 50 -f "$SERVER_LOG"; else tail -n 50 "$SERVER_LOG"; fi
+}
+
+# Compose's logs for one service, or for all of them after the tool server's own.
+logs_services() {
+  local service="$1" follow="$2"
+  need_docker
+  settings_ok
+  use_secrets
+  if [ -n "$service" ]; then
+    if [ "$service" = "$RERANK_SERVICE" ] && [ -s "$RERANK_LOG" ]; then tail -n 20 "$RERANK_LOG"; fi
+    compose_all logs --tail 50 ${follow:+--follow} "$service"
+    return 0
+  fi
+  if [ -f "$SERVER_LOG" ]; then say "== tool server =="; tail -n 20 "$SERVER_LOG"; fi
+  compose_all logs --tail 20
+}
+
+# ==== The dispatch. ====
+
+# Choosing a profile reads no profile, so it works whatever the remembered one holds.
+if [ "${1:-}" = profile ]; then shift; cmd_profile "$@"; exit 0; fi
+startup
+case "${1:-help}" in
+  up) shift; cmd_up "$@" ;;
+  ingest) shift; cmd_ingest "$@" ;;
+  search) shift; cmd_search "$@" ;;
+  reindex) shift; cmd_reindex "$@" ;;
+  status) shift; cmd_status "$@" ;;
+  app) shift; cmd_app "$@" ;;
+  logs) shift; cmd_logs "$@" ;;
+  down) shift; cmd_down "$@" ;;
+  plugin) shift; cmd_plugin "$@" ;;
+  help | -h | --help) cmd_help ;;
+  *) printf "engine: unknown command '%s'\n\n" "$1" >&2; cmd_help >&2; exit 2 ;;
+esac

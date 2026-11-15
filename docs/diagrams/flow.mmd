@@ -1,0 +1,21 @@
+%% title: From a folder to the right document: read, index, search, then the document whole with its source
+flowchart TB
+  folder["`**Your folder**
+  PDFs, office files, text`"]
+  read["`**Read**
+  file-reader plugins,
+  bounded by the engine`"]
+  index["`**Index**
+  passages, vectors and keywords
+  in Postgres with pgvector`"]
+  search["`**Search**
+  vector and keyword, fused,
+  reranking optional`"]
+  doc["`**The right document**
+  whole, with its source`"]
+  folder -- "./engine ingest" --> read
+  read --> index
+  index --> search
+  search -- "`louvain_search_sources
+  or louvain_lookup_source,
+  then louvain_read_source`" --> doc

@@ -1,0 +1,60 @@
+# reader-__name__
+
+A file reader: plain text and Markdown files (`txt`, `md`, `markdown`), read as UTF-8. It is the smallest complete
+plugin, so this page also shows how to write your own; `./engine plugin new reader <name>` starts one as a copy of it,
+this page included.
+
+## Use it
+
+```ts
+// engine.config.ts
+import { defineEngine } from "@louvain/engine-core";
+import { documents } from "@louvain/reader-documents";
+import { __camelName__ } from "@louvain/reader-__name__";
+
+export default defineEngine({ readers: [documents(), __camelName__()] });
+```
+
+Its one setting, `extensions`, narrows what it claims: `__camelName__({ extensions: ["txt"] })` leaves Markdown to another
+reader. An extension it does not read stops the start.
+
+## Write your own
+
+A file reader is three things: a name, the extensions it claims, and one function from a file's bytes to its text.
+This is the whole of `src/index.ts`; change what it reads and how, then its test:
+
+```ts
+import { definePlugin } from "@louvain/engine-core";
+import { z } from "zod";
+
+const READS = ["txt", "md", "markdown"] as const;
+const utf8 = new TextDecoder();
+
+export const __camelName__ = definePlugin({
+  kind: "fileReader",
+  name: "__name__",
+  settings: z.object({ extensions: z.array(z.enum(READS)).default([...READS]) }),
+  create: ({ extensions }) => ({
+    name: "__name__",
+    claims: { extensions: [...new Set(extensions)] },
+    read: (bytes) => ({ text: utf8.decode(bytes) }),
+  }),
+});
+```
+
+1. **`definePlugin`** makes a factory. `kind` says which contract `create` returns; `name` is what the engine reports
+   a file was read by, and it must be unique among the configured readers.
+2. **`settings`** is a zod schema. The configuration's call, `__camelName__({ … })`, is parsed with it, so a wrong setting
+   stops the start with the schema's own message. Here `extensions` may name only formats the reader reads, and
+   defaults to all of them. Leave `settings` out for a reader with no settings.
+3. **`claims.extensions`** are lower case, without the dot.
+4. **`claims.rank`** is `specific` when left out, as here. A general reader says `fallback`, so a specific reader of
+   the same extension wins. Two readers of one rank on one extension stop the start, naming both.
+5. **`read`** returns `{ text }` (with `pages` for a paginated format) or `{ refused: "<why>" }`. It may be async.
+
+The engine holds every reader to its bounds: it opens only regular files, refuses one past the byte cap before
+reading, races `read` against a deadline, refuses text past the character cap, and turns a reader that throws into a
+refusal for that one file. A reader needs none of those checks itself.
+
+Test a reader through the registry, as `test/index.test.ts` does: `createPluginRegistry(defineEngine({ readers:
+[yours()] }))`, then call its `read`.

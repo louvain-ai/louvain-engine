@@ -1,0 +1,5 @@
+{
+  "kind": "calendar",
+  "readerVersion": 1,
+  "text": "Reading pipeline review, Q4\nWhen: 2026-10-01 09:00 UTC – 10:00 UTC\nRepeats: weekly (FREQ=WEEKLY;BYDAY=TH)\nWhere: Room 3; the long table\nOrganiser: Platform Owner <owner@example.test>\nAttendees: Reader <reader@example.test>\n\nQuarterly review of the reading pipeline.\nEvery sheet, paragraph and slide must reach the text.\nOwner: the platform team. A long line that the writer folds. A long line that the writer folds. A long line that the writer folds. A long line that the writer folds."
+}

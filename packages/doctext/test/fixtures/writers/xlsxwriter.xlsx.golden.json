@@ -1,0 +1,5 @@
+{
+  "kind": "xlsx",
+  "readerVersion": 4,
+  "text": "## Bugs\nid\tissue\tpriority\topened\tblocking\n1\tParser drops inline strings\tP0\t2026-09-01\tTRUE\n2\tEmpty cell shifts columns\t\t2026-09-02\tFALSE\n7\tTotals row counted twice\tP2\t2026-09-07\tFALSE\n## Notes\nnote\nA second sheet is named in the text."
+}

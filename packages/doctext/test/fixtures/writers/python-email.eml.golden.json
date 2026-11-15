@@ -1,0 +1,5 @@
+{
+  "kind": "eml",
+  "readerVersion": 1,
+  "text": "From: Platform Owner <owner@example.test>\nTo: Reader <reader@example.test>, second@example.test\nDate: Wed, 30 Sep 2026 09:00:00 +1300\nSubject: Reading pipeline review’s notes\n\nQuarterly review of the reading pipeline.\nEvery sheet, paragraph and slide must reach the text.\nOwner: the platform team.\n\nAttached: bugs.csv (text/csv)"
+}

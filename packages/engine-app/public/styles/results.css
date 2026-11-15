@@ -1,0 +1,75 @@
+/* What a search found: a row is its document (a button that opens it) and its quiet facts beside it, the date, how it
+   matched and its number, which opens why it is here. The accent marks only the exact row. */
+
+.hit-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: var(--space-4);
+  align-items: start;
+}
+.hit-row > .hit {
+  grid-template-columns: 1fr;
+}
+.hit-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: end;
+  gap: var(--space-1) var(--space-3);
+  padding-top: var(--space-5);
+  color: var(--faint);
+  font-size: 12px;
+}
+/* One word and its figure, quiet, on one line; it opens why. The accent marks only the exact row. */
+.hit-how {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font: inherit;
+  color: var(--faint);
+  white-space: nowrap;
+  text-underline-offset: 3px;
+}
+.hit-how:hover,
+.hit-how[aria-expanded="true"] {
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+}
+.hit-figure {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.hit-row:has(.hit.is-exact) .hit-how {
+  color: var(--accent);
+}
+.hit.is-exact {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.search-note {
+  margin-bottom: var(--space-4);
+  color: var(--body);
+}
+.hit-why {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border-left: 2px solid var(--line);
+  color: var(--body);
+  font-size: 13px;
+  list-style: none;
+}
+/* On a phone the facts sit under the passage, on one line that wraps between them, never inside one. */
+@media (max-width: 720px) {
+  .hit-row {
+    grid-template-columns: 1fr;
+  }
+  .hit-meta {
+    justify-content: start;
+    padding: 0 0 var(--space-4);
+  }
+  .hit-meta > * {
+    white-space: nowrap;
+  }
+}

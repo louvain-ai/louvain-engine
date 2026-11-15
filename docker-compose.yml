@@ -1,0 +1,124 @@
+# The engine's services on one machine: Postgres with pgvector, and the Python sidecars built from apps/nlp.
+#
+#   ./engine up                                  # makes this install's secrets, then starts and readies the stack
+#
+# NO DEFAULT CREDENTIAL: every port is published on the loopback address only, where any local user and any web page
+# in a browser can reach it, so Postgres and the sidecars each require a per-install secret. `./engine up` makes them
+# in .engine/ (mode 600) and hands them to Compose through its environment. Run by hand, Compose needs them too:
+#
+#   export LOUVAIN_PG_PASSWORD="$(cat .engine/db-password)" LOUVAIN_SIDECAR_TOKEN="$(cat .engine/sidecar-token)"
+#   docker compose --profile bulk up -d --wait   # with the bulk embedding lane
+#
+# Each port comes from one setting a busy machine can move (in .env or the shell): LOUVAIN_PG_HOST_PORT (5434),
+# LOUVAIN_EMBEDDINGS_HOST_PORT (8091), LOUVAIN_EMBEDDINGS_BULK_HOST_PORT (8092), LOUVAIN_BM25_HOST_PORT (8095) and
+# LOUVAIN_RERANK_HOST_PORT (8096); `./engine up` builds the engine's URLs from them. Third-party images are pinned by digest, the tag beside it.
+services:
+  postgres:
+    image: pgvector/pgvector:pg17@sha256:b513c48566e4777cd3370451400000c78eda6a08131d68f4c31d4a76f27bd8fd
+    # Each engine process opens its own pool; the stock limit of 100 is reached by a few of them.
+    command: postgres -c max_connections=300
+    environment:
+      POSTGRES_USER: engine
+      POSTGRES_PASSWORD: ${LOUVAIN_PG_PASSWORD:?run ./engine up, which makes the database password in .engine/db-password}
+      POSTGRES_DB: engine
+    ports:
+      - "127.0.0.1:${LOUVAIN_PG_HOST_PORT:-5434}:5432"
+    # Ready means the real server over TCP: during initdb the image answers on the socket from a temporary server.
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=$$POSTGRES_PASSWORD psql -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB -tAc 'select 1' >/dev/null"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # The embedding sidecar, query lane (LOUVAIN_EMBEDDINGS_URL). The image takes its weights at build time:
+  # by default a public model from the Hugging Face hub (apps/nlp/Dockerfile.embed's EMBEDDING_MODEL argument).
+  embeddings:
+    build:
+      context: .
+      dockerfile: apps/nlp/Dockerfile.embed
+    environment:
+      PORT: 8090
+      LOUVAIN_EMBEDDINGS_CONCURRENCY: ${LOUVAIN_EMBEDDINGS_CONCURRENCY:-1}
+      LOUVAIN_EMBEDDINGS_MAX_QUEUE: ${LOUVAIN_EMBEDDINGS_MAX_QUEUE:-64}
+      LOUVAIN_SIDECAR_TOKEN: ${LOUVAIN_SIDECAR_TOKEN:?run ./engine up, which makes the sidecar token in .engine/sidecar-token}
+    ports:
+      - "127.0.0.1:${LOUVAIN_EMBEDDINGS_HOST_PORT:-8091}:8090"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8090/healthz').status==200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 60s
+      retries: 10
+
+  # The bulk lane: the same image, so a backfill never queues in front of a query (LOUVAIN_EMBEDDINGS_BULK_URL).
+  # Optional: without it, loading embeds on the query lane.
+  embeddings-bulk:
+    profiles: ["bulk"]
+    build:
+      context: .
+      dockerfile: apps/nlp/Dockerfile.embed
+    environment:
+      PORT: 8090
+      LOUVAIN_EMBEDDINGS_CONCURRENCY: ${LOUVAIN_EMBEDDINGS_CONCURRENCY:-1}
+      LOUVAIN_EMBEDDINGS_MAX_QUEUE: ${LOUVAIN_EMBEDDINGS_MAX_QUEUE:-64}
+      LOUVAIN_SIDECAR_TOKEN: ${LOUVAIN_SIDECAR_TOKEN:?run ./engine up, which makes the sidecar token in .engine/sidecar-token}
+    ports:
+      - "127.0.0.1:${LOUVAIN_EMBEDDINGS_BULK_HOST_PORT:-8092}:8090"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8090/healthz').status==200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 60s
+      retries: 10
+
+  # The BM25 keyword index (LOUVAIN_BM25_URL). Its index is derived from the records, so the volume is a cache.
+  bm25:
+    build:
+      context: .
+      dockerfile: apps/nlp/Dockerfile.bm25
+    environment:
+      PORT: 8095
+      LOUVAIN_BM25_DIR: /index
+      # Documents and searches pass through the same analyzer (the word-delimiter step, `apps/nlp/analyzer.py`).
+      LOUVAIN_BM25_ANALYZER: "on"
+      LOUVAIN_SIDECAR_TOKEN: ${LOUVAIN_SIDECAR_TOKEN:?run ./engine up, which makes the sidecar token in .engine/sidecar-token}
+    volumes:
+      - bm25index:/index
+    ports:
+      - "127.0.0.1:${LOUVAIN_BM25_HOST_PORT:-8095}:8095"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8095/healthz').status==200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 20s
+      retries: 10
+
+  # The local reranker (LOUVAIN_RERANK_URL): an open-weights cross-encoder, slow on a CPU. `./engine up` starts it, in
+  # its own profile, when engine.config.ts runs it, built with the model the configuration names; the weights are
+  # fetched once, at build, at a pinned hub commit.
+  rerank:
+    profiles: ["rerank"]
+    build:
+      context: .
+      dockerfile: apps/nlp/Dockerfile.rerank
+      # The shipped default; `./engine up` builds with the model engine.config.ts names (`--build-arg`).
+      args:
+        RERANK_MODEL: BAAI/bge-reranker-v2-m3
+        RERANK_MODEL_REVISION: 953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e
+    environment:
+      PORT: 8096
+      LOUVAIN_SIDECAR_TOKEN: ${LOUVAIN_SIDECAR_TOKEN:?run ./engine up, which makes the sidecar token in .engine/sidecar-token}
+    ports:
+      - "127.0.0.1:${LOUVAIN_RERANK_HOST_PORT:-8096}:8096"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8096/healthz').status==200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 60s
+      retries: 10
+
+volumes:
+  pgdata:
+  bm25index:

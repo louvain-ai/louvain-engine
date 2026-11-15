@@ -1,0 +1,474 @@
+{
+  "random letters": {
+    "sources": [],
+    "looselyRelated": [],
+    "matched": false,
+    "note": "No document holds \"ibobsonosoino78h9\"; searched without it. Nothing in your documents matches this search: none holds what it names.",
+    "hasMore": false,
+    "corrected": [
+      {
+        "from": "ibobsonosoino78h9",
+        "dropped": true
+      }
+    ]
+  },
+  "a real word in no document": {
+    "sources": [],
+    "looselyRelated": [
+      {
+        "id": "@board-shared/office-move",
+        "title": "Office move notice",
+        "app": "http",
+        "kind": "file",
+        "author": "office-move",
+        "modifiedAt": "2025-08-04T09:00:00.000Z",
+        "excerpt": "The board has agreed that the team moves to the third floor in October; staff will hear the details soon.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.17,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 1
+          }
+        }
+      },
+      {
+        "id": "@board/heron-acquisition",
+        "title": "Project Heron: acquisition proposal",
+        "app": "http",
+        "kind": "file",
+        "author": "heron-acquisition",
+        "modifiedAt": "2025-04-30T09:00:00.000Z",
+        "excerpt": "Heron is a small analytics company with nineteen staff. The proposal is to acquire it for four million, paid half in cash and half in shares, closing in the autumn.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.13,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 2
+          }
+        }
+      },
+      {
+        "id": "@engineering/deploy-runbook",
+        "title": "Deploy runbook",
+        "app": "http",
+        "kind": "file",
+        "author": "deploy-runbook",
+        "modifiedAt": "2025-04-14T09:00:00.000Z",
+        "excerpt": "Deploys go out from the main branch after the checks pass. Watch the error rate for ten minutes after each deploy, and roll back if it doubles.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.13,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 3
+          }
+        }
+      },
+      {
+        "id": "@engineering/on-call",
+        "title": "On-call rota",
+        "app": "http",
+        "kind": "file",
+        "author": "on-call",
+        "modifiedAt": "2025-07-01T09:00:00.000Z",
+        "excerpt": "Two engineers are on call each week, a primary and a secondary. The primary answers a page within fifteen minutes; the secondary takes over if the primary has not acknowledged it in thirty.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.11,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 4
+          }
+        }
+      },
+      {
+        "id": "@support/escalation",
+        "title": "Escalation guide",
+        "app": "http",
+        "kind": "file",
+        "author": "escalation",
+        "modifiedAt": "2025-02-03T09:00:00.000Z",
+        "excerpt": "Escalate to engineering when a customer reports lost data or an outage. Everything else stays with support until it has been open for three days.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.1,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 5
+          }
+        }
+      }
+    ],
+    "matched": false,
+    "note": "No document holds \"highfield\"; searched without it. Nothing in your documents matches this search: none holds its words or comes close to it in meaning. Any listed under looselyRelated are only the nearest.",
+    "hasMore": true,
+    "nextCursor": "<cursor>",
+    "corrected": [
+      {
+        "from": "highfield",
+        "dropped": true
+      }
+    ]
+  },
+  "an answer in other words": {
+    "sources": [
+      {
+        "id": "@handbook/own-car",
+        "title": "Using your own car for work",
+        "app": "http",
+        "kind": "file",
+        "author": "own-car",
+        "modifiedAt": "2024-05-20T09:00:00.000Z",
+        "excerpt": "If you drive your own car on company business, claim mileage at forty-five pence a mile. Your insurance must cover business use. Parking fines are never refunded.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.23,
+          "relevance": 0.557,
+          "ranks": {
+            "words": null,
+            "meaning": 1
+          },
+          "by": "relevance"
+        },
+        "container": {
+          "id": "http/folder/handbook",
+          "name": "handbook"
+        }
+      }
+    ],
+    "looselyRelated": [
+      {
+        "id": "@handbook/annual-leave",
+        "title": "Annual leave",
+        "app": "http",
+        "kind": "file",
+        "author": "annual-leave",
+        "modifiedAt": "2024-01-15T09:00:00.000Z",
+        "excerpt": "Everyone has twenty-five days of annual leave a year, plus public holidays. Book leave in the people system at least two weeks ahead. Up to five unused days carry over into the next year.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.16,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 2
+          }
+        }
+      },
+      {
+        "id": "@finance/audit-plan",
+        "title": "Year-end audit plan",
+        "app": "http",
+        "kind": "file",
+        "author": "audit-plan",
+        "modifiedAt": "2025-09-15T09:00:00.000Z",
+        "excerpt": "service desk will walk each floor with the asset register and tag any laptop, monitor or desk that is missing a label. Anything found that is not on the register is added at its estimated value and flagged for the auditors.\n\nThe audit closes with a meeting between the auditors, the finance director and the chair of the audit committee. Any findings are written up with an owner and a date, and the board reviews them at its next meeting.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.14,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 3
+          }
+        }
+      },
+      {
+        "id": "@engineering/failover-incident",
+        "title": "Incident report: database failover",
+        "app": "http",
+        "kind": "file",
+        "author": "failover-incident",
+        "modifiedAt": "2025-06-03T09:00:00.000Z",
+        "excerpt": "service. No data was lost: every write that was acknowledged before the failover was present on the promoted replica.\n\nActions: remove unused replication slots and alert when one is idle for a day; send disk alerts to the on-call phone; make the connection pool resolve the address on every new connection; and rehearse a failover each quarter.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.1,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 4
+          }
+        }
+      },
+      {
+        "id": "@support/clinic-partner",
+        "title": "Partner clinic",
+        "app": "http",
+        "kind": "file",
+        "author": "clinic-partner",
+        "modifiedAt": "2025-10-01T09:00:00.000Z",
+        "excerpt": "Our healthcare customers include a physician practice in Leeds that books appointments through the product. Treat their tickets as urgent during surgery hours.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.1,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 5
+          }
+        }
+      }
+    ],
+    "matched": true,
+    "note": "No document holds \"automobile\"; searched without it.",
+    "hasMore": true,
+    "nextCursor": "<cursor>",
+    "corrected": [
+      {
+        "from": "automobile",
+        "dropped": true
+      }
+    ]
+  },
+  "an identifier": {
+    "sources": [
+      {
+        "id": "@finance/fin-2207",
+        "title": "FIN-2207 Supplier contract renewal",
+        "app": "http",
+        "kind": "file",
+        "author": "fin-2207",
+        "modifiedAt": "2025-07-14T09:00:00.000Z",
+        "excerpt": "The cleaning contract renews in September for two more years at the same rate. Legal has reviewed the terms.",
+        "url": null,
+        "match": {
+          "words": true,
+          "meaning": null,
+          "exact": true,
+          "ranks": {
+            "words": 2,
+            "meaning": null
+          },
+          "by": "exact"
+        },
+        "container": {
+          "id": "http/folder/finance",
+          "name": "finance"
+        }
+      },
+      {
+        "id": "@handbook/procurement",
+        "title": "Buying things",
+        "app": "http",
+        "kind": "file",
+        "author": "procurement",
+        "modifiedAt": "2025-07-21T09:00:00.000Z",
+        "excerpt": "Contracts over ten thousand pounds go through finance; the cleaning renewal, FIN-2207, is an example of one.",
+        "url": null,
+        "match": {
+          "words": true,
+          "meaning": null,
+          "ranks": {
+            "words": 1,
+            "meaning": null
+          },
+          "by": "words"
+        },
+        "container": {
+          "id": "http/folder/handbook",
+          "name": "handbook"
+        }
+      }
+    ],
+    "looselyRelated": [],
+    "matched": true,
+    "note": null,
+    "hasMore": false
+  },
+  "plain words": {
+    "sources": [
+      {
+        "id": "@handbook/parental-leave",
+        "title": "Parental leave",
+        "app": "http",
+        "kind": "file",
+        "author": "parental-leave",
+        "modifiedAt": "2024-02-01T09:00:00.000Z",
+        "excerpt": "Parents receive twenty-six weeks of parental leave on full pay, which can be shared between both parents. Tell your manager twelve weeks before the expected date.",
+        "url": null,
+        "match": {
+          "words": true,
+          "meaning": 0.31,
+          "exact": true,
+          "relevance": 0.61,
+          "ranks": {
+            "words": 1,
+            "meaning": 1
+          },
+          "by": "exact"
+        },
+        "container": {
+          "id": "http/folder/handbook",
+          "name": "handbook"
+        }
+      },
+      {
+        "id": "@handbook/annual-leave",
+        "title": "Annual leave",
+        "app": "http",
+        "kind": "file",
+        "author": "annual-leave",
+        "modifiedAt": "2024-01-15T09:00:00.000Z",
+        "excerpt": "Everyone has twenty-five days of annual leave a year, plus public holidays. Book leave in the people system at least two weeks ahead. Up to five unused days carry over into the next year.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.26,
+          "relevance": 0.55,
+          "ranks": {
+            "words": null,
+            "meaning": 2
+          },
+          "by": "relevance"
+        },
+        "container": {
+          "id": "http/folder/handbook",
+          "name": "handbook"
+        }
+      }
+    ],
+    "looselyRelated": [
+      {
+        "id": "@board/executive-pay",
+        "title": "Executive pay review",
+        "app": "http",
+        "kind": "file",
+        "author": "executive-pay",
+        "modifiedAt": "2025-05-15T09:00:00.000Z",
+        "excerpt": "The remuneration committee recommends a three percent rise for the executive team and no change to the bonus scheme.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.19,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 3
+          }
+        }
+      },
+      {
+        "id": "@finance/petty-cash",
+        "title": "Petty cash",
+        "app": "http",
+        "kind": "file",
+        "author": "petty-cash",
+        "modifiedAt": "2024-07-30T09:00:00.000Z",
+        "excerpt": "Each office keeps a small float of petty cash for postage and refreshments. Count it every Friday and record every withdrawal in the petty cash book.",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.16,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 4
+          }
+        }
+      },
+      {
+        "id": "@engineering/failover-incident",
+        "title": "Incident report: database failover",
+        "app": "http",
+        "kind": "file",
+        "author": "failover-incident",
+        "modifiedAt": "2025-06-03T09:00:00.000Z",
+        "excerpt": "At 02:14 on the second of June the primary database stopped accepting writes after its disk filled with write-ahead log. The replica was promoted automatically after ninety seconds, but the application kept its connections to the old primary and returned errors to customers for eleven minutes.\n\nThe disk filled because a long-running report held a replication slot open and the log could not be recycled. The slot had been created for a migration in March and never removed. Monitoring alerted on disk usage at ninety percent, but the alert went to a channel that nobody watches at night.\n\nThe appli…",
+        "url": null,
+        "match": {
+          "words": false,
+          "meaning": 0.11,
+          "relevance": 0.5,
+          "ranks": {
+            "words": null,
+            "meaning": 5
+          }
+        }
+      }
+    ],
+    "matched": true,
+    "note": null,
+    "hasMore": true,
+    "nextCursor": "<cursor>"
+  },
+  "a search that only names a code": {
+    "sources": [
+      {
+        "id": "@finance/po-4471",
+        "title": "Supplier invoice approval",
+        "app": "http",
+        "kind": "file",
+        "author": "po-4471",
+        "modifiedAt": "2025-02-17T09:00:00.000Z",
+        "excerpt": "Purchase order PO-4471 covers the replacement desks for the second floor. The supplier invoice matches the order and is approved for payment.",
+        "url": null,
+        "match": {
+          "words": true,
+          "meaning": null,
+          "ranks": {
+            "words": 1,
+            "meaning": null
+          },
+          "by": "words"
+        },
+        "container": {
+          "id": "http/folder/finance",
+          "name": "finance"
+        }
+      }
+    ],
+    "looselyRelated": [],
+    "matched": true,
+    "note": null,
+    "hasMore": false
+  },
+  "a figure written another way": {
+    "sources": [
+      {
+        "id": "@finance/po-4471",
+        "title": "Supplier invoice approval",
+        "app": "http",
+        "kind": "file",
+        "author": "po-4471",
+        "modifiedAt": "2025-02-17T09:00:00.000Z",
+        "excerpt": "Purchase order PO-4471 covers the replacement desks for the second floor. The supplier invoice matches the order and is approved for payment.",
+        "url": null,
+        "match": {
+          "words": true,
+          "meaning": null,
+          "ranks": {
+            "words": 1,
+            "meaning": null
+          },
+          "by": "words"
+        },
+        "container": {
+          "id": "http/folder/finance",
+          "name": "finance"
+        }
+      }
+    ],
+    "looselyRelated": [],
+    "matched": true,
+    "note": null,
+    "hasMore": false
+  }
+}

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Louvain Engine</title>
+    <link rel="icon" href="mark.svg" type="image/svg+xml" />
+    <script src="theme-boot.js"></script>
+    <link rel="preload" href="fonts/host-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/parts.css" />
+    <link rel="stylesheet" href="styles/screens.css" />
+    <link rel="stylesheet" href="styles/answer.css" />
+    <link rel="stylesheet" href="styles/results.css" />
+    <script type="module" src="js/main.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="bar">
+      <div class="bar-row">
+        <a class="brand" href="#search" aria-label="Louvain Engine, Search">
+          <svg class="lockup" viewBox="0 0 469 122" aria-hidden="true">
+            <g transform="translate(0 12) scale(1.5312)">
+              <g class="mark-bare">
+                <path class="mk-line" d="M15 15 V49 H49" />
+                <circle class="mk-node" cx="15" cy="15" r="6.6" />
+                <circle class="mk-node" cx="49" cy="49" r="6.6" />
+                <circle class="mk-node" cx="15" cy="49" r="9.2" />
+                <circle class="mk-faint" cx="49" cy="15" r="6.6" />
+              </g>
+              <g class="mark-tiled">
+                <rect class="mk-tile" width="64" height="64" rx="14" />
+                <g transform="translate(10 10) scale(0.6875)">
+                  <path class="mk-line" d="M15 15 V49 H49" />
+                  <circle class="mk-node" cx="15" cy="15" r="6.6" />
+                  <circle class="mk-node" cx="49" cy="49" r="6.6" />
+                  <circle class="mk-node" cx="15" cy="49" r="9.2" />
+                  <circle class="mk-faint" cx="49" cy="15" r="6.6" />
+                </g>
+              </g>
+            </g>
+            <g class="wordmark" transform="translate(118 97)">
+              <path d="M6.67 0V-72H19.33V0Z M52.87 1Q44.77 1 38.63 -2.4Q32.5 -5.8 29.08 -11.85Q25.67 -17.9 25.67 -25.7Q25.67 -33.53 29.1 -39.43Q32.53 -45.33 38.65 -48.67Q44.77 -52 52.87 -52Q61.07 -52 67.18 -48.67Q73.3 -45.33 76.68 -39.43Q80.07 -33.53 80.07 -25.7Q80.07 -17.9 76.65 -11.85Q73.23 -5.8 67.12 -2.4Q61 1 52.87 1ZM52.87 -9.13Q56.93 -9.13 60.1 -11.18Q63.27 -13.23 65.1 -16.97Q66.93 -20.7 66.93 -25.8Q66.93 -33.33 62.95 -37.6Q58.97 -41.87 52.87 -41.87Q46.8 -41.87 42.8 -37.57Q38.8 -33.27 38.8 -25.8Q38.8 -20.7 40.63 -16.97Q42.47 -13.23 45.65 -11.18Q48.83 -9.13 52.87 -9.13Z M102.9 1Q97.63 1 93.77 -1.25Q89.9 -3.5 87.83 -7.38Q85.77 -11.27 85.77 -16.17V-51H98.43V-18.8Q98.43 -14.07 100.78 -11.7Q103.13 -9.33 107.43 -9.33Q111.3 -9.33 114.27 -11.13Q117.23 -12.93 118.98 -16.15Q120.73 -19.37 120.73 -23.53L122.03 -11.3Q119.53 -5.73 114.57 -2.37Q109.6 1 102.9 1ZM121.1 0V-12H120.73V-51H133.4V0Z M158 0 137.57 -51H151.17L167.5 -4.07H160.83L177.07 -51H190.27L169.83 0Z M226.2 0Q225.67 -2.03 225.45 -4.43Q225.23 -6.83 225.23 -10.17H224.8V-34.37Q224.8 -38.37 222.55 -40.45Q220.3 -42.53 215.67 -42.53Q211.2 -42.53 208.55 -40.88Q205.9 -39.23 205.3 -36.13H193.2Q194.03 -43.2 200 -47.6Q205.97 -52 216.1 -52Q226.6 -52 232 -47.23Q237.4 -42.47 237.4 -33.33V-10.17Q237.4 -7.77 237.73 -5.28Q238.07 -2.8 238.77 0ZM208.5 1Q200.8 1 196.25 -2.85Q191.7 -6.7 191.7 -13.2Q191.7 -20.17 196.8 -24.3Q201.9 -28.43 211.23 -29.8L227.1 -32.2V-24.2L213.3 -22.07Q208.77 -21.37 206.53 -19.6Q204.3 -17.83 204.3 -14.63Q204.3 -11.67 206.38 -10.13Q208.47 -8.6 212.2 -8.6Q217.57 -8.6 221.18 -11.32Q224.8 -14.03 224.8 -17.93L226.17 -10.23Q224.17 -4.73 219.62 -1.87Q215.07 1 208.5 1Z M247.17 0V-51H259.83V0ZM246.63 -59.4V-73.33H260.37V-59.4Z M270.17 0V-51H282.47V-39H282.83V0ZM306 0V-32.2Q306 -36.93 303.6 -39.3Q301.2 -41.67 296.57 -41.67Q292.57 -41.67 289.45 -39.87Q286.33 -38.07 284.58 -34.9Q282.83 -31.73 282.83 -27.47L281.53 -39.7Q284.07 -45.33 289.08 -48.67Q294.1 -52 301.1 -52Q309.43 -52 314.05 -47.32Q318.67 -42.63 318.67 -34.83V0Z M328.23 0V-14.43H342.67V0Z" />
+            </g>
+          </svg>
+          <span class="brand-line">Engine</span>
+        </a>
+
+        <nav class="tabs" aria-label="Views">
+          <a class="tab" href="#search" data-view="search">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.75" cy="8.75" r="5.25" /><path d="m12.75 12.75 4 4" /></svg>
+            <span>Search</span>
+          </a>
+          <a class="tab" href="#ask" data-view="ask">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4.75h12v8.5H9.5L6 16.25v-3H4z" /><path d="M7.5 8.25h5M7.5 10.5h3" /></svg>
+            <span>Ask</span>
+          </a>
+        </nav>
+
+        <div class="bar-end">
+          <button class="status" type="button" popovertarget="status-card">
+            <span class="dot" aria-hidden="true"></span><span class="status-line">Connecting</span>
+          </button>
+          <button class="theme quiet-button" type="button" aria-label="Theme: follow the system">
+            <svg class="icon theme-system" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="9.5" rx="1.5" /><path d="M7.5 16.5h5M10 13.5v3" /></svg>
+            <svg class="icon theme-light" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.25" /><path d="M10 2.5v1.75M10 15.75v1.75M2.5 10h1.75M15.75 10h1.75M4.7 4.7l1.24 1.24M14.06 14.06l1.24 1.24M4.7 15.3l1.24-1.24M14.06 5.94l1.24-1.24" /></svg>
+            <svg class="icon theme-dark" viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 12.4A6.25 6.25 0 0 1 7.6 4.5a6.25 6.25 0 1 0 7.9 7.9Z" /></svg>
+          </button>
+        </div>
+      </div>
+      <div class="status-card" id="status-card" popover></div>
+    </header>
+
+    <main id="main" class="sheet" tabindex="-1">
+      <h1 class="visually-hidden">Louvain Engine</h1>
+      <section class="view view-search" id="view-search" aria-label="Search" hidden>
+        <search>
+        <form class="query">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.75" cy="8.75" r="5.25" /><path d="m12.75 12.75 4 4" /></svg>
+          <input class="query-input" name="q" type="search" placeholder="Search your documents" aria-label="Search your documents" autocomplete="off" spellcheck="false" enterkeyhint="search" />
+          <kbd class="key" aria-hidden="true">/</kbd>
+        </form>
+        </search>
+        <p class="search-said visually-hidden" role="status"></p>
+        <div class="results" aria-busy="false"></div>
+      </section>
+
+      <section class="view view-ask" id="view-ask" aria-label="Ask" hidden>
+        <ol class="thread"></ol>
+        <div class="dock">
+          <form class="composer">
+            <textarea class="composer-input" name="question" rows="1" placeholder="Ask about your documents" aria-label="Your question" enterkeyhint="send"></textarea>
+            <button class="send" type="submit" aria-label="Ask">
+              <svg class="icon icon-send" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 15.5v-11M5.5 9 10 4.5 14.5 9" /></svg>
+              <svg class="icon icon-stop" viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="6" width="8" height="8" rx="1.5" /></svg>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section class="view view-signin" id="view-signin" aria-label="Sign in" hidden></section>
+    </main>
+
+    <aside class="reader" aria-label="Document" hidden>
+      <div class="reader-bar">
+        <p class="reader-meta mono"></p>
+        <button class="reader-close quiet-button" type="button" aria-label="Close the document">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 5.5 9 9M14.5 5.5l-9 9" /></svg>
+        </button>
+      </div>
+      <article class="reader-page" tabindex="-1"></article>
+    </aside>
+  </body>
+</html>

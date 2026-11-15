@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { createPluginRegistry, defineEngine } from "@louvain/engine-core";
+import { __camelName__ } from "../src/index.js";
+
+/** The reranker: one score per text, from 0 to 1, in the order asked. */
+const reranker = async () =>
+  (await createPluginRegistry(defineEngine({ reranker: __camelName__() }))).list("reranker")[0]?.plugin;
+
+test("it scores every text from 0 to 1, in the order asked", async () => {
+  const r = await reranker();
+  const answer = await r?.rerank({ query: "when does the lease renew", texts: ["a", "b", "c"] });
+  assert.deepEqual(answer, { ok: true, scores: [1, 1 / 2, 1 / 3] });
+});

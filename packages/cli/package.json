@@ -1,0 +1,20 @@
+{
+  "name": "@louvain/cli",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "description": "./engine's commands: each loads engine.config.ts and runs one part of the engine.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@louvain/engine": "workspace:*",
+    "@louvain/engine-app": "workspace:*",
+    "@louvain/engine-core": "workspace:*",
+    "@louvain/reader-documents": "workspace:*",
+    "@louvain/reader-text": "workspace:*",
+    "zod": "^4.6.7"
+  }
+}

@@ -1,0 +1,39 @@
+From: Platform Owner <owner@example.test>
+To: Reader <reader@example.test>, second@example.test
+Subject: Reading pipeline =?utf-8?q?review=E2=80=99s?= notes
+Date: Wed, 30 Sep 2026 09:00:00 +1300
+Message-ID: <writer-corpus-1@example.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============8043128891768169035=="
+
+--===============8043128891768169035==
+Content-Type: multipart/alternative;
+ boundary="===============1327201260535552318=="
+
+--===============1327201260535552318==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Quarterly review of the reading pipeline.
+Every sheet, paragraph and slide must reach the text.
+Owner: the platform team.
+
+--===============1327201260535552318==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<p>Quarterly review of the reading pipeline.</p><p>Every sheet, paragraph and=
+ slide must reach the text.</p><p>Owner: the platform team.</p>
+
+--===============1327201260535552318==--
+
+--===============8043128891768169035==
+Content-Type: text/csv
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="bugs.csv"
+MIME-Version: 1.0
+
+aWQsaXNzdWUKMSxQYXJzZXIgZHJvcHMgaW5saW5lIHN0cmluZ3MK
+
+--===============8043128891768169035==--

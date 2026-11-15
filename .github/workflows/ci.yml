@@ -1,0 +1,84 @@
+# The engine's own checks. `check`: install from the lockfile, build the workspace packages, typecheck, lint and test.
+# `stack`: `./engine up` on a clean runner (the Compose services built and started, the schema loaded from
+# db/baseline.sql, the tool server started), the smoke test (packages/engine/scripts/verify-engine-stack.ts) accepting,
+# indexing, searching and reading one document, then `./engine ingest` of the sample corpus and the example agent
+# (examples/agent) calling the tool server over MCP, which fails unless the right document comes first.
+# `database`: Postgres and the keyword index, and the engine's database tests (packages/engine/test/db): what each search answers and
+# the SQL text each read sends, recorded, on a database each test builds from db/baseline.sql.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      # The version is package.json's `packageManager`, the one the lockfile was cut with.
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm run test
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      # The Compose file takes no default credential: this job's database gets a throwaway password of its own.
+      - run: |
+          password="$(openssl rand -hex 32)"
+          echo "::add-mask::$password"
+          {
+            echo "LOUVAIN_PG_PASSWORD=$password"
+            echo "LOUVAIN_SIDECAR_TOKEN=$(openssl rand -hex 32)"
+            echo "TEST_AUTH_DATABASE_URL=postgres://engine:$password@127.0.0.1:5434/engine"
+          } >> "$GITHUB_ENV"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: docker compose up -d --wait postgres
+      # The open engine reads through its keyword index, so each test file starts its own container of the index's
+      # image (packages/engine/test/db/keyword-index.ts), built here from the tree's own Dockerfile, by its id.
+      - run: echo "LOUVAIN_TEST_BM25_IMAGE=$(docker build -q -f apps/nlp/Dockerfile.bm25 .)" >> "$GITHUB_ENV"
+      - run: pnpm --filter @louvain/engine test:db
+      - if: always()
+        run: docker compose down -v
+  stack:
+    runs-on: ubuntu-latest
+    env:
+      LOUVAIN_EMBEDDINGS_URL: http://127.0.0.1:8091
+      LOUVAIN_BM25_URL: http://127.0.0.1:8095
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: ./engine up
+      # The smoke test runs outside ./engine, so it reads this install's secrets from the files `up` made.
+      - run: |
+          DATABASE_URL="postgres://engine:$(cat ../../.engine/db-password)@127.0.0.1:5434/engine" \
+          LOUVAIN_SIDECAR_TOKEN="$(cat ../../.engine/sidecar-token)" pnpm exec tsx scripts/verify-engine-stack.ts
+        working-directory: packages/engine
+      - run: ./engine ingest folder --folder examples/sample-corpus
+      - run: node --import tsx examples/agent/agent.ts --expect lease-renewal
+      - run: ./engine status
+      - if: failure()
+        run: ./engine logs
+      - if: always()
+        run: ./engine down --volumes --yes

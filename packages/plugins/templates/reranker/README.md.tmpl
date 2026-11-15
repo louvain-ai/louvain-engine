@@ -1,0 +1,47 @@
+# reranker-__name__
+
+A reranker that keeps the order it was given: the smallest correct one, as `./engine plugin new reranker <name>`
+writes it. Make it read the search and each candidate's text, and score how well the candidate answers.
+
+## Use it
+
+```ts
+// engine.config.ts
+import { defineEngine } from "@louvain/engine-core";
+import { __camelName__ } from "@louvain/reranker-__name__";
+
+export default defineEngine({ reranker: __camelName__() });
+```
+
+## Make it yours
+
+This is the whole of `src/index.ts`:
+
+```ts
+import { definePlugin } from "@louvain/engine-core";
+import { z } from "zod";
+
+export const __camelName__ = definePlugin({
+  kind: "reranker",
+  name: "__name__",
+  settings: z.object({}),
+  create: () => ({
+    model: "__name__",
+    rerank: async ({ texts }) => ({ ok: true, scores: texts.map((_, i) => 1 / (i + 1)) }),
+  }),
+});
+```
+
+1. **`definePlugin`** makes a factory; `engine.config.ts` calls it. A configuration runs one reranker, or none.
+2. **`settings`** is a zod schema for what the configuration passes, such as a URL, a model or a timeout. A wrong
+   setting stops the start with the schema's own message. Read a key from the environment in its default, so it is
+   never written into a file.
+3. **`model`** names what makes the scores: a cut-off measured on one model is never applied to another's. A reranker
+   may also state `cutoffs` (`{ matched }`: at or above it, a document matches) and `blend` (how much of the order is
+   its own, from 0 to 1).
+4. **`rerank`** gets `{ query, texts }` and returns one score from 0 to 1 per text, in the order asked, as
+   `{ ok: true, scores }`. A reranker that cannot answer returns `{ ok: false, failure: "<why>" }`; it never throws,
+   and the engine then keeps the order it had and says the search was not reranked.
+
+Test it through the registry, as `test/index.test.ts` does. `packages/plugins/reranker-cohere` is a complete one that
+calls an API.

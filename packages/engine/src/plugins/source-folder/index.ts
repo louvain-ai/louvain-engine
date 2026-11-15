@@ -1,0 +1,96 @@
+import { type Dirent, readdirSync, realpathSync, statSync } from "node:fs";
+import { basename, extname, join, relative } from "node:path";
+import { definePlugin, type IngestItem, type ItemProblem, source } from "@louvain/engine-core";
+import { z } from "zod";
+
+/**
+ * A folder: every file under it, keyed by its path. It lists the folder whole, so a file gone from it is removed; a
+ * directory it cannot read makes the listing incomplete, and then nothing is. Links are never followed, hidden names
+ * are left out, and no file is read here: the engine reads it, inside this folder.
+ */
+const isDirectory = (path: string): boolean => {
+  try {
+    return statSync(path).isDirectory();
+  } catch {
+    // swallowed: a path that cannot be stated is not a folder, and the settings are refused saying so.
+    return false;
+  }
+};
+
+const FolderRequest = z.object({
+  folder: z
+    .string()
+    .min(1)
+    .refine(isDirectory, {
+      error: (issue) => `${String(issue.input)} is not a folder that exists`,
+    })
+    .describe("the folder to keep the collection in step with"),
+  collection: z
+    .string()
+    .optional()
+    .describe("the collection's name; the folder's own name by default"),
+});
+
+/** A folder's own name as a collection's: what the folder is called, in the characters a collection's name allows. */
+const collectionOf = (root: string): string =>
+  basename(root)
+    .replace(/[^A-Za-z0-9_-]+/g, "-")
+    .replace(/^[-_]+|-+$/g, "") || "folder";
+
+/** `./engine ingest folder --folder <path> [--collection <name>]`: the request's fields are the command's flags. */
+export const folder = definePlugin({
+  kind: "source",
+  name: "folder",
+  create: () =>
+    source({
+      request: FolderRequest,
+      open: ({ folder, collection }) => {
+        // The native form spells the path as the disk does, so one folder typed in another case is one origin.
+        const root = realpathSync.native(folder);
+        const listing = { whole: true };
+        return {
+          collection: collection ?? collectionOf(root),
+          origin: root,
+          files: root,
+          lists: "all",
+          items: () => walk(root, root, listing),
+          complete: () => listing.whole,
+        };
+      },
+    }),
+});
+
+async function* walk(
+  root: string,
+  dir: string,
+  listing: { whole: boolean },
+): AsyncGenerator<IngestItem | ItemProblem> {
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    // swallowed: the directory is reported, and the listing is no longer whole, so nothing is removed.
+    listing.whole = false;
+    yield { at: relative(root, dir) || ".", problem: "unreadable folder" };
+    return;
+  }
+  for (const entry of entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) {
+    if (entry.name.startsWith(".")) continue;
+    const path = join(dir, entry.name);
+    const key = relative(root, path).split("\\").join("/");
+    if (entry.isSymbolicLink()) yield { at: key, key, problem: "link" };
+    else if (entry.isDirectory()) yield* walk(root, path, listing);
+    else yield fileItem(key);
+  }
+}
+
+function fileItem(key: string): IngestItem {
+  const dir = key.includes("/") ? key.slice(0, key.lastIndexOf("/")) : undefined;
+  return {
+    key,
+    file: key,
+    title: basename(key, extname(key)),
+    kind: "document",
+    ...(dir ? { container: dir } : {}),
+  };
+}

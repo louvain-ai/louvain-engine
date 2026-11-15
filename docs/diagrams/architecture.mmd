@@ -1,0 +1,40 @@
+%% title: The engine's architecture: your agent and the ./engine command over the tool server, the loader and search, which use Postgres with pgvector and two sidecars, with a bulk embedding lane and a reranker as options
+flowchart TB
+  agent["`**Your agent**`"]
+  cli["`**./engine**`"]
+  subgraph engine["Louvain Engine"]
+    direction TB
+    server["`**Tool server**
+    MCP over HTTP
+    louvain_search_sources
+    louvain_lookup_source
+    louvain_read_source`"]
+    loader["`**Loader**
+    file-reader plugins`"]
+    search["`**Search**
+    the same tool, in this process`"]
+    server ~~~ loader ~~~ search
+  end
+  subgraph stack["Default stack, Docker Compose"]
+    direction TB
+    store[("`**Postgres**
+    with pgvector`")]
+    embed["`**Embedding**
+    sidecar`"]
+    keyword["`**Keyword index**
+    sidecar`"]
+    store ~~~ embed ~~~ keyword
+  end
+  subgraph optional["Optional"]
+    direction TB
+    bulk["`**Bulk embedding**
+    --profile bulk`"]
+    rerank["`**Reranker**
+    sidecar or hosted, in engine.config.ts`"]
+    bulk ~~~ rerank
+  end
+  agent -- "MCP, bearer token" --> engine
+  cli -- "up, ingest, search" --> engine
+  engine -- "every read and write" --> stack
+  engine -.-> optional
+  stack ~~~ optional

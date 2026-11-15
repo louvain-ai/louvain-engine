@@ -1,0 +1,13 @@
+/** A reranker: it keeps the order it was given. Its README walks every line. */
+import { definePlugin } from "@louvain/engine-core";
+import { z } from "zod";
+
+export const __camelName__ = definePlugin({
+  kind: "reranker",
+  name: "__name__",
+  settings: z.object({}),
+  create: () => ({
+    model: "__name__",
+    rerank: async ({ texts }) => ({ ok: true, scores: texts.map((_, i) => 1 / (i + 1)) }),
+  }),
+});

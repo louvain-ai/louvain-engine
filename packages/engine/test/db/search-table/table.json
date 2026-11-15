@@ -1,0 +1,1206 @@
+{
+  "rows": [
+    {
+      "query": "SUP-1042",
+      "class": "exact key",
+      "why": "an identified thing outranks an unidentified reference to it: a document whose title opens with the key leads its search (match.exact), then the documents that mention the key",
+      "status": "holds",
+      "first": "support/sup-1042",
+      "must": {
+        "keys": ["support/sup-1042", "support/escalation-review"],
+        "within": 2
+      },
+      "only": true,
+      "mustNot": ["support/sup-1043", "support/sup-1041"],
+      "note": null
+    },
+    {
+      "query": "FS-4471",
+      "class": "exact key",
+      "why": "an identified thing outranks an unidentified reference to it: a document whose title opens with the key leads its search (match.exact), then the documents that mention the key",
+      "status": "holds",
+      "first": "datasheets/fs-4471",
+      "only": true,
+      "must": {
+        "keys": ["datasheets/fs-4471"],
+        "within": 1
+      },
+      "mustNot": ["datasheets/fs-4472"],
+      "note": null
+    },
+    {
+      "query": "note-05",
+      "class": "exact key",
+      "why": "an identified thing outranks an unidentified reference to it: a document whose title opens with the key leads its search (match.exact), then the documents that mention the key; a key's parts are not stemmed",
+      "status": "holds",
+      "first": "notes/note-05",
+      "only": true,
+      "must": {
+        "keys": ["notes/note-05"],
+        "within": 1
+      },
+      "mustNot": ["wiki/field-service-scheduling-notes-5"],
+      "note": null
+    },
+    {
+      "query": "call-10-velden",
+      "class": "exact key",
+      "why": "an identified thing outranks an unidentified reference to it: a document whose title opens with the key leads its search (match.exact), then the documents that mention the key",
+      "status": "holds",
+      "first": "calls/call-10-velden",
+      "only": true,
+      "must": {
+        "keys": ["calls/call-10-velden"],
+        "within": 1
+      }
+    },
+    {
+      "query": "SUP-1024",
+      "class": "exact key",
+      "why": "a term held whole is the answer and is never widened (last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so)",
+      "status": "holds",
+      "first": "support/sup-1024",
+      "only": true,
+      "must": {
+        "keys": ["support/sup-1024"],
+        "within": 1
+      },
+      "note": null
+    },
+    {
+      "query": "sup1042",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search",
+      "status": "holds",
+      "first": "support/sup-1042",
+      "only": true,
+      "must": {
+        "keys": ["support/sup-1042", "support/escalation-review"],
+        "within": 2
+      },
+      "mustNot": ["support/sup-1043"]
+    },
+    {
+      "query": "sup-1042",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search",
+      "status": "holds",
+      "first": "support/sup-1042",
+      "only": true,
+      "must": {
+        "keys": ["support/sup-1042", "support/escalation-review"],
+        "within": 2
+      },
+      "mustNot": ["support/sup-1043"]
+    },
+    {
+      "query": "Sup-1042",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search",
+      "status": "holds",
+      "first": "support/sup-1042",
+      "only": true,
+      "must": {
+        "keys": ["support/sup-1042", "support/escalation-review"],
+        "within": 2
+      },
+      "mustNot": ["support/sup-1043"]
+    },
+    {
+      "query": "SUP1042",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search",
+      "status": "holds",
+      "first": "support/sup-1042",
+      "only": true,
+      "must": {
+        "keys": ["support/sup-1042", "support/escalation-review"],
+        "within": 2
+      },
+      "mustNot": ["support/sup-1043"]
+    },
+    {
+      "query": "fs4471",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a digit part is held as a number",
+      "status": "holds",
+      "first": "datasheets/fs-4471",
+      "only": true,
+      "must": {
+        "keys": ["datasheets/fs-4471"],
+        "within": 1
+      }
+    },
+    {
+      "query": "Fs-4471",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a digit part is held as a number",
+      "status": "holds",
+      "first": "datasheets/fs-4471",
+      "only": true,
+      "must": {
+        "keys": ["datasheets/fs-4471"],
+        "within": 1
+      }
+    },
+    {
+      "query": "4471",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a digit part is held as a number",
+      "status": "holds",
+      "first": "datasheets/fs-4471",
+      "only": true,
+      "must": {
+        "keys": ["datasheets/fs-4471"],
+        "within": 1
+      }
+    },
+    {
+      "query": "SUP 1042",
+      "class": "key forms",
+      "why": "a space is not an intra-word delimiter, so a spaced key is two tokens; the documents holding both lead",
+      "status": "holds",
+      "must": {
+        "keys": ["support/sup-1042", "support/escalation-review"],
+        "within": 2
+      }
+    },
+    {
+      "query": "FS 4471",
+      "class": "key forms",
+      "why": "a space is not an intra-word delimiter, so a spaced key is two tokens; the document holding both leads",
+      "status": "holds",
+      "first": "datasheets/fs-4471"
+    },
+    {
+      "query": "NOTE5",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a digit part drops its leading zeros, so a zero-padded key is one key, and a key's parts are not stemmed",
+      "status": "holds",
+      "first": "notes/note-05",
+      "only": true,
+      "must": {
+        "keys": ["notes/note-05"],
+        "within": 1
+      },
+      "mustNot": [
+        "notes/note-15",
+        "notes/note-25",
+        "notes/note-35",
+        "wiki/field-service-scheduling-notes-5"
+      ]
+    },
+    {
+      "query": "note05",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a digit part drops its leading zeros, so a zero-padded key is one key, and a key's parts are not stemmed",
+      "status": "holds",
+      "first": "notes/note-05",
+      "only": true,
+      "must": {
+        "keys": ["notes/note-05"],
+        "within": 1
+      },
+      "mustNot": [
+        "notes/note-15",
+        "notes/note-25",
+        "notes/note-35",
+        "wiki/field-service-scheduling-notes-5"
+      ]
+    },
+    {
+      "query": "note-5",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a digit part drops its leading zeros, so a zero-padded key is one key, and a key's parts are not stemmed",
+      "status": "holds",
+      "first": "notes/note-05",
+      "only": true,
+      "must": {
+        "keys": ["notes/note-05"],
+        "within": 1
+      },
+      "mustNot": [
+        "notes/note-15",
+        "notes/note-25",
+        "notes/note-35",
+        "wiki/field-service-scheduling-notes-5"
+      ]
+    },
+    {
+      "query": "NOTE-05",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a digit part drops its leading zeros, so a zero-padded key is one key, and a key's parts are not stemmed",
+      "status": "holds",
+      "first": "notes/note-05",
+      "only": true,
+      "must": {
+        "keys": ["notes/note-05"],
+        "within": 1
+      },
+      "mustNot": [
+        "notes/note-15",
+        "notes/note-25",
+        "notes/note-35",
+        "wiki/field-service-scheduling-notes-5"
+      ]
+    },
+    {
+      "query": "note-005",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a digit part drops its leading zeros, so a zero-padded key is one key, and a key's parts are not stemmed",
+      "status": "holds",
+      "first": "notes/note-05",
+      "only": true,
+      "must": {
+        "keys": ["notes/note-05"],
+        "within": 1
+      },
+      "mustNot": [
+        "notes/note-15",
+        "notes/note-25",
+        "notes/note-35",
+        "wiki/field-service-scheduling-notes-5"
+      ]
+    },
+    {
+      "query": "notes-5",
+      "class": "key forms",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a key's parts are not stemmed, so `notes-5` is the key `notes5` and never note-05, which only an edit would reach",
+      "status": "holds",
+      "first": "wiki/field-service-scheduling-notes-5",
+      "only": true,
+      "must": {
+        "keys": ["wiki/field-service-scheduling-notes-5"],
+        "within": 1
+      },
+      "mustNot": ["notes/note-05"]
+    },
+    {
+      "query": "SUP-1061",
+      "class": "complete key",
+      "why": "an identifier is never corrected, so a key no document is finds nothing, not its neighbour",
+      "status": "holds",
+      "nothing": true,
+      "mustNot": ["support/sup-1060"],
+      "note": "No document holds \"SUP-1061\"; searched without it. Nothing in your documents matches this search: none holds what it names.",
+      "corrected": [
+        {
+          "from": "SUP-1061",
+          "dropped": true
+        }
+      ]
+    },
+    {
+      "query": "FS-4473",
+      "class": "complete key",
+      "why": "an identifier is never corrected, so a key no document is finds nothing, not its neighbour",
+      "status": "holds",
+      "nothing": true,
+      "mustNot": ["datasheets/fs-4472", "datasheets/fs-4471"],
+      "note": "No document holds \"FS-4473\"; searched without it. Nothing in your documents matches this search: none holds what it names.",
+      "corrected": [
+        {
+          "from": "FS-4473",
+          "dropped": true
+        }
+      ]
+    },
+    {
+      "query": "SUP-102",
+      "class": "unfinished key",
+      "why": "last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (from 3 characters), and the page says so",
+      "status": "holds",
+      "must": {
+        "keys": [
+          "support/sup-1020",
+          "support/sup-1021",
+          "support/sup-1022",
+          "support/sup-1023",
+          "support/sup-1024",
+          "support/sup-1025",
+          "support/sup-1026",
+          "support/sup-1027",
+          "support/sup-1028",
+          "support/sup-1029"
+        ],
+        "within": 10
+      },
+      "only": true,
+      "note": "No document holds \"SUP-102\"; searched for what begins with it.",
+      "corrected": [
+        {
+          "from": "SUP-102",
+          "completed": true
+        }
+      ]
+    },
+    {
+      "query": "FS-447",
+      "class": "unfinished key",
+      "why": "last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so",
+      "status": "holds",
+      "must": {
+        "keys": ["datasheets/fs-4471", "datasheets/fs-4472"],
+        "within": 2
+      },
+      "only": true
+    },
+    {
+      "query": "PX-771",
+      "class": "unfinished key",
+      "why": "last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (from 3 characters), and the page says so; a completion that every readable document holding it also holds a shorter one by (a key and its revision, PX-7710-102 beside PX-7710) folds into the shorter, so the note names the key once",
+      "status": "holds",
+      "must": {
+        "keys": ["parts/bracket-catalogue"],
+        "within": 1
+      },
+      "only": true,
+      "note": "No document holds \"PX-771\"; searched for what begins with it.",
+      "corrected": [
+        {
+          "from": "PX-771",
+          "completed": true
+        }
+      ]
+    },
+    {
+      "query": "QX-550",
+      "class": "unfinished key",
+      "why": "last-token prefix: a key whose numbered extensions run past a hundred terms (QX-5501-001 to -120) folds them into the key in one fenced question, and they spend none of the walk's budget, so the sibling key after them in term order (QX-5507) is still reached and named",
+      "status": "holds",
+      "must": {
+        "keys": ["parts/qx-5501", "parts/qx-5501-lines", "parts/qx-5507"],
+        "within": 3
+      },
+      "only": true,
+      "note": "No document holds \"QX-550\"; searched for what begins with it.",
+      "corrected": [
+        {
+          "from": "QX-550",
+          "completed": true
+        }
+      ]
+    },
+    {
+      "query": "SU",
+      "class": "unfinished key",
+      "why": "last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix of the held terms, from 3 characters; two are under the minimum, so nothing completes",
+      "status": "holds",
+      "nothing": true
+    },
+    {
+      "query": "SUP-102 escalation",
+      "class": "unfinished key",
+      "why": "last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so; only the last token completes, so a key prefix earlier in the search is left as typed",
+      "status": "holds",
+      "first": "support/escalation-review",
+      "notMatched": [
+        "support/sup-1020",
+        "support/sup-1021",
+        "support/sup-1022",
+        "support/sup-1023",
+        "support/sup-1024",
+        "support/sup-1025",
+        "support/sup-1026",
+        "support/sup-1027",
+        "support/sup-1028",
+        "support/sup-1029"
+      ]
+    },
+    {
+      "query": "2400",
+      "class": "figures",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search: a figure is one figure however its thousands are written",
+      "status": "holds",
+      "first": "datasheets/fs-4471",
+      "only": true,
+      "must": {
+        "keys": ["datasheets/fs-4471"],
+        "within": 1
+      }
+    },
+    {
+      "query": "2,400",
+      "class": "figures",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search: a figure is one figure however its thousands are written",
+      "status": "holds",
+      "first": "datasheets/fs-4471",
+      "only": true,
+      "must": {
+        "keys": ["datasheets/fs-4471"],
+        "within": 1
+      }
+    },
+    {
+      "query": "2.400",
+      "class": "figures",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search: a figure is one figure however its thousands are written",
+      "status": "holds",
+      "first": "datasheets/fs-4471",
+      "only": true,
+      "must": {
+        "keys": ["datasheets/fs-4471"],
+        "within": 1
+      }
+    },
+    {
+      "query": "2 400",
+      "class": "figures",
+      "why": "a figure grouped by a space is two numbers: the word-delimiter step joins across an intra-word delimiter, never across a space",
+      "status": "holds",
+      "must": {
+        "keys": ["ops/warehouse-stock", "datasheets/fs-4471"],
+        "within": 2
+      },
+      "only": true
+    },
+    {
+      "query": "12500",
+      "class": "figures",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a currency sign is not part of the figure",
+      "status": "holds",
+      "first": "finance/hardware-budget",
+      "only": true,
+      "must": {
+        "keys": ["finance/hardware-budget"],
+        "within": 1
+      }
+    },
+    {
+      "query": "12,500",
+      "class": "figures",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a currency sign is not part of the figure",
+      "status": "holds",
+      "first": "finance/hardware-budget",
+      "only": true,
+      "must": {
+        "keys": ["finance/hardware-budget"],
+        "within": 1
+      }
+    },
+    {
+      "query": "£12,500",
+      "class": "figures",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search; a currency sign is not part of the figure",
+      "status": "holds",
+      "first": "finance/hardware-budget",
+      "only": true,
+      "must": {
+        "keys": ["finance/hardware-budget"],
+        "within": 1
+      }
+    },
+    {
+      "query": "618",
+      "class": "figures",
+      "why": "a term held whole is the answer and is never widened (last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so)",
+      "status": "holds",
+      "first": "finance/kiln-hours",
+      "only": true,
+      "must": {
+        "keys": ["finance/kiln-hours"],
+        "within": 1
+      },
+      "mustNot": ["finance/clay-delivery"]
+    },
+    {
+      "query": "234",
+      "class": "figures",
+      "why": "last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so; figures take part",
+      "status": "holds",
+      "first": "finance/rivet-order",
+      "only": true,
+      "must": {
+        "keys": ["finance/rivet-order"],
+        "within": 1
+      }
+    },
+    {
+      "query": "calibraton",
+      "class": "typo",
+      "why": "Meilisearch's typo tolerance (one typo from 5 letters, two from 9) as a clause of the keyword index's query: every document holding \"calibration\" matches; a typo clause scores each the same, so after the title's weight the order among equal holders is the stable tie order (newer first), which no rule decides further",
+      "status": "holds",
+      "must": {
+        "keys": ["guides/calibration", "calls/call-14-pellucid", "ops/contacts"],
+        "within": 3
+      },
+      "note": "No document holds \"calibraton\"; searched for words like it.",
+      "corrected": [
+        {
+          "from": "calibraton"
+        }
+      ]
+    },
+    {
+      "query": "warrendr",
+      "class": "typo",
+      "why": "near words: the keyword index's typo tolerance, tantivy's fuzzy term query with Meilisearch's typo thresholds (none under 5 letters, one from 5, two from 9)",
+      "status": "holds",
+      "must": {
+        "keys": ["guides/calibration"],
+        "within": 24
+      },
+      "args": {
+        "limit": 24
+      },
+      "note": "No document holds \"warrendr\"; searched for words like it.",
+      "corrected": [
+        {
+          "from": "warrendr"
+        }
+      ]
+    },
+    {
+      "query": "glazng handbook",
+      "class": "typo",
+      "why": "near words: the keyword index's typo tolerance, tantivy's fuzzy term query with Meilisearch's typo thresholds (none under 5 letters, one from 5, two from 9); a word some document holds is never corrected, so only the misspelt word changes",
+      "status": "holds",
+      "first": "guides/glazing-handbook"
+    },
+    {
+      "query": "Vel",
+      "class": "prefix",
+      "why": "last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so",
+      "status": "holds",
+      "must": {
+        "keys": ["calls/call-10-velden", "datasheets/fs-4471"],
+        "within": 2
+      },
+      "only": true,
+      "note": "No document holds \"Vel\"; searched for what begins with it.",
+      "corrected": [
+        {
+          "from": "Vel",
+          "completed": true
+        }
+      ]
+    },
+    {
+      "query": "chemi",
+      "class": "prefix",
+      "why": "last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so",
+      "status": "holds",
+      "must": {
+        "keys": [
+          "notes/note-08",
+          "notes/note-16",
+          "notes/note-24",
+          "notes/note-32",
+          "notes/note-40"
+        ],
+        "within": 5
+      },
+      "only": true,
+      "note": "No document holds \"chemi\"; searched for what begins with it.",
+      "corrected": [
+        {
+          "from": "chemi",
+          "completed": true
+        }
+      ]
+    },
+    {
+      "query": "darkroom chem",
+      "class": "prefix",
+      "why": "last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so",
+      "status": "holds",
+      "must": {
+        "keys": ["notes/note-08"],
+        "within": 5
+      },
+      "note": "No document holds \"chem\"; searched for what begins with it.",
+      "corrected": [
+        {
+          "from": "chem",
+          "completed": true
+        }
+      ]
+    },
+    {
+      "query": "chem darkroom",
+      "class": "prefix",
+      "why": "Meilisearch's typo and prefix rules: only the last word completes, and a word under 5 letters takes no typo, so `chem`, held by no readable document, is searched without and the page says so",
+      "status": "holds",
+      "must": {
+        "keys": ["notes/note-08"],
+        "within": 5
+      },
+      "note": "No document holds \"chem\"; searched without it.",
+      "corrected": [
+        {
+          "from": "chem",
+          "dropped": true
+        }
+      ]
+    },
+    {
+      "query": "lantern",
+      "class": "prefix",
+      "why": "header-exact: a title's words are held terms, so the last token completes over them (last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so)",
+      "status": "holds",
+      "first": "guides/lanternfish"
+    },
+    {
+      "query": "glazing hand",
+      "class": "prefix",
+      "why": "header-exact: a title's words are held terms, so the last token completes over them (last-token prefix: the last token of a search, of any type, that no readable document holds whole completes as a prefix over the held terms (at most ten, those more readable documents hold first, from 3 characters), and the page says so)",
+      "status": "holds",
+      "must": {
+        "keys": ["guides/glazing-handbook"],
+        "within": 3
+      }
+    },
+    {
+      "query": "ralibration",
+      "class": "typo",
+      "why": "Meilisearch's typo tolerance, which has no first-letter rule: a word of nine letters or more may carry two typos, here one",
+      "status": "holds",
+      "note": "No document holds \"ralibration\"; searched for words like it.",
+      "must": {
+        "keys": ["guides/calibration"],
+        "within": 3
+      },
+      "corrected": [
+        {
+          "from": "ralibration"
+        }
+      ]
+    },
+    {
+      "query": "bump",
+      "class": "short word",
+      "why": "Meilisearch's word sizes: a word under five letters takes no typo, so bump never reaches a word a letter away; no held word begins with it, so it is searched without",
+      "status": "holds",
+      "nothing": true,
+      "notMatched": ["guides/cold-start", "guides/warm-restart"],
+      "note": "No document holds \"bump\"; searched without it. Nothing in your documents matches this search: none holds its words or comes close to it in meaning. Any listed under looselyRelated are only the nearest.",
+      "corrected": [
+        {
+          "from": "bump",
+          "dropped": true
+        }
+      ]
+    },
+    {
+      "query": "\"cold start\"",
+      "class": "phrase",
+      "why": "a quoted phrase matches its words adjacent and in order, as Lucene's query parser and Postgres's websearch_to_tsquery read quotes",
+      "status": "pending",
+      "first": "guides/cold-start",
+      "notMatched": ["guides/warm-restart"],
+      "pending": {
+        "reason": "Quotes are not read: the warm restart, which holds `cold` and `start` apart, matches and leads.",
+        "rule": "quoted-phrase: quotes make a phrase, as the published query syntax reads them"
+      }
+    },
+    {
+      "query": "cold start",
+      "class": "ranking",
+      "why": "ranking-rules: the keyword ordering follows Meilisearch's default ranking rules, in order: words, typo, proximity, attribute (title before body), exactness; the guide holds the two words side by side and in its title",
+      "status": "pending",
+      "first": "guides/cold-start",
+      "pending": {
+        "reason": "The warm restart, which holds the words apart, ranks first.",
+        "rule": "ranking-rules"
+      }
+    },
+    {
+      "query": "note 5",
+      "class": "ranking",
+      "why": "ranking-rules: the keyword ordering follows Meilisearch's default ranking rules, in order: words, typo, proximity, attribute (title before body), exactness; note-05 holds both words, side by side, in its title",
+      "status": "pending",
+      "first": "notes/note-05",
+      "pending": {
+        "reason": "note-05 is not on the first page: tickets holding `credit note` fill it.",
+        "rule": "ranking-rules"
+      }
+    },
+    {
+      "query": "SUP 1042",
+      "class": "ranking",
+      "why": "ranking-rules: the keyword ordering follows Meilisearch's default ranking rules, in order: words, typo, proximity, attribute (title before body), exactness; the ticket holds both words in its title, its citer only in its body",
+      "status": "pending",
+      "first": "support/sup-1042",
+      "pending": {
+        "reason": "The citing document ranks above the ticket.",
+        "rule": "ranking-rules"
+      }
+    },
+    {
+      "query": "cold start procedure",
+      "class": "several words",
+      "why": "Meilisearch's matching strategy: a document holding every word matches; one holding fewer (warm-restart) ranks below it and is only loosely related",
+      "status": "holds",
+      "first": "guides/cold-start",
+      "must": {
+        "keys": ["guides/cold-start"],
+        "within": 1
+      },
+      "notMatched": ["guides/warm-restart"]
+    },
+    {
+      "query": "pressure sensor trial",
+      "class": "several words",
+      "why": "Meilisearch's matching strategy: a document holding every word matches; one holding fewer (fs-4472) ranks below it and is only loosely related",
+      "status": "holds",
+      "first": "calls/call-11-orrin",
+      "must": {
+        "keys": ["calls/call-11-orrin"],
+        "within": 1
+      },
+      "notMatched": ["datasheets/fs-4472"]
+    },
+    {
+      "query": "label printer",
+      "class": "several words",
+      "why": "a document matches by the words it holds",
+      "status": "holds",
+      "must": {
+        "keys": [
+          "support/sup-1020",
+          "support/sup-1021",
+          "support/sup-1022",
+          "support/sup-1023",
+          "support/sup-1024",
+          "support/sup-1025",
+          "support/sup-1026"
+        ],
+        "within": 7
+      },
+      "only": true
+    },
+    {
+      "query": "Lanternfish",
+      "class": "title only",
+      "why": "a document's title is read by the keyword legs like its text",
+      "status": "holds",
+      "first": "guides/lanternfish",
+      "only": true,
+      "must": {
+        "keys": ["guides/lanternfish"],
+        "within": 1
+      }
+    },
+    {
+      "query": "hammering",
+      "class": "body only",
+      "why": "a document matches by the words its text holds",
+      "status": "holds",
+      "first": "guides/cold-start",
+      "only": true,
+      "must": {
+        "keys": ["guides/cold-start"],
+        "within": 1
+      }
+    },
+    {
+      "query": "the",
+      "class": "stop words",
+      "why": "Postgres's English stop words: `the` is never a match",
+      "status": "holds",
+      "nothing": true,
+      "note": "Nothing in your documents matches this search: none holds its words or comes close to it in meaning. Any listed under looselyRelated are only the nearest."
+    },
+    {
+      "query": "the kiln",
+      "class": "stop words",
+      "why": "Postgres's English stop words: the page is made from the other words",
+      "status": "holds",
+      "first": "finance/kiln-hours"
+    },
+    {
+      "query": "cafe marrow",
+      "class": "diacritics",
+      "why": "accents folded, as an ASCII-folding filter does",
+      "status": "holds",
+      "first": "guides/cafe-marrow",
+      "only": true,
+      "must": {
+        "keys": ["guides/cafe-marrow"],
+        "within": 1
+      }
+    },
+    {
+      "query": "Café",
+      "class": "diacritics",
+      "why": "accents folded, as an ASCII-folding filter does",
+      "status": "holds",
+      "first": "guides/cafe-marrow",
+      "only": true,
+      "must": {
+        "keys": ["guides/cafe-marrow"],
+        "within": 1
+      }
+    },
+    {
+      "query": "Zoe",
+      "class": "diacritics",
+      "why": "accents folded, as an ASCII-folding filter does",
+      "status": "holds",
+      "first": "guides/cafe-marrow",
+      "only": true,
+      "must": {
+        "keys": ["guides/cafe-marrow"],
+        "within": 1
+      }
+    },
+    {
+      "query": "pump",
+      "class": "plurals",
+      "why": "Postgres's English stemming: a plural and its singular are one word",
+      "status": "holds",
+      "must": {
+        "keys": [
+          "guides/cold-start",
+          "guides/warm-restart",
+          "ops/warehouse-stock",
+          "guides/lanternfish"
+        ],
+        "within": 4
+      },
+      "only": true
+    },
+    {
+      "query": "pumps",
+      "class": "plurals",
+      "why": "Postgres's English stemming: a plural and its singular are one word",
+      "status": "holds",
+      "must": {
+        "keys": [
+          "guides/cold-start",
+          "guides/warm-restart",
+          "ops/warehouse-stock",
+          "guides/lanternfish"
+        ],
+        "within": 4
+      },
+      "only": true
+    },
+    {
+      "query": "certificates",
+      "class": "plurals",
+      "why": "Postgres's English stemming: a plural and its singular are one word",
+      "status": "holds",
+      "must": {
+        "keys": ["guides/calibration", "calls/call-14-pellucid"],
+        "within": 2
+      },
+      "only": true
+    },
+    {
+      "query": "orders@example.com",
+      "class": "e-mail",
+      "why": "an address is read as its words, as a standard tokenizer splits one; the document holding it whole leads",
+      "status": "holds",
+      "first": "ops/contacts"
+    },
+    {
+      "query": "https://status.example.com/calibration",
+      "class": "url",
+      "why": "a document holding the URL is what the search names",
+      "status": "holds",
+      "first": "ops/contacts",
+      "only": true,
+      "must": {
+        "keys": ["ops/contacts"],
+        "within": 1
+      }
+    },
+    {
+      "query": "status.example.com",
+      "class": "url",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search",
+      "status": "holds",
+      "first": "ops/contacts",
+      "only": true,
+      "must": {
+        "keys": ["ops/contacts"],
+        "within": 1
+      }
+    },
+    {
+      "query": "v2.3.1",
+      "class": "version",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search",
+      "status": "holds",
+      "must": {
+        "keys": ["ops/release-notes", "datasheets/fs-4471"],
+        "within": 2
+      },
+      "only": true,
+      "mustNot": ["datasheets/fs-4472"]
+    },
+    {
+      "query": "2.3.1",
+      "class": "version",
+      "why": "catenate_numbers (Elasticsearch word_delimiter_graph): a chain of digits separated by delimiters is also held joined, so a version typed without its letter finds the documents that wrote it with one",
+      "status": "holds",
+      "must": {
+        "keys": ["ops/release-notes", "datasheets/fs-4471"],
+        "within": 2
+      },
+      "only": true,
+      "mustNot": ["datasheets/fs-4472"]
+    },
+    {
+      "query": "2.03",
+      "class": "version",
+      "why": "a key of digits alone is asked as written as well as with its zeros dropped, since a document holds its digit chain as written (catenate_numbers): 2.03 finds v2.03",
+      "status": "pending",
+      "first": "ops/controller-firmware",
+      "must": {
+        "keys": ["ops/controller-firmware"],
+        "within": 1
+      },
+      "pending": {
+        "reason": "Fusion, measured: the keyword index ranks ops/controller-firmware first (words 1) and notes/note-23 second (words 2, its title's 23 is 2.03's digit parts joined), and the meaning leg ranks note-23 29th and the firmware not at all, so reciprocal rank fusion puts note-23, found by both, first.",
+        "rule": "catenate_numbers: a key searched as written is placed by the document that holds it so, not by fusion with a leg it means nothing to"
+      }
+    },
+    {
+      "query": "2029-03-14",
+      "class": "date",
+      "why": "the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search",
+      "status": "holds",
+      "first": "ops/maintenance-window",
+      "only": true,
+      "must": {
+        "keys": ["ops/maintenance-window"],
+        "within": 1
+      }
+    },
+    {
+      "query": "314",
+      "class": "date",
+      "why": "catenate_numbers joins a date's WHOLE chain of digits as written (backup-2029-03-14-07 holds 2029031407), never a piece of it, and a run of parts begins with a letter, so no short number completes into a date",
+      "status": "holds",
+      "nothing": true,
+      "mustNot": ["ops/backup-log"]
+    },
+    {
+      "query": "14 March 2029",
+      "class": "date",
+      "why": "a date written in words is its words and numbers",
+      "status": "holds",
+      "first": "ops/release-notes"
+    },
+    {
+      "query": "020 7946 0958",
+      "class": "phone",
+      "why": "a number grouped by spaces is its groups (the word-delimiter step never joins across a space); the document holding every group leads",
+      "status": "holds",
+      "first": "ops/contacts"
+    },
+    {
+      "query": "02079460958",
+      "class": "phone",
+      "why": "a phone number is one number however it is grouped or prefixed",
+      "status": "pending",
+      "first": "ops/contacts",
+      "pending": {
+        "reason": "Nothing matches: the joined number is one token no document holds.",
+        "rule": "a phone-number analyzer plugin; the search owner rules"
+      }
+    },
+    {
+      "query": "+44 20 7946 0958",
+      "class": "phone",
+      "why": "a phone number is one number however it is grouped or prefixed",
+      "status": "pending",
+      "first": "ops/contacts",
+      "notMatched": ["ops/out-of-hours"],
+      "pending": {
+        "reason": "The out-of-hours line, a different number sharing `44`, `20` and `7946`, matches and leads.",
+        "rule": "a phone-number analyzer plugin; the search owner rules"
+      }
+    },
+    {
+      "query": "qwxzvkjhgf",
+      "class": "nonsense",
+      "why": "a word no document holds and no word is near: nothing matches, and the page says so",
+      "status": "holds",
+      "nothing": true,
+      "note": "No document holds \"qwxzvkjhgf\"; searched without it. Nothing in your documents matches this search: none holds its words or comes close to it in meaning. Any listed under looselyRelated are only the nearest.",
+      "corrected": [
+        {
+          "from": "qwxzvkjhgf",
+          "dropped": true
+        }
+      ]
+    },
+    {
+      "query": "zzzz",
+      "class": "nonsense",
+      "why": "a word no document holds and no word is near: nothing matches, and the page says so",
+      "status": "holds",
+      "nothing": true,
+      "note": "No document holds \"zzzz\"; searched without it. Nothing in your documents matches this search: none holds its words or comes close to it in meaning. Any listed under looselyRelated are only the nearest.",
+      "corrected": [
+        {
+          "from": "zzzz",
+          "dropped": true
+        }
+      ]
+    },
+    {
+      "query": "Tobias Quell",
+      "class": "names",
+      "why": "a person's name is its words",
+      "status": "holds",
+      "must": {
+        "keys": ["guides/onboarding"],
+        "within": 24
+      },
+      "args": {
+        "limit": 24
+      }
+    },
+    {
+      "query": "Ilse Warrender",
+      "class": "names",
+      "why": "a person's name is its words",
+      "status": "holds",
+      "must": {
+        "keys": ["guides/calibration"],
+        "within": 24
+      },
+      "args": {
+        "limit": 24
+      }
+    },
+    {
+      "query": "velden",
+      "class": "names",
+      "why": "a company's name is a word: its call note matches",
+      "status": "holds",
+      "first": "calls/call-10-velden",
+      "only": true,
+      "must": {
+        "keys": ["calls/call-10-velden"],
+        "within": 1
+      }
+    },
+    {
+      "query": "FS-4471",
+      "class": "keyword index down",
+      "why": "the open build requires its keyword index: with it not answering (degraded keyword:index) there is no keyword leg and no title-key candidate (the index lists them), so a key is found by nothing, and the page says the search is incomplete, never that no document holds it",
+      "status": "holds",
+      "stack": "keyword-index-down",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "fs4471",
+      "class": "keyword index down",
+      "why": "the open build requires its keyword index: with it not answering (degraded keyword:index) there is no keyword leg and no title-key candidate (the index lists them), so a key is found by nothing, and the page says the search is incomplete, never that no document holds it",
+      "status": "holds",
+      "stack": "keyword-index-down",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "FS-2210",
+      "class": "keyword index down",
+      "why": "the open build requires its keyword index: with it not answering there is no keyword leg (degraded keyword:index), and FS-2210 is written only in a document's text, never its title, so the record lookup does not name it and a search that only names it finds nothing, and the page says the search is incomplete, never that no document holds it",
+      "status": "holds",
+      "stack": "keyword-index-down",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "fs2210",
+      "class": "keyword index down",
+      "why": "the open build requires its keyword index: with it not answering there is no keyword leg (degraded keyword:index), and FS-2210 is written only in a document's text, never its title, so the record lookup does not name it and a search that only names it finds nothing, and the page says the search is incomplete, never that no document holds it",
+      "status": "holds",
+      "stack": "keyword-index-down",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "humidity FS-2210",
+      "class": "keyword index down",
+      "why": "with the keyword index not answering, the Postgres leg reads every spelling of a key the same way (the word-delimiter step, as Lucene's WordDelimiterGraphFilter (Elasticsearch word_delimiter_graph) runs it with preserve original, catenate all and split on numerics: every spelling of a key is one search)",
+      "status": "holds",
+      "first": "ops/sensor-order",
+      "stack": "keyword-index-down"
+    },
+    {
+      "query": "humidity fs2210",
+      "class": "keyword index down",
+      "why": "the open build requires its keyword index, and with it not answering there is no keyword leg (degraded keyword:index) and no analyzer in the database: nothing confirms a document holds the words, the sensor order is only the nearest by meaning, below the embedder's floor, and the page says the search is incomplete",
+      "status": "holds",
+      "stack": "keyword-index-down",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "sup1042",
+      "class": "keyword index down",
+      "why": "the open build requires its keyword index: with it not answering (degraded keyword:index) there is no keyword leg and no title-key candidate (the index lists them), so a key is found by nothing, and the page says the search is incomplete, never that no document holds it",
+      "status": "holds",
+      "stack": "keyword-index-down",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "NOTE5",
+      "class": "keyword index down",
+      "why": "the open build requires its keyword index, and with it not answering there is no keyword leg (degraded keyword:index) and no analyzer in the database: the record lookup is exact (no document is titled NOTE5), so a search that only names it finds nothing, and the page says the search is incomplete, never that no document holds it",
+      "status": "holds",
+      "stack": "keyword-index-down",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "calibraton",
+      "class": "keyword index down",
+      "why": "near words need the keyword index: without it a search runs exactly as typed",
+      "status": "holds",
+      "nothing": true,
+      "stack": "keyword-index-down"
+    },
+    {
+      "query": "FS-2210",
+      "class": "no keyword index",
+      "why": "the open build requires its keyword index, and with it not configured there is no keyword leg (degraded keyword:index) and no analyzer in the database: FS-2210 is written only in a document's text, so a search that only names it finds nothing, and the page says the search is incomplete, never that no document holds it",
+      "status": "holds",
+      "stack": "no-keyword-index",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "fs2210",
+      "class": "no keyword index",
+      "why": "the open build requires its keyword index, and with it not configured there is no keyword leg (degraded keyword:index) and no analyzer in the database: FS-2210 is written only in a document's text, so a search that only names it finds nothing, and the page says the search is incomplete, never that no document holds it",
+      "status": "holds",
+      "stack": "no-keyword-index",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "SUP-1042",
+      "class": "no keyword index",
+      "why": "the open build requires its keyword index: with none configured (degraded keyword:index) there is no keyword leg and no title-key candidate (the index lists them), so a key is found by nothing, and the page says the search is incomplete, never that no document holds it",
+      "status": "holds",
+      "stack": "no-keyword-index",
+      "nothing": true,
+      "note": "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words."
+    },
+    {
+      "query": "how much money is set aside for computer equipment",
+      "class": "meaning",
+      "why": "close in meaning: a paraphrase that shares no word with the document matches when its nearest passage reaches the embedder's floor (0.57 for Xenova/bge-base-en-v1.5)",
+      "status": "holds",
+      "first": "finance/hardware-budget",
+      "stack": "meaning"
+    },
+    {
+      "query": "what do I do before switching the pumps on from cold",
+      "class": "meaning",
+      "why": "close in meaning: a paraphrase that shares no word with the document matches when its nearest passage reaches the embedder's floor (0.57 for Xenova/bge-base-en-v1.5)",
+      "status": "holds",
+      "first": "guides/cold-start",
+      "stack": "meaning"
+    }
+  ]
+}

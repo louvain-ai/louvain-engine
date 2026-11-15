@@ -1,0 +1,42 @@
+{
+  "name": "@louvain/doctext",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./reading": {
+      "types": "./dist/reading.d.ts",
+      "default": "./dist/reading.js"
+    },
+    "./text": {
+      "types": "./dist/text.d.ts",
+      "default": "./dist/text.js"
+    }
+  },
+  "scripts": {
+    "build": "node ../../scripts/clean-dist.mjs && tsc -p tsconfig.json",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@louvain/engine-core": "workspace:*",
+    "entities": "^6.0.1",
+    "fflate": "^0.8.2",
+    "ical.js": "2.2.1",
+    "pdfjs-dist": "^6.3.289",
+    "postal-mime": "4.1.4",
+    "windows-iana": "5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

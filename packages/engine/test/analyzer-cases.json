@@ -1,0 +1,120 @@
+{
+  "about": "The word-delimiter step (_delimited in the keyword sidecar, and search_delimited in a database that keeps an analyzer of its own): each string and the forms the step adds beside its words, as a set. Lucene's WordDelimiterGraphFilter with preserve_original, catenate_all and split_on_numerics, after case and accent folding, a digit part compared as a number (its leading zeros dropped), and every run of two or more parts joined that begins with a letter (a shingle filter with an empty separator, up to 8 parts). Both sides must give exactly these.",
+  "cases": [
+    ["PO-4471", ["po", "4471", "po4471"]],
+    ["SUP-1042 escalation", ["sup", "1042", "sup1042"]],
+    ["sup1042", ["sup", "1042", "sup1042"]],
+    ["GBP 2,400 a year", ["2", "400", "2400"]],
+    ["2.400", ["2", "400", "2400"]],
+    ["4.5%", ["4", "5", "45"]],
+    ["token-hours", ["token", "hours", "tokenhours"]],
+    ["Café-Crème", ["cafe", "creme", "cafecreme"]],
+    ["SOC2 readiness", ["soc", "2", "soc2"]],
+    ["2026-11-14", ["2026", "11", "14", "20261114"]],
+    [
+      "notes/plan_v2.md",
+      [
+        "notes",
+        "plan",
+        "v",
+        "2",
+        "md",
+        "notesplanv2md",
+        "notesplan",
+        "planv",
+        "v2",
+        "notesplanv",
+        "planv2",
+        "v2md",
+        "notesplanv2",
+        "planv2md"
+      ]
+    ],
+    ["plain words only", []],
+    ["2400", []],
+    ["note-05", ["note", "5", "note05", "note5"]],
+    ["NOTE5", ["note", "5", "note5"]],
+    [
+      "field-service-scheduling-notes-5",
+      [
+        "field",
+        "service",
+        "scheduling",
+        "notes",
+        "5",
+        "fieldserviceschedulingnotes5",
+        "fieldservice",
+        "servicescheduling",
+        "schedulingnotes",
+        "notes5",
+        "fieldservicescheduling",
+        "serviceschedulingnotes",
+        "schedulingnotes5",
+        "fieldserviceschedulingnotes",
+        "serviceschedulingnotes5"
+      ]
+    ],
+    [
+      "datasheet-FS-4471-revA",
+      [
+        "datasheet",
+        "fs",
+        "4471",
+        "reva",
+        "datasheetfs4471reva",
+        "datasheetfs",
+        "fs4471",
+        "datasheetfs4471",
+        "fs4471reva"
+      ]
+    ],
+    ["Note: 5 working days of notice", []]
+  ],
+  "postgresDiffers": {
+    "about": "Where the database's half differs, and only there: the keyword sidecar's step also has Elasticsearch word_delimiter_graph's catenate_numbers (each chain of digits separated by delimiters, joined as written, in a token that holds a letter); search_delimited does not. The Postgres side is the one that differs. The sidecar is held to `sidecar` (test_bm25_analyzer.py); the database's half to `postgres`.",
+    "cases": [
+      {
+        "text": "engineering-2026-09-02-34.md",
+        "sidecar": [
+          "engineering",
+          "2026",
+          "9",
+          "2",
+          "34",
+          "md",
+          "engineering2026090234md",
+          "engineering20269234md",
+          "2026090234",
+          "engineering2026",
+          "engineering20269",
+          "engineering202692",
+          "engineering20269234"
+        ],
+        "postgres": [
+          "engineering",
+          "2026",
+          "9",
+          "2",
+          "34",
+          "md",
+          "engineering2026090234md",
+          "engineering20269234md",
+          "engineering2026",
+          "engineering20269",
+          "engineering202692",
+          "engineering20269234"
+        ]
+      },
+      {
+        "text": "v2.3.1",
+        "sidecar": ["v", "2", "3", "1", "v231", "231", "v2", "v23"],
+        "postgres": ["v", "2", "3", "1", "v231", "v2", "v23"]
+      },
+      {
+        "text": "PX-7710-102",
+        "sidecar": ["px", "7710", "102", "px7710102", "7710102", "px7710"],
+        "postgres": ["px", "7710", "102", "px7710102", "px7710"]
+      }
+    ]
+  }
+}

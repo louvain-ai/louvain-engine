@@ -1,0 +1,11 @@
+# The engine's own state: the tool server's token and its log. Never committed.
+.engine/
+# Your settings, from .env.example: they name your endpoints and keys.
+.env
+.env.*
+!.env.example
+# Installs and build outputs.
+node_modules/
+dist/
+*.tsbuildinfo
+.turbo/

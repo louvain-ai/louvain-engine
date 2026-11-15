@@ -1,0 +1,136 @@
+/*
+ * The tokens: colours, type, space and motion. Light is the bare
+ * :root; dark is stated twice, for the system's preference and for a choice made here, and the two blocks stay equal.
+ */
+
+@font-face {
+  font-family: "Host Grotesk";
+  src: url("../fonts/host-grotesk-latin-wght-normal.woff2") format("woff2");
+  font-weight: 300 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 800;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+  --sheet: #ffffff;
+  --raised: #ffffff;
+  --ink: #0a0917;
+  --body: #4d4e60;
+  --faint: #696a7d;
+  --line: #e3e4ed;
+  --line-soft: #edeef5;
+  --hover: #efeff7;
+  --accent: #6331fb;
+  --accent-deep: #5300e1;
+  --on-accent: #ffffff;
+  --tint: #ecedff;
+  --tint-line: #cbcdf8;
+  --cite: #ffc870;
+  --on-cite: #0a0917;
+  --ring: #6331fb33;
+  --good: #187a48;
+  --bad: #cc2a1e;
+  --skeleton: #eaebf0;
+  --skeleton-glint: #f4f5f8;
+  --shadow-card: 0 1px 2px #15204406, 0 4px 12px #15204404;
+  --shadow-float: 0 0 0 1px #15204404, 0 8px 20px #1520440d, 0 24px 64px #15204414;
+  --logo-bare: inline;
+  --logo-tiled: none;
+
+  /* The field: deep violet in both themes, with the ribbon's bands and the amber. */
+  --field: #25006f;
+  --field-violet: #6331fb;
+  --on-field: #ffffff;
+  --on-field-soft: #d7d9ff;
+  --amber: #f5b21f;
+  --on-amber: #1b1406;
+
+  --sans: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 72px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --quick: 120ms;
+  --move: 220ms;
+  --arrive: 320ms;
+
+  --bar-height: 64px;
+  --reader-width: min(44vw, 640px);
+  --target: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --sheet: #05050f;
+    --raised: #0e0d1c;
+    --ink: #f4f4fc;
+    --body: #a6a7bc;
+    --faint: #898a9e;
+    --line: #242437;
+    --line-soft: #191928;
+    --hover: #18182a;
+    --accent: #7f72ff;
+    --accent-deep: #9490ff;
+    --on-accent: #05050f;
+    --tint: #1c1a3a;
+    --tint-line: #333064;
+    --cite: #523700;
+    --on-cite: #f4f4fc;
+    --ring: #7f72ff33;
+    --good: #3ecf7a;
+    --bad: #f97066;
+    --skeleton: #191928;
+    --skeleton-glint: #222235;
+    --shadow-card: 0 1px 2px #00000012, 0 4px 12px #0000000a;
+    --shadow-float: 0 0 0 1px #ffffff08, 0 8px 20px #00000033, 0 24px 64px #00000055;
+    --logo-bare: none;
+    --logo-tiled: inline;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --sheet: #05050f;
+  --raised: #0e0d1c;
+  --ink: #f4f4fc;
+  --body: #a6a7bc;
+  --faint: #898a9e;
+  --line: #242437;
+  --line-soft: #191928;
+  --hover: #18182a;
+  --accent: #7f72ff;
+  --accent-deep: #9490ff;
+  --on-accent: #05050f;
+  --tint: #1c1a3a;
+  --tint-line: #333064;
+  --cite: #523700;
+  --on-cite: #f4f4fc;
+  --ring: #7f72ff33;
+  --good: #3ecf7a;
+  --bad: #f97066;
+  --skeleton: #191928;
+  --skeleton-glint: #222235;
+  --shadow-card: 0 1px 2px #00000012, 0 4px 12px #0000000a;
+  --shadow-float: 0 0 0 1px #ffffff08, 0 8px 20px #00000033, 0 24px 64px #00000055;
+  --logo-bare: none;
+  --logo-tiled: inline;
+}

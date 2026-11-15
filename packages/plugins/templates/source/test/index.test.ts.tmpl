@@ -1,0 +1,38 @@
+import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { test } from "node:test";
+import { createPluginRegistry, defineEngine } from "@louvain/engine-core";
+import { __camelName__ } from "../src/index.js";
+
+/** The source: a request it checks first, then one item per file of the folder it names, hidden names left out. */
+const opened = async () =>
+  (await createPluginRegistry(defineEngine({ sources: [__camelName__()] }))).list("source")[0]?.plugin;
+const noFetch = { fetch: async () => ({ ok: false as const, reason: "a folder fetches nothing" }) };
+
+test("it lists every file under the folder as one item, keyed by its path", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "__name__-"));
+  try {
+    mkdirSync(join(dir, "notes"));
+    writeFileSync(join(dir, "plan.md"), "# Plan");
+    writeFileSync(join(dir, "notes", "day.txt"), "today");
+    writeFileSync(join(dir, ".hidden"), "left out");
+    const source = await opened();
+    const listing = source?.open(source.request.parse({ folder: dir }), noFetch);
+    const items = [];
+    for await (const item of listing?.items() ?? []) items.push(item);
+    assert.deepEqual(
+      items.map((item) => ("key" in item ? item.key : item)),
+      ["notes/day.txt", "plan.md"],
+    );
+    assert.equal(listing?.complete(), true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a request that names no folder that exists is refused before anything is read", async () => {
+  const source = await opened();
+  assert.equal(source?.request.safeParse({ folder: join(tmpdir(), "no-such-folder-here") }).success, false);
+});

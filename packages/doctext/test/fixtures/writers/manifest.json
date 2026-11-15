@@ -1,0 +1,44 @@
+{
+  "openpyxl.xlsx": {
+    "producer": "openpyxl",
+    "version": "3.1.5"
+  },
+  "xlsxwriter.xlsx": {
+    "producer": "xlsxwriter",
+    "version": "3.2.9"
+  },
+  "python-docx.docx": {
+    "producer": "python-docx",
+    "version": "1.2.0"
+  },
+  "python-pptx.pptx": {
+    "producer": "python-pptx",
+    "version": "1.0.2"
+  },
+  "openpyxl-shop-stock.xlsx": {
+    "producer": "openpyxl, in the shape an agent writes",
+    "version": "3.1.5",
+    "note": "invented content (a fictional bicycle shop's stock list) in the shape of a workbook once read as its sheet names alone: inline strings, a frozen bold header row, set column widths, an autofilter, blank cells"
+  },
+  "icalendar.ics": {
+    "producer": "icalendar",
+    "version": "7.3.0"
+  },
+  "python-email.eml": {
+    "producer": "python email (stdlib)",
+    "version": "3.14.0"
+  },
+  "webvtt-py.vtt": {
+    "producer": "webvtt-py",
+    "version": "0.5.1"
+  },
+  "webvtt-py.srt": {
+    "producer": "webvtt-py",
+    "version": "0.5.1"
+  },
+  "libreoffice-recalc.xlsx": {
+    "producer": "LibreOffice Calc 25.2.3 headless (the recalculation sidecar)",
+    "version": "25.2.3.2",
+    "note": "a 360-row loan schedule, invented, recalculated from an openpyxl file with no cached values: what the reader reads after recalculation"
+  }
+}

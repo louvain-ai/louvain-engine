@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Engine writer corpus//icalendar//EN
+METHOD:REQUEST
+BEGIN:VEVENT
+SUMMARY:Reading pipeline review\, Q4
+DTSTART:20261001T090000Z
+DTEND:20261001T100000Z
+DTSTAMP:20260930T090000Z
+UID:writer-corpus-1@example.test
+RRULE:FREQ=WEEKLY;BYDAY=TH
+ATTENDEE;CN=Reader:mailto:reader@example.test
+DESCRIPTION:Quarterly review of the reading pipeline.\nEvery sheet\, parag
+ raph and slide must reach the text.\nOwner: the platform team. A long line
+  that the writer folds. A long line that the writer folds. A long line tha
+ t the writer folds. A long line that the writer folds. 
+LOCATION:Room 3\; the long table
+ORGANIZER;CN="Platform Owner":mailto:owner@example.test
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,39 @@
+# source-__name__
+
+A source: a way into the engine. It starts as a copy of `folder()`, the source `./engine ingest folder --folder <path>`
+runs, so it lists every file under a folder; make it list what yours reads.
+
+## Use it
+
+```ts
+// engine.config.ts
+import { defineEngine } from "@louvain/engine-core";
+import { __camelName__ } from "@louvain/source-__name__";
+
+export default defineEngine({ sources: [__camelName__()] });
+```
+
+Then `./engine ingest __name__ --folder <path>`. The fields of its request are the command's flags, typed as the schema
+types them, and `./engine ingest __name__ --help` lists them with each field's `.describe()`. What a run asks for goes in
+the request; what never changes from run to run (an address, a key) goes in `definePlugin`'s `settings`.
+
+## Make it yours
+
+A source names a collection and yields items. It never writes, never decides what is removed, never reads a file's
+bytes and never chooses who may call it: those rules are the engine's.
+
+1. **`definePlugin`** with `kind: "source"` makes the factory `engine.config.ts` calls; `name` is what
+   `./engine ingest <name>` asks for.
+2. **`source({ request, open })`** is what `create` returns. `request` is a zod schema the engine parses before
+   anything is read, so a wrong request is refused by name; its fields are the command's flags.
+3. **`open(request, tools)`** returns the listing: its `collection`, its `origin` (what it reads, as a person knows
+   it), `files` (the folder its items name files under, when there is one), `lists` (`all`: a key it did not list is gone; `some`: it removes only what it marks `removed`), `items()`
+   and `complete()`. `tools.fetch` is the only network a source is handed: HTTPS to public addresses only.
+4. **`items()`** yields one item per thing it reads: a `key` that stays the same from run to run, its `text` or a
+   `file` the engine reads through the file readers, and as much else as it knows (`title`, `date`, `author`, `url`). Something it cannot read is a problem
+   (`{ at, problem }`), which the engine reports and goes on.
+5. **`complete()`** says, once the items are exhausted, whether the listing was whole. A listing that is not whole
+   removes nothing.
+
+Every item is checked again by the engine, whoever wrote the source. Test it as `test/index.test.ts` does: start it
+through the registry, then `open` a parsed request and read its items.

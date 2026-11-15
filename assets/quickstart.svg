@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="670" height="516" viewBox="0 0 670 516" role="img" aria-label="Terminal">
+<rect width="670" height="516" rx="12" fill="#0e0d1c"/>
+<rect width="670" height="36" rx="12" fill="#1c1a3a"/><rect y="24" width="670" height="12" fill="#1c1a3a"/>
+<circle cx="22" cy="18" r="6" fill="#ff5f57"/><circle cx="42" cy="18" r="6" fill="#febc2e"/><circle cx="62" cy="18" r="6" fill="#28c840"/>
+<text x="335" y="23" fill="#9ca3af" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="13" text-anchor="middle">Terminal</text>
+<g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14">
+<text x="20" y="71" fill="#c4b5fd" xml:space="preserve">$ ./engine up</text>
+<text x="20" y="91" fill="#e5e7eb" xml:space="preserve">Installing (the lockfile pins every version)...</text>
+<text x="20" y="111" fill="#e5e7eb" xml:space="preserve">Building the workspace packages...</text>
+<text x="20" y="131" fill="#e5e7eb" xml:space="preserve">Settings: wrote .env from .env.example.</text>
+<text x="20" y="151" fill="#e5e7eb" xml:space="preserve">Starting the engine's services (the first run builds their images)...</text>
+<text x="20" y="171" fill="#e5e7eb" xml:space="preserve">Reranker: off (engine.config.ts names none).</text>
+<text x="20" y="191" fill="#e5e7eb" xml:space="preserve">Schema: loaded.</text>
+<text x="20" y="211" fill="#e5e7eb" xml:space="preserve">Tools: http://127.0.0.1:8080/mcp</text>
+<text x="20" y="231" fill="#e5e7eb" xml:space="preserve">App:   http://127.0.0.1:8080/app/</text>
+<text x="20" y="251" fill="#e5e7eb" xml:space="preserve">Token: .engine/token</text>
+<text x="20" y="271" fill="#e5e7eb" xml:space="preserve">Ready.</text>
+<text x="20" y="291" fill="#c4b5fd" xml:space="preserve">$ ./engine ingest folder --folder examples/sample-corpus</text>
+<text x="20" y="311" fill="#e5e7eb" xml:space="preserve">ingesting examples/sample-corpus into &quot;sample-corpus&quot;</text>
+<text x="20" y="331" fill="#e5e7eb" xml:space="preserve">  calibration-rig.md: added (text)</text>
+<text x="20" y="351" fill="#e5e7eb" xml:space="preserve">  facilities-agreement.pdf: added (documents)</text>
+<text x="20" y="371" fill="#e5e7eb" xml:space="preserve">  hiring-plan.md: added (text)</text>
+<text x="20" y="391" fill="#e5e7eb" xml:space="preserve">  lease-renewal.md: added (text)</text>
+<text x="20" y="411" fill="#e5e7eb" xml:space="preserve">&quot;sample-corpus&quot;: 4 added, 0 updated, 0 removed, 0 unchanged; 4 new passages</text>
+<text x="20" y="431" fill="#e5e7eb" xml:space="preserve">keyword index: 4 indexed</text>
+<text x="20" y="451" fill="#c4b5fd" xml:space="preserve">$ ./engine search &quot;When does the Harbour Street lease renew?&quot;</text>
+<text x="20" y="471" fill="#e5e7eb" xml:space="preserve">1. lease-renewal · 2026-11-15 · 9a1ac4976ad1</text>
+<text x="20" y="491" fill="#e5e7eb" xml:space="preserve">2. facilities-agreement · 2026-11-15 · c0f10b4694de</text>
+</g>
+</svg>
