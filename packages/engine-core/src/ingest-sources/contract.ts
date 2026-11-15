@@ -31,7 +31,7 @@ export type IngestSource = {
 };
 
 /**
- * A FETCH THE ENGINE VETTED: the only network a source is handed. Every hop is HTTPS to a public address, the socket is
+ * A fetch the engine vetted: the only network a source is handed. Every hop is HTTPS to a public address, the socket is
  * pinned to the address that was checked, and no header but `accept` goes out. The body comes back read, under a
  * bound (`maxBytes`, 32 MB unless smaller); a refusal or a body past the bound is an answer, never a throw.
  */
@@ -47,7 +47,7 @@ export type GuardedFetch = (
 export type SourceTools = { fetch: GuardedFetch };
 
 /**
- * A SOURCE, AS ITS PLUGIN STARTS IT (`engine.config.ts` `sources`): what a person asks it for each run (`request`,
+ * A source, as its plugin starts it (`engine.config.ts` `sources`): what a person asks it for each run (`request`,
  * whose schema the engine parses first, so a wrong request is refused before anything is read) and the listing it
  * opens for that request. A source that takes items over the server's door names the token that opens it (`door`);
  * a configuration without such a source has no door.

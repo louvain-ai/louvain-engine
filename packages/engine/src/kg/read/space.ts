@@ -1,4 +1,6 @@
-import { type Embedder, productEmbedder } from "./context.js";
+import { embedderOf } from "../../embedder.js";
+import { type Embedder, readEmbedderOf } from "./context.js";
+import type { ReadContext } from "./fence.js";
 import { queryVectorWith } from "./question.js";
 
 /**
@@ -15,6 +17,8 @@ export type VectorSpace = {
   embedder: Embedder;
   /** Told when a query in this space could not be embedded and was read in the current space instead. */
   fellBack?: () => void;
+  /** The current space a query falls back to when this one's lane cannot answer; the current space has none. */
+  fallback?: VectorSpace;
 };
 
 /** A space a build keeps beside the current one: its columns and its two embedding lanes. */
@@ -41,14 +45,10 @@ export type VectorSpaces = {
 /** The open build's: the current space alone. */
 export const ONE_SPACE: VectorSpaces = { spaceFor: null, fellBack: () => {} };
 
-const CURRENT_SPACE: VectorSpace = {
-  name: "current",
-  columns: { passage: "embedding", statement: "embedding" },
-  embedder: productEmbedder,
-};
+const CURRENT_COLUMNS: VectorColumns = { passage: "embedding", statement: "embedding" };
 
 /** The space's query lane memoised on the question (`queryVectorWith`), its document lane, and whom it tells. */
-const searched = (other: OtherSpace, fellBack: () => void): VectorSpace => ({
+const searched = (other: OtherSpace, fellBack: () => void, fallback: VectorSpace): VectorSpace => ({
   name: other.name,
   columns: other.columns,
   embedder: {
@@ -56,17 +56,27 @@ const searched = (other: OtherSpace, fellBack: () => void): VectorSpace => ({
     documents: other.documents,
   },
   fellBack,
+  fallback,
 });
 
-/** The space a workspace is searched in, among the build's `spaces`: another the build keeps for it, else the current. */
+/**
+ * The space a workspace is searched in, among the read's spaces (`ReadHooks.spaces`): another the build keeps for it,
+ * else the current one, embedded by the read's own embedder (`embedderOf`).
+ */
 export async function vectorSpaceFor(
-  spaces: VectorSpaces,
+  on: Pick<ReadContext, "hooks">,
   orgId: string,
   override?: Embedder,
 ): Promise<VectorSpace> {
-  if (override) return { ...CURRENT_SPACE, embedder: override };
+  const here: VectorSpace = {
+    name: "current",
+    columns: CURRENT_COLUMNS,
+    embedder: override ?? readEmbedderOf(embedderOf(on)),
+  };
+  if (override) return here;
+  const spaces = on.hooks?.spaces ?? ONE_SPACE;
   const other = await spaces.spaceFor?.(orgId);
-  return other ? searched(other, spaces.fellBack) : CURRENT_SPACE;
+  return other ? searched(other, spaces.fellBack, here) : here;
 }
 
 /**
@@ -79,14 +89,14 @@ export async function queryIn(
   text: string,
   orgId?: string,
 ): Promise<{ space: VectorSpace; vector: number[] | string }> {
-  if (space.name === CURRENT_SPACE.name)
-    return { space, vector: await space.embedder.query(text, orgId) };
+  const { fallback } = space;
+  if (!fallback) return { space, vector: await space.embedder.query(text, orgId) };
   try {
     return { space, vector: await space.embedder.query(text, orgId) };
   } catch {
     // swallowed: another space's lane that cannot answer costs this search that space, not its vector leg: the
     // current columns are searched with the current model instead, and the build is told.
     space.fellBack?.();
-    return { space: CURRENT_SPACE, vector: await CURRENT_SPACE.embedder.query(text, orgId) };
+    return { space: fallback, vector: await fallback.embedder.query(text, orgId) };
   }
 }

@@ -1,5 +1,5 @@
 /**
- * WORK WITH A DEADLINE, one definition. Eight copies raced a promise against a `setTimeout`: each
+ * Work with a deadline, one definition. Eight copies raced a promise against a `setTimeout`: each
  * remembered to clear its timer or did not (the miner's never did, so every run held a live timer for its whole
  * budget), and none could STOP the work it gave up on — the loser of `Promise.race` runs on. So:
  *

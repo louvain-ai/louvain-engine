@@ -2,7 +2,7 @@ import type { PendingQuery, Row } from "postgres";
 import type { Queryable } from "./sql.js";
 
 /**
- * WHICH OF TWO VERSIONS OF ONE RECORD IS THE NEWER, WRITTEN ONCE: the later RANK, then the later id.
+ * Which of two versions of one record is the newer, written once: the later RANK, then the later id.
  * A version's rank is the time its source stated (`occurred_at`), unless the time was one WE chose (a calendar's series
  * time or start, `saidAt`): then the rank the accept trigger stored when it arrived (`version_rank`), just above what
  * its record held, so the source's own later stamp is never beaten by our guess. `newer` and `older` are aliases of

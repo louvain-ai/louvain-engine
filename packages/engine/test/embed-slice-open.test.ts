@@ -29,7 +29,7 @@ test("N chunks with contexts send N texts, and none carries a context vector", a
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const saved = process.env.LOUVAIN_EMBEDDINGS_URL;
   process.env.LOUVAIN_EMBEDDINGS_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  await openTestEngine();
+  const { writes } = await openTestEngine();
   try {
     const pieces = [
       { body: "The lease renews in March.", seq: 0 },
@@ -41,7 +41,7 @@ test("N chunks with contexts send N texts, and none carries a context vector", a
       key: "k",
       embedText: `Harbour Street lease\n\n${body}`,
     }));
-    const rows = await embedSlice(openPassageRules, pieces, planned);
+    const rows = await embedSlice(writes, pieces, planned);
     assert.deepEqual(
       sent,
       pieces.map((p) => p.body),

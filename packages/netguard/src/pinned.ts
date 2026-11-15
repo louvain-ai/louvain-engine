@@ -6,7 +6,7 @@ import { Readable } from "node:stream";
 import { privateAddress, publicUrl } from "./address.js";
 
 /**
- * CONNECT TO THE ADDRESS THAT WAS CHECKED.
+ * Connect to the address that was checked.
  *
  * Checking a name's resolved addresses and then handing its URL to `fetch` is
  * two resolutions: the check's and the transport's. The owner of the name
@@ -73,7 +73,7 @@ export function pinnedRequest(url: URL, init: PinnedInit, pin: Pin): Promise<Res
         signal: init.signal,
         lookup: pinned,
         /*
-         * NO SHARED AGENT. The global agent is where Node's environment proxy lives
+         * No shared agent. The global agent is where Node's environment proxy lives
          * (`NODE_USE_ENV_PROXY` / `--use-env-proxy` with `HTTPS_PROXY`): through it the request
          * goes to the PROXY, which resolves the name itself and never sees the pin. A private
          * agent per request also means no pooled socket from another host is ever reused.
@@ -157,7 +157,7 @@ function validators(conditional: FetchPublicOptions["conditional"]): Record<stri
 }
 
 /**
- * FETCH A URL SOMEBODY ELSE CHOSE, SAFELY — the whole policy in one call.
+ * Fetch a URL somebody else chose, safely — the whole policy in one call.
  *
  * Every hop gets all of it: `publicUrl` over the URL (https, no credentials,
  * no address literal, no internal suffix, the allowed ports), every resolved
@@ -173,7 +173,7 @@ export async function fetchPublic(raw: string, options: FetchPublicOptions): Pro
 }
 
 /**
- * THE HOP LOOP every vetted GET shares (`fetchPublic`, `fetchMedia` in `media.ts`), so the two cannot drift apart:
+ * The hop loop every vetted GET shares (`fetchPublic`, `fetchMedia` in `media.ts`), so the two cannot drift apart:
  * each hop is `publicUrl`, the caller's own host test (`admits`, a media fetch's allowlist), every resolved address
  * public, a socket pinned to the address that passed, and a redirect followed by hand. A caller adds NO header of
  * its own: it names what it needs — the conditional validators (each one line, `oneLine`) or a byte range (two safe

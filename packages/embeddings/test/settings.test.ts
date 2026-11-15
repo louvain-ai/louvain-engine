@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { EmbeddingsSettings } from "../src/settings.js";
 
 /**
- * A NUMBER SETTING THAT DOES NOT PARSE STOPS THE START: unset or empty takes its default, a whole number above 0 is
+ * A number setting that does not parse stops the start: unset or empty takes its default, a whole number above 0 is
  * itself, and anything else throws naming the setting, never read as 0, NaN or a fallback.
  */
 const at = (name: keyof typeof EmbeddingsSettings.shape, value: string | undefined): unknown =>

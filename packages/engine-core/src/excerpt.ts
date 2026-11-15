@@ -1,5 +1,5 @@
 /**
- * HOW MUCH OF A SOURCE A ROW CARRIES, when it is less than all of it.
+ * How much of a source a row carries, when it is less than all of it.
  *
  * `shown` and `total` are characters of the source's own text. `ingest` is set when the
  * text the engine holds is itself a cut reading of the source — a file its reader read

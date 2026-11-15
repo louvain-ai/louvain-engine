@@ -1,5 +1,5 @@
 /**
- * THE WORK A SCAN DID, COUNTED — NOT TIMED. Every character `String.prototype.indexOf`, `includes` or
+ * The work a scan did, counted — not timed. Every character `String.prototype.indexOf`, `includes` or
  * `lastIndexOf` walked past, every
  * character a regular expression's `exec` consumed from where it started (its `lastIndex` for a global or sticky one),
  * and one for every character a loop read itself (`charCodeAt`, `charAt`, `codePointAt`), summed while `run` executes.

@@ -5,7 +5,7 @@
  */
 import { toPgVector } from "@louvain/embeddings";
 import type { PendingQuery, Row, Sql, TransactionSql } from "postgres";
-import { embed } from "../embedder.js";
+import { embedderOf } from "../embedder.js";
 import { recordEmbeddingSpace } from "../embedding-space.js";
 import { chunk } from "../ingest/cut.js";
 import { contextVectorNull, indexableEvent, type PassageRules } from "../ingest/passage-rules.js";
@@ -17,7 +17,6 @@ import { type Writes, writeHooksOf } from "../writes.js";
 import { contextualText } from "./contextual-text.js";
 import { composeContext, contextKey, type HeaderRecord } from "./passage-context.js";
 import type { MemoryWriteContext } from "./store.js";
-import { checkWork, workTransaction } from "./work-seam.js";
 
 /** A new chunk's context, planned before its passage is written: the context, its key and the text to embed. */
 export type PlannedContext = { context: string; key: string; embedText: string } | null;
@@ -54,9 +53,9 @@ export async function indexPassageContexts(
   ctx: Pick<MemoryWriteContext, "eventId" | "orgId">,
   record: HeaderRecord,
 ): Promise<number> {
-  checkWork();
+  const { passageRules: rules, passageWrites, work } = writeHooksOf(writes);
+  work.check();
   const { sql } = writes;
-  const { passageRules: rules, passageWrites } = writeHooksOf(writes);
   if (!writesPassageContext(await passageContextMode(sql, ctx.orgId))) return 0;
   const chunks = chunk(rules, record.text);
   if (chunks.length === 0) return 0;
@@ -71,24 +70,29 @@ export async function indexPassageContexts(
       from passage where event_id = ${ctx.eventId} and org_id = ${ctx.orgId} and vector_dropped_at is null`;
   const { write, clear } = contextChanges(rows, { chunks, headers });
   if (write.length === 0 && clear.length === 0) return 0;
-  const vectors = col ? await embed(write.map((w) => contextualText(w.context, w.text))) : null;
+  const embedder = embedderOf(writes);
+  const vectors = col
+    ? await embedder.embed(write.map((w) => contextualText(w.context, w.text)))
+    : null;
   // Which embedding space these stored vectors are in, per workspace (`embedding-space.ts`).
-  if (vectors && write.length > 0) void recordEmbeddingSpace(sql, ctx.orgId);
-  checkWork();
+  if (vectors && write.length > 0) void recordEmbeddingSpace(embedder, sql, ctx.orgId);
+  work.check();
   const contextual: string[] = [];
-  return workTransaction(sql, async (trx) => {
-    const [event] = await trx`select id from event_log where id = ${ctx.eventId}
+  return work
+    .transaction(async (trx) => {
+      const [event] = await trx`select id from event_log where id = ${ctx.eventId}
       and org_id = ${ctx.orgId} ${indexableEvent(rules, trx)} for update`;
-    if (!event) return 0;
-    const written = await writeContexts(trx, ctx, { write, vectors, contextual, col, rules });
-    if (clear.length > 0) await clearContexts(trx, ctx, { rows: clear, rules });
-    telemetry.count("passage.context.written", written, { mode: "header" });
-    return written;
-  }).then(async (written) => {
-    // Whatever the build does after a write (`passage-write-seam.ts`): best effort.
-    await afterPassagesWritten(passageWrites, "context", contextual);
-    return written;
-  });
+      if (!event) return 0;
+      const written = await writeContexts(trx, ctx, { write, vectors, contextual, col, rules });
+      if (clear.length > 0) await clearContexts(trx, ctx, { rows: clear, rules });
+      telemetry.count("passage.context.written", written, { mode: "header" });
+      return written;
+    })
+    .then(async (written) => {
+      // Whatever the build does after a write (`passage-write-seam.ts`): best effort.
+      await afterPassagesWritten(passageWrites, "context", contextual);
+      return written;
+    });
 }
 
 type ContextWrite = { id: string; text: string; context: string; key: string };

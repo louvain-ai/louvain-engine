@@ -10,7 +10,7 @@ import { indexPassageContexts } from "../memory/passage-context-write.js";
 import { writePassages } from "../memory/store.js";
 import { telemetry } from "../telemetry.js";
 import { isUnreachable } from "../unreachable.js";
-import type { Writes } from "../writes.js";
+import { type Writes, writeHooksOf } from "../writes.js";
 import { forgetDocumentEntry, indexKeywords, keywordHeader } from "./keyword.js";
 import { type IndexedRecord, recordToIndex } from "./record.js";
 import { bestEffort, stage } from "./stage.js";
@@ -39,11 +39,10 @@ async function contextsOf(
   if (!record) return;
   const { ctx, header, planned } = record;
   if (planned && written === planned.length) return;
-  await bestEffort(
-    "ingest.contexts",
-    () => indexPassageContexts(writes, ctx, header),
-    missedContexts,
-  );
+  await bestEffort("ingest.contexts", () => indexPassageContexts(writes, ctx, header), {
+    missed: missedContexts,
+    work: writeHooksOf(writes).work,
+  });
 }
 
 /** Its keyword entry; a record with nothing to index leaves its document none (`forgetDocumentEntry`). */

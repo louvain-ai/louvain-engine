@@ -8,7 +8,7 @@ import type { NotReady } from "./kinds.js";
 import type { Surface } from "./surface.js";
 
 /**
- * WHAT A PLUGIN OF EACH KIND IS. A plugin adds a capability, and the engine's configuration names the ones that run.
+ * What a plugin of each kind is. A plugin adds a capability, and the engine's configuration names the ones that run.
  * The kinds are this type's keys and nothing else is one, so a kind that is not here does not compile.
  */
 export type Contracts = {
@@ -21,7 +21,7 @@ export type Contracts = {
 };
 
 /**
- * A PLUGIN: a capability of one kind, under a name unique within it. A plugin exports one factory, made by
+ * A plugin: a capability of one kind, under a name unique within it. A plugin exports one factory, made by
  * `definePlugin`, which the configuration calls with its settings; they are parsed then, so a wrong one stops the
  * start at the line that wrote it. `create` runs once, at start, and may wait; a plugin holding something open offers
  * `close`.

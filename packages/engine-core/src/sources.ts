@@ -1,5 +1,5 @@
 /**
- * WHO GENERATED A SOURCE, AND FOR WHOM: the agent's name (as the deployment names it, null when unknown) and
+ * Who generated a source, and for whom: the agent's name (as the deployment names it, null when unknown) and
  * the person it wrote as — the display name of whoever the version was saved for, null once they are gone.
  * Never the person alone: an agent's file is labelled as generated on their behalf everywhere it is shown.
  */
@@ -19,7 +19,7 @@ export type SourceSummary = {
   indexedAt: string;
   metadataStatus: "native" | "legacy";
   /**
-   * WHICH ORIGINAL this is a copy of — opaque, stable, the same on every copy
+   * Which original this is a copy of — opaque, stable, the same on every copy
    * of one message however many connections delivered it (keyed by the build
    * that groups copies). Two summaries with one `origin` are one source to
    * show and one to count; absent where the source carries no verified
@@ -58,7 +58,7 @@ export type SourceSummary = {
    */
   instructionLike?: { marker: string };
   /**
-   * WHICH CONNECTION delivered its current revision (`event_log.connection_id`). An id, never a name: a client names it
+   * Which connection delivered its current revision (`event_log.connection_id`). An id, never a name: a client names it
    * from the connections the viewer may see (`GET /v1/me/connections`), so two of one app can be told apart without a
    * name reaching anyone it should not. Absent where the connection is gone or never recorded.
    */

@@ -19,7 +19,7 @@ export type Reranked<T> = {
 };
 
 /**
- * WHAT TEXT STANDS FOR A DOCUMENT TO THE RERANKER (`settings.rerank.feed`). `passage`, the default: the passage that
+ * What text stands for a document to the reranker (`settings.rerank.feed`). `passage`, the default: the passage that
  * ranked it, cut at `passageChars`. `document`: the whole document as `passages.asDocuments` reads it under the
  * viewer's fence, cut at `documentChars`. A failed read feeds every document
  * its passage and is named (`rerank:document_text`); a document the read returns nothing for is fed its passage too.

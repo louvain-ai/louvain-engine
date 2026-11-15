@@ -16,7 +16,6 @@ import {
 } from "../kg/read/bm25.js";
 import { passageContextMode, writesPassageContext } from "../kg/read/passage-context-mode.js";
 import type { HeaderRecord } from "../memory/passage-context.js";
-import { checkWork, workTransaction } from "../memory/work-seam.js";
 import { documentOfEntry } from "../sources/keyword-documents.js";
 import { displayApp } from "../sources/read-core.js";
 import { telemetry } from "../telemetry.js";
@@ -33,10 +32,10 @@ export async function indexKeywords(
   /** The record's header, as its own keyword field; none leaves the field empty until the record is next indexed. */
   header: string | null = null,
 ): Promise<void> {
-  checkWork();
+  const { filters, passageRules, work } = writeHooksOf(writes);
+  work.check();
   if (!bm25Configured()) return;
   const { sql } = writes;
-  const { filters, passageRules } = writeHooksOf(writes);
   const [event] =
     await sql`select keyword_indexed_at, connector, (select ${displayApp(sql, filters.app)} from source_revision r
     join source_document d on d.id = r.source_id where r.event_id = event_log.id) as app,
@@ -45,7 +44,10 @@ export async function indexKeywords(
   if (!event || event.keyword_indexed_at) return;
   const apps = appsOf(event.connector, event.app);
   const entry = () => keywordDoc(ctx, { text, title: event.title, header, apps });
-  await bestEffort("ingest.keyword", () => writeKeywordEntry(writes, ctx, entry()), missedKeyword);
+  await bestEffort("ingest.keyword", () => writeKeywordEntry(writes, ctx, entry()), {
+    missed: missedKeyword,
+    work,
+  });
 }
 
 /**
@@ -75,7 +77,7 @@ async function writeKeywordEntry(
   entry: ReturnType<typeof keywordDoc>,
 ): Promise<void> {
   const { sql } = writes;
-  const rules = writeHooksOf(writes).passageRules;
+  const { passageRules: rules, work } = writeHooksOf(writes);
   const document = await documentEntryOf(writes, entry);
   const doc = document ? [entry, document] : [entry];
   // Durable before the marker: one group commit shared with whatever else waits, or, with group commit off, its own.
@@ -90,7 +92,7 @@ async function writeKeywordEntry(
     ]);
     return;
   }
-  await workTransaction(sql, async (trx) => {
+  await work.transaction(async (trx) => {
     await trx`update event_log set keyword_indexed_at = now()
         where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableEvent(rules, trx)}`;
   });
@@ -111,7 +113,10 @@ async function documentGone(sql: Sql, orgId: string, entryId: string): Promise<b
  */
 export async function forgetDocumentEntry(writes: Writes, eventId: string): Promise<void> {
   if (!bm25Configured()) return;
-  await bestEffort("ingest.keyword", () => deleteCurrentEntry(writes, eventId), missedKeyword);
+  await bestEffort("ingest.keyword", () => deleteCurrentEntry(writes, eventId), {
+    missed: missedKeyword,
+    work: writeHooksOf(writes).work,
+  });
 }
 
 async function deleteCurrentEntry(writes: Writes, eventId: string): Promise<void> {

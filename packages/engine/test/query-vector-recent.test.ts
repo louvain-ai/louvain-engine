@@ -129,17 +129,17 @@ test("the current space's product embedder, outside any memo, asks the sidecar o
   const saved = process.env.LOUVAIN_EMBEDDINGS_URL;
   // Before the first embed: the open build's embedder reads its settings then, once.
   process.env.LOUVAIN_EMBEDDINGS_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  await openTestEngine();
+  const { embedder } = await openTestEngine();
   try {
     const legs = await Promise.all([
-      queryVectorFor("quarterly churn", ORG),
-      queryVectorFor("quarterly churn", ORG),
-      queryVectorFor(" quarterly churn ", ORG),
+      queryVectorFor(embedder, "quarterly churn", ORG),
+      queryVectorFor(embedder, "quarterly churn", ORG),
+      queryVectorFor(embedder, " quarterly churn ", ORG),
     ]);
     assert.equal(new Set(legs).size, 1);
-    await queryVectorFor("quarterly churn", ORG);
+    await queryVectorFor(embedder, "quarterly churn", ORG);
     assert.equal(seen.length, 1, "one sidecar request for three legs and a page");
-    await queryVectorFor("quarterly churn", "org-b");
+    await queryVectorFor(embedder, "quarterly churn", "org-b");
     assert.equal(seen.length, 2, "another workspace's search is its own request");
   } finally {
     if (saved === undefined) delete process.env.LOUVAIN_EMBEDDINGS_URL;

@@ -1,39 +1,37 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { test } from "node:test";
+import type { WorkHooks } from "../src/memory/work-seam.js";
+import { type Writes, writeHooksOf } from "../src/writes.js";
 
 /**
- * THE INDEXER'S WORK SEAM (`memory/work-seam.ts`): unbound it is a plain transaction on the writer's pool with nothing
- * to check and no durable owner (the open engine's case, and any process that never loaded the queue); bound, the bound
- * hooks answer; the same hooks again are a no-op and different ones are refused. This process loads no queue, so it
- * starts unbound.
+ * THE INDEXER'S WORK IS A WRITE HOOK (`writes.ts` `WriteHooks.work`). A build that hands none owns nothing: nothing to
+ * check, nothing durable, and a plain transaction on the pool its writes write through. A build that hands its queue's
+ * has its writes check that claim and commit through it.
  */
-test("work seam: plain unbound, the bound hooks once bound, a different binding refused", async () => {
-  const seam = await import("../src/memory/work-seam.js");
-  assert.doesNotThrow(() => seam.checkWork());
-  assert.equal(seam.durableWork(), false);
-  const calls: string[] = [];
-  const pool = {
-    begin: async <T>(fn: (trx: never) => Promise<T>) => {
-      calls.push("begin");
-      return fn(undefined as never);
-    },
-  } as never;
-  assert.equal(await seam.workTransaction(pool, async () => 6), 6);
-  const hooks = {
-    check: () => {
-      calls.push("check");
-    },
+const pool = { begin: async (fn: (trx: unknown) => Promise<unknown>) => fn("trx") };
+const writes = (work?: WorkHooks): Writes => ({
+  sql: pool as never,
+  hooks: work ? { work } : {},
+});
+
+test("with no work handed, a write owns nothing and commits in a plain transaction on its pool", async () => {
+  const { work } = writeHooksOf(writes());
+  assert.doesNotThrow(() => work.check());
+  assert.equal(work.durable(), false);
+  assert.equal(await work.transaction(async (trx) => trx), "trx");
+});
+
+test("a build's work is what its writes check and commit through", async () => {
+  const seen: string[] = [];
+  const queue: WorkHooks = {
+    check: () => seen.push("check"),
+    transaction: async (fn) => fn("claimed" as never),
     durable: () => true,
-    transaction: async <T>(fn: (trx: never) => Promise<T>) => {
-      calls.push("transaction");
-      return fn(undefined as never);
-    },
   };
-  seam.bindWork(hooks);
-  seam.bindWork(hooks);
-  seam.checkWork();
-  assert.equal(seam.durableWork(), true);
-  assert.equal(await seam.workTransaction(pool, async () => 7), 7);
-  assert.deepEqual(calls, ["begin", "check", "transaction"]);
-  assert.throws(() => seam.bindWork({ ...hooks }), /already bound/);
+  const { work } = writeHooksOf(writes(queue));
+  assert.equal(work, queue);
+  work.check();
+  assert.equal(work.durable(), true);
+  assert.equal(await work.transaction(async (trx) => trx), "claimed");
+  assert.deepEqual(seen, ["check"]);
 });

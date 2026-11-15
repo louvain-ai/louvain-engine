@@ -10,7 +10,6 @@ import { stage } from "../ingest/stage.js";
 import { settleVersions, writeSlice } from "../ingest/write.js";
 import { type Writes, writeHooksOf } from "../writes.js";
 import type { PlannedContext } from "./passage-context-write.js";
-import { checkWork, workTransaction } from "./work-seam.js";
 
 /**
  * The verbatim tier, written for every admitted message, so a question can be answered from the words actually said.
@@ -28,7 +27,7 @@ export async function writePassages(
   const missing = await cutText(writes, ctx, text);
   let written = 0;
   for (const slice of slicesOf(missing)) {
-    const rows = await stage("ingest.embed", () => embedSlice(passageRules, slice, planned));
+    const rows = await stage("ingest.embed", () => embedSlice(writes, slice, planned));
     const count = await stage("ingest.write", () => writeSlice(writes, ctx, rows));
     if (count === null) return written;
     written += count;
@@ -60,8 +59,9 @@ async function cutText(
   ctx: MemoryWriteContext,
   text: string,
 ): Promise<Piece[] | null> {
-  checkWork();
-  const chunks = chunk(writeHooksOf(writes).passageRules, text);
+  const { passageRules, work } = writeHooksOf(writes);
+  work.check();
+  const chunks = chunk(passageRules, text);
   if (chunks.length === 0) return null;
   return stage("ingest.cut", () => chunksToWrite(writes, ctx, chunks));
 }
@@ -83,12 +83,12 @@ async function chunksToWrite(
   chunks: string[],
 ): Promise<Piece[]> {
   const { sql } = writes;
-  const rules = writeHooksOf(writes).passageRules;
+  const { passageRules: rules, work } = writeHooksOf(writes);
   const existing = await sql<{ seq: number; text: string }[]>`select seq, text from passage
     where event_id = ${ctx.eventId} and org_id = ${ctx.orgId} ${textRows(rules, sql)}`;
   const bySeq = new Map(existing.map((row) => [row.seq, row.text]));
   if (existing.some((row) => row.seq >= chunks.length))
-    await workTransaction(sql, async (trx) => {
+    await work.transaction(async (trx) => {
       const [event] = await trx`select id from event_log where id = ${ctx.eventId}
         and org_id = ${ctx.orgId} ${indexableEvent(rules, trx)} for update`;
       if (event)

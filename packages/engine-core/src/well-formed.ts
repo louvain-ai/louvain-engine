@@ -1,5 +1,5 @@
 /**
- * TEXT A DATABASE CANNOT HOLD IS REFUSED WHERE IT ARRIVES.
+ * Text a database cannot hold is refused where it arrives.
  *
  * A JavaScript string is UTF-16, and a lone surrogate (half of a pair, the usual result of text cut
  * in the middle of an emoji) is legal in one. It is not legal in UTF-8 or in JSON's meaning of

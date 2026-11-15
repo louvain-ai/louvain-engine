@@ -3,7 +3,6 @@
  * default) over the engine's plugins, its token in the profile's state. Surfaces that clash stop the start by name. It
  * stops when it is asked to, and closes the engine.
  */
-import { bindEmbedder } from "@louvain/engine/embedder";
 import { openHost } from "@louvain/engine/kg/read/open-readable-set";
 import { ServerRefused, startToolServer } from "@louvain/engine/open/mcp-server";
 import { RouteClash } from "@louvain/engine/open/routes";
@@ -12,7 +11,6 @@ import { openEngine } from "./engine.js";
 import { stopOn } from "./stop.js";
 
 const engine = await openEngine(openHost).catch(stopOn(PluginRefused));
-bindEmbedder(engine.embedder);
 const server = await startToolServer(engine, engine.profile.state).catch(
   stopOn(ServerRefused, RouteClash),
 );

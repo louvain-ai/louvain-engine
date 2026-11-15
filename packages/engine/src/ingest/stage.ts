@@ -2,7 +2,7 @@
  * An ingest's stages, each timed under its own bounded name (`ingest.<stage>`, labelled with its outcome and nothing
  * else). A critical stage's failure is its caller's; a best-effort stage's failure costs only what that stage adds.
  */
-import { durableWork } from "../memory/work-seam.js";
+import type { WorkHooks } from "../memory/work-seam.js";
 import { stage as timedStage } from "../observability/stage.js";
 
 /** One stage, timed whichever way it ends; what it throws is thrown on, and counted by its caller, not reported. */
@@ -31,13 +31,13 @@ export type Effort<T> = { value: T; degraded: false } | { value: undefined; degr
 export async function bestEffort<T>(
   name: StageName,
   run: () => Promise<T>,
-  missed: (err: unknown) => void,
+  on: { missed: (err: unknown) => void; work: WorkHooks },
 ): Promise<Effort<T>> {
   try {
     return { value: await stage(name, run), degraded: false };
   } catch (err) {
-    missed(err);
-    if (durableWork()) throw err;
+    on.missed(err);
+    if (on.work.durable()) throw err;
     // swallowed: counted by `missed`; the record's next index adds what this stage would have.
     return { value: undefined, degraded: true };
   }

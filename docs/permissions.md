@@ -26,15 +26,16 @@ What a deployment decides, the engine reads through one `Host` (`packages/engine
 | Member | What it decides | When the host has none |
 | --- | --- | --- |
 | `readableSet` | Who may read what: the collections a reader may read, and any record admitted by id (none here) | Required |
-| `work` | How a work item's effects are committed | A plain transaction |
 | `endpoints` | How a sidecar that is not a plain HTTP service is reached | Plain HTTP |
 
 Each entry point hands its host to the engine it builds (`createEngine({ host: openHost(store.sql), … })`), and every
 read runs on the engine's context, which carries that host's `readableSet` (`fence(context, viewer)`): nothing binds
-it, and no read reaches a resolver its context was not made with. A deployment whose work is owned by a queue binds
-the queue's `work` where the queue loads (`packages/engine/src/memory/work-seam.ts`); this build has none. The
-embedder an entry makes for its host (`embedderFor(host)`) is the process's one, bound once by the entry
-(`bindEmbedder(engine.embedder)`), because the reads and writes that embed still ask that binding.
+it, and no read reaches a resolver its context was not made with. A deployment whose work is owned by a queue hands
+the queue's work to the engine it builds as a write hook (`WriteHooks.work`, `packages/engine/src/memory/work-seam.ts`),
+and its writes check the claim and commit through it; this build has none, so its writes commit plainly. The
+embedder an entry makes for its host (`embedderFor(host)`) is a part of the engine it builds, and the engine carries it
+on its context and its writes: a read or a write that embeds asks the engine's own (`embedderOf`), and nothing binds
+one per process.
 
 ### Retrievers
 

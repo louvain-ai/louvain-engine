@@ -1,5 +1,5 @@
 /**
- * A WALL-CLOCK TIME IN A ZONE: `zonedInstant(day, clock, zone)` is the instant a wall-clock time names in a zone (an
+ * A wall-clock time in a zone: `zonedInstant(day, clock, zone)` is the instant a wall-clock time names in a zone (an
  * invite's DTSTART with a TZID). The zone is always an ARGUMENT, never read from ambient state here; pure `Intl`.
  */
 

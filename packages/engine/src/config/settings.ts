@@ -2,7 +2,7 @@ import { refuse } from "@louvain/engine-core";
 import { z } from "zod";
 
 /**
- * THE ENGINE'S SETTINGS: how a search reads and ranks, set in `engine.config.ts` under `settings`, never in the
+ * The engine's settings: how a search reads and ranks, set in `engine.config.ts` under `settings`, never in the
  * environment, which carries addresses, keys and ports only (`environment.ts`). One schema, validated at the start; a
  * setting left out keeps its default, and the start says which depart from theirs. Anything nobody should set is a
  * constant beside its one reader, not a setting.

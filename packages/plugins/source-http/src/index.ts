@@ -2,7 +2,7 @@ import { definePlugin, itemOf, source } from "@louvain/engine-core";
 import { z } from "zod";
 
 /**
- * THE HTTP DOOR: `POST /ingest` on the tool server, `{ "collection": …, "items": [ … ] }`, with its own token. It is
+ * The HTTP door: `POST /ingest` on the tool server, `{ "collection": …, "items": [ … ] }`, with its own token. It is
  * open only when a configuration names this source, and the token is no one else's: never the read token agents hold.
  * A request lists only what it sends, so it removes only an item marked `removed`; each item is checked on its own and
  * answered on its own.

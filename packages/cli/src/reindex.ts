@@ -2,7 +2,6 @@
  * `./engine reindex`: the keyword index rebuilt from what is loaded. Prints the count; a record the index still missed
  * after its passes is named, and the command exits 1, as it does when no keyword index is configured.
  */
-import { bindEmbedder } from "@louvain/engine/embedder";
 import { openHost } from "@louvain/engine/kg/read/open-readable-set";
 import { NoKeywordIndex, PASSES, reindexKeywords } from "@louvain/engine/open/reindex";
 import { PluginRefused } from "@louvain/engine-core";
@@ -10,7 +9,6 @@ import { openEngine } from "./engine.js";
 import { stopOn } from "./stop.js";
 
 const engine = await openEngine(openHost).catch(stopOn(PluginRefused));
-bindEmbedder(engine.embedder);
 process.exitCode = await reindex().finally(() => engine.close());
 
 async function reindex(): Promise<number> {

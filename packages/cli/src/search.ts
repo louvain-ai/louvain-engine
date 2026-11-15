@@ -3,7 +3,6 @@
  * documents one a line, the page the tool server returns, ids shortened unless `--full-ids`.
  */
 
-import { bindEmbedder } from "@louvain/engine/embedder";
 import type { Engine } from "@louvain/engine/engine";
 import { openHost } from "@louvain/engine/kg/read/open-readable-set";
 import { openSearch } from "@louvain/engine/open/mcp-tools";
@@ -16,7 +15,6 @@ import { stopOn, usage } from "./stop.js";
 
 const asked = searchArgs(process.argv.slice(2)) ?? usage(SEARCH_USAGE);
 const engine = await openEngine(openHost).catch(stopOn(PluginRefused));
-bindEmbedder(engine.embedder);
 await printSearch(engine, asked)
   .catch((err: unknown) => failed(engine, err))
   .finally(() => engine.close());

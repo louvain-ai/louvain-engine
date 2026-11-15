@@ -1,7 +1,7 @@
 import ipaddr from "ipaddr.js";
 
 /**
- * WHICH ADDRESSES A REQUEST FROM INSIDE THE DEPLOYMENT MAY REACH — pure, with
+ * Which addresses a request from inside the deployment may reach — pure, with
  * no database or configuration import, so every process that fetches on
  * someone else's say-so uses exactly the same rule: the API's assistant web
  * tools (a URL a model chose), the structured-source runners (a URL an
@@ -9,7 +9,7 @@ import ipaddr from "ipaddr.js";
  * and the WEB app's server-side fetchers (`/unfurl`, `/site-image`,
  * `/site-icon` — a host a cited page named).
  *
- * ONE PACKAGE, NOT A COPY PER APP. The web app used to carry its own, and it
+ * One package, not a copy per app. The web app used to carry its own, and it
  * was the weaker one: it did not refuse CGNAT (`100.100.100.200` is a cloud
  * metadata service), the retired 6to4 relay, NAT64, 6to4 or site-local v6 —
  * and the web app's fetchers need no session, so it was the one any internet
@@ -18,7 +18,7 @@ import ipaddr from "ipaddr.js";
  */
 
 /**
- * IS THIS ADDRESS ONE THE INTERNET CAN REACH?
+ * Is this address one the internet can reach?
  *
  * Everything a fetch must refuse, in both address families, because the whole
  * point of the fetch is that it is made by a process sitting inside the
@@ -40,7 +40,7 @@ import ipaddr from "ipaddr.js";
  * the unassigned rest) outnumber the one block that is.
  */
 /**
- * WHICH FAMILY A STRING IS AN ADDRESS OF: 4, 6, or 0 for none — `node:net`'s `isIP`, from `ipaddr.js` so this file
+ * Which family a string is an address of: 4, 6, or 0 for none — `node:net`'s `isIP`, from `ipaddr.js` so this file
  * runs in a browser too (`@louvain/netguard/address`: the web's own check on a link a running page asks to open).
  * A v4 address is the four-part decimal form only, as `isIP` takes it: `ipaddr`'s looser parser also reads `0x7f.1`
  * and `127.1`, which a URL has already normalised and a bare string must not be read as.
@@ -130,7 +130,7 @@ function privateV4(ip: string): boolean {
 }
 
 /**
- * MAY THE PROCESS EVEN TRY THIS URL?
+ * May the process even try this URL?
  *
  * Scheme and host only, before any resolution: HTTPS because a plaintext
  * fetch from inside the deployment's network is a request an intermediary can
@@ -145,7 +145,7 @@ function privateV4(ip: string): boolean {
  * original result — a search engine does not return private ranges, but the
  * page it returns can redirect wherever it likes.
  *
- * CREDENTIALS IN THE URL ARE REFUSED, never stripped: `https://user:pw@host`
+ * Credentials in the URL are refused, never stripped: `https://user:pw@host`
  * sends an Authorization header nobody in the deployment chose, and a check
  * that quietly removes them has a log that no longer says what it was asked.
  *

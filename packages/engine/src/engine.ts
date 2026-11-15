@@ -1,6 +1,5 @@
 import type { Embedder } from "@louvain/embeddings";
 import type { Host, PluginRegistry } from "@louvain/engine-core";
-import type { TransactionSql } from "postgres";
 import type { Settings } from "./config/settings.js";
 import { type ReadContext, readContextOf } from "./kg/read/fence.js";
 import type { ReadHooks } from "./kg/read/hooks.js";
@@ -20,7 +19,7 @@ export type EngineParts = {
   /** The configuration's plugins, started (`createPluginRegistry`). */
   readonly plugins: PluginRegistry;
   /** What the deployment decides: who may read what, and how a work item's effects are committed. */
-  readonly host: Host<TransactionSql>;
+  readonly host: Host;
   /** The engine's settings, parsed (`settingsOf`). */
   readonly settings: Settings;
   /**
@@ -49,12 +48,12 @@ const readHooksOf = ({
 export function createEngine(parts: EngineParts): Engine {
   return Object.freeze({
     ...parts,
-    context: readContextOf(
-      { store: parts.store, sql: parts.store.sql },
-      parts.host.readableSet,
-      parts.hooks ? readHooksOf(parts.hooks) : undefined,
-    ),
-    writes: { sql: parts.store.sql, hooks: parts.hooks ?? {} },
+    // Its embedder rides with the build's hooks, so a read or a write that embeds asks its own (`embedderOf`).
+    context: readContextOf({ store: parts.store, sql: parts.store.sql }, parts.host.readableSet, {
+      ...(parts.hooks ? readHooksOf(parts.hooks) : {}),
+      embedder: parts.embedder,
+    }),
+    writes: { sql: parts.store.sql, hooks: { ...parts.hooks, embedder: parts.embedder } },
     close: async () => {
       try {
         await parts.plugins.close();

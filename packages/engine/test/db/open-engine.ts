@@ -5,8 +5,8 @@ import { openStore, type Store, storeOf } from "../../src/store.js";
 
 /**
  * THE OPEN BUILD'S ENGINE AS A TEST BUILDS IT, as an open entry does (`packages/cli/src/engine.ts`): over a store it
- * opens on the test's database (`openStore`), on the open host, with no plugins and the default settings, its embedder
- * bound as the one the reads and writes that embed ask. Made once per process, on first use, after the test has set
+ * opens on the test's database (`openStore`), on the open host, with no plugins and the default settings, and the
+ * embedder made for that host, which its reads and writes ask (`embedderOf`). Made once per process, on first use, after the test has set
  * the environment the pool and the embedder read; a case that searches through plugins hands its own beside it
  * (`{ ...engine, plugins }`). A database these tests did not make is refused: every query on it fails naming it and
  * connects nowhere, while a case that never queries (a unit test building the open engine to see what it binds) is
@@ -27,7 +27,6 @@ async function build(): Promise<Engine> {
       ? openStore(config.databaseUrl, storeSettings)
       : refusedStore(config.databaseUrl, refusal);
   const { createEngine } = await import("../../src/engine.js");
-  const { bindEmbedder } = await import("../../src/embedder.js");
   const { embedderFor } = await import("../../src/open/embedder.js");
   const { settingsOf } = await import("../../src/config/settings.js");
   const { openHost } = await import("../../src/kg/read/open-readable-set.js");
@@ -39,7 +38,6 @@ async function build(): Promise<Engine> {
     host,
     settings: settingsOf(undefined),
   });
-  bindEmbedder(engine.embedder);
   return engine;
 }
 

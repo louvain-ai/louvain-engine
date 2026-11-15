@@ -34,7 +34,6 @@ const { config, storeSettings } = await import("../src/config/engine.js");
 const { openStore } = await import("../src/store.js");
 const store = openStore(config.databaseUrl, storeSettings);
 const { createEngine } = await import("../src/engine.js");
-const { bindEmbedder } = await import("../src/embedder.js");
 const { embedderFor } = await import("../src/open/embedder.js");
 const { settingsOf } = await import("../src/config/settings.js");
 const { openHost } = await import("../src/kg/read/open-readable-set.js");
@@ -47,7 +46,6 @@ const engine = createEngine({
   host,
   settings: settingsOf(undefined),
 });
-bindEmbedder(engine.embedder);
 const { sql } = store;
 const { context: readContext, writes } = engine;
 const { acceptOpen } = await import("../src/ingest/accept-open.js");

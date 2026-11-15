@@ -36,7 +36,7 @@ export function statedSpace(raw: unknown): StatedSpace {
 }
 
 /**
- * THE ONE SPACE CHECK: the fields of `expected` a stated space differs in, as "field stated ≠ expected", in
+ * The one space check: the fields of `expected` a stated space differs in, as "field stated ≠ expected", in
  * `expected`'s order. A field the statement leaves out takes its `defaults` value where the caller names one (a sidecar
  * that states no pooling pools by `mean`); with none it is a difference only when `strict`, since a sidecar that
  * reports less than a whole space is agreement for readiness but not for adopting a space.

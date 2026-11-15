@@ -1,6 +1,6 @@
 import type { RelevanceCutoffs, Viewer } from "@louvain/engine-core";
 import { searchRelevanceSetting } from "../../config/engine-switches.js";
-import { embeddingSettings, remoteTokenCounts } from "../../embedder.js";
+import { embedderOf } from "../../embedder.js";
 import type { ReadContext } from "../../kg/read/fence.js";
 import { hooksOf } from "../../kg/read/hooks.js";
 import { heldWords, literalsOf, relevanceOf, wordsOf } from "../../kg/read/relevance.js";
@@ -44,12 +44,12 @@ async function meaningOf(
   query: string,
 ): Promise<string | null> {
   if (namesOnly(query)) return null;
-  const cut = SHATTERED_AT[embeddingSettings().model];
+  const cut = SHATTERED_AT[embedderOf(context).settings().model];
   const words = query.trim().split(/\s+/).filter(Boolean);
   if (cut === undefined || words.length === 0) return query;
   let pieces: number[];
   try {
-    const [markers = 0, ...counts] = await remoteTokenCounts(["", ...words]);
+    const [markers = 0, ...counts] = await embedderOf(context).remoteTokenCounts(["", ...words]);
     pieces = counts.map((n) => n - markers);
   } catch {
     // swallowed: without the tokeniser's count the search is measured whole, as before this rule.
@@ -85,7 +85,7 @@ export async function holdersAmong(
   docs: readonly { recordId: string }[],
 ): Promise<Map<string, Matched>> {
   const found = await matchesOf(context, owner, query, docs, null);
-  return new Map([...found].filter(([, m]) => isMatch(m)));
+  return new Map([...found].filter(([, m]) => isMatch(context, m)));
 }
 
 /**
@@ -126,10 +126,10 @@ async function matchesOf(
  * Why a document matches (`matchedBy`): it IS what the search names, holds its words, the reranker scores it at its
  * cut-off, or its meaning reaches this embedder's measured floor. None of these, it does not match.
  */
-const byOf = (m: Matched | undefined, cutoffs?: RelevanceCutoffs): By | undefined =>
-  matchedBy(m ?? NO_MATCH, MEANING_FLOORS[embeddingSettings().model], cutoffs);
-const isMatch = (m: Matched | undefined, cutoffs?: RelevanceCutoffs): boolean =>
-  byOf(m, cutoffs) !== undefined;
+const byOf = (context: ReadContext, m: Matched | undefined, cutoffs?: RelevanceCutoffs) =>
+  matchedBy(m ?? NO_MATCH, MEANING_FLOORS[embedderOf(context).settings().model], cutoffs);
+const isMatch = (context: ReadContext, m: Matched | undefined, cutoffs?: RelevanceCutoffs) =>
+  byOf(context, m, cutoffs) !== undefined;
 
 /**
  * A search with nothing to look for: no letter and no digit ("?!"). Its words match nothing and its meaning is noise,
@@ -201,11 +201,11 @@ export async function splitHead<D extends Placed & { relevance?: number; ranks?:
   for (const d of head) matches.set(d.recordId, withFound(matches.get(d.recordId) ?? NO_MATCH, d));
   // A search not measured by meaning (names only, or nothing to mean) is its named documents alone: no score adds one.
   const cutoffs = meaning === null ? undefined : narrowing.reranked?.cutoffs;
-  const matching = head.filter((d) => isMatch(matches.get(d.recordId), cutoffs));
+  const matching = head.filter((d) => isMatch(context, matches.get(d.recordId), cutoffs));
   const rest =
     meaning === null && mode !== "keyword"
       ? []
-      : head.filter((d) => !isMatch(matches.get(d.recordId), cutoffs));
+      : head.filter((d) => !isMatch(context, matches.get(d.recordId), cutoffs));
   const ordered = [...matching, ...rest];
   return {
     ordered,
@@ -254,7 +254,7 @@ export async function rankedHits<D extends ShownHit>(
     unknown.length > 0 ? await matchesOf(context, owner, query, unknown, meaning) : new Map();
   const matchOf = (d: (typeof placed)[number]): Matched => {
     const m = split?.matches.get(d.recordId) ?? filled.get(d.recordId) ?? NO_MATCH;
-    const by = byOf(m, split?.cutoffs);
+    const by = byOf(context, m, split?.cutoffs);
     return { ...m, ranks: m.ranks ?? { words: null, meaning: null }, ...(by ? { by } : {}) };
   };
   const sources = placed.filter((d) => matchOf(d).by);

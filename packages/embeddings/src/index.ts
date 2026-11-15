@@ -1,5 +1,5 @@
 /**
- * THE EMBEDDING CLIENT: one object, made once from its settings (`createEmbedder`), that embeds documents and queries
+ * The embedding client: one object, made once from its settings (`createEmbedder`), that embeds documents and queries
  * through a sidecar when one is configured and in process otherwise, says whether its sidecars are healthy, and names
  * the space its vectors are in. It holds what it loads and remembers (the model, the last stated space, whether an
  * outage was said); nothing in this package is module state.

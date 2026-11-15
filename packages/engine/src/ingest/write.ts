@@ -3,11 +3,11 @@
  * stops it; each slice commits on its own. Once the record is whole, its older versions are settled.
  */
 import type { Sql } from "postgres";
+import { embedderOf } from "../embedder.js";
 import { recordEmbeddingSpace } from "../embedding-space.js";
 import { laterVersion } from "../kg/core/version.js";
 import type { MemoryWriteContext } from "../memory/store.js";
 import { dropRecordSupersededVectors } from "../memory/superseded-vectors.js";
-import { workTransaction } from "../memory/work-seam.js";
 import { afterPassagesWritten } from "../passage-write-seam.js";
 import { telemetry } from "../telemetry.js";
 import { type Writes, writeHooksOf } from "../writes.js";
@@ -23,7 +23,7 @@ export async function writeSlice(
   const ids = await insertSlice(writes, ctx, rows);
   if (ids === null) return null;
   // Which space these vectors are in, once per workspace per process: a model change without a re-embed shows at boot.
-  if (ids.length > 0) await recordEmbeddingSpace(writes.sql, ctx.orgId);
+  if (ids.length > 0) await recordEmbeddingSpace(embedderOf(writes), writes.sql, ctx.orgId);
   // And whatever the build does after a write (`passage-write-seam.ts`): best effort, never a failure of this write.
   const { passageWrites } = writeHooksOf(writes);
   await afterPassagesWritten(passageWrites, "passage", ids);
@@ -42,7 +42,7 @@ export async function settleVersions(
   missing: readonly unknown[] | null,
 ): Promise<void> {
   if (missing === null) return;
-  if (missing.length > 0) await flagOlderVersions(writes.sql, ctx);
+  if (missing.length > 0) await flagOlderVersions(writes, ctx);
   await dropRecordSupersededVectors(writes, ctx.orgId, ctx.eventId);
 }
 
@@ -52,8 +52,8 @@ export async function settleVersions(
  * matters. It is done here, off the accept path, because flagging a row writes a new entry into every passage index;
  * a passage later written for an older version copies its version's flag itself (`insertSlice`).
  */
-async function flagOlderVersions(sql: Sql, ctx: MemoryWriteContext): Promise<void> {
-  await workTransaction(sql, async (trx) => {
+async function flagOlderVersions(writes: Writes, ctx: MemoryWriteContext): Promise<void> {
+  await writeHooksOf(writes).work.transaction(async (trx) => {
     await trx`
       update passage p set record_has_newer = true
         from event_log n, event_log o
@@ -74,8 +74,8 @@ async function insertSlice(
   ctx: MemoryWriteContext,
   rows: SliceRow[],
 ): Promise<string[] | null> {
-  const rules = writeHooksOf(writes).passageRules;
-  return workTransaction(writes.sql, async (trx) => {
+  const { passageRules: rules, work } = writeHooksOf(writes);
+  return work.transaction(async (trx) => {
     const [event] = await trx`select id from event_log where id = ${ctx.eventId}
       and org_id = ${ctx.orgId} ${indexableEvent(rules, trx)} for update`;
     if (!event) return null;

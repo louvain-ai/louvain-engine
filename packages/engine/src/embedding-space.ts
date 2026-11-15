@@ -1,5 +1,5 @@
+import type { Embedder } from "@louvain/embeddings";
 import type { Sql } from "postgres";
-import { embeddingSpace } from "./embedder.js";
 import { telemetry } from "./telemetry.js";
 
 /**
@@ -21,13 +21,17 @@ export function forgetRecordedSpaces(): void {
 }
 
 /**
- * Note that `orgId` holds vectors made in this process's space. The first space an org is written in is kept; a
+ * Note that `orgId` holds vectors made in `embedder`'s space (the one that just embedded them). The first space an org is written in is kept; a
  * different one arriving later sets `mixed` rather than overwriting, because the earlier vectors are still there.
  * Never fails a write: the record is an observation about vectors already stored.
  */
-export async function recordEmbeddingSpace(sql: Sql, orgId: string): Promise<void> {
+export async function recordEmbeddingSpace(
+  embedder: Embedder,
+  sql: Sql,
+  orgId: string,
+): Promise<void> {
   try {
-    const space = await embeddingSpace();
+    const space = await embedder.space();
     if (!space || recorded.has(`${orgId}|${space.fingerprint}`)) return;
     await sql`insert into embedding_space (org_id, fingerprint, detail)
       values (${orgId}::uuid, ${space.fingerprint}, ${sql.json(space.detail)})
@@ -48,8 +52,12 @@ export async function recordEmbeddingSpace(sql: Sql, orgId: string): Promise<voi
  * An org re-embedded whole: its stored vectors are in this process's space, and only that. Called by the re-embed
  * script when an org's re-embed completes.
  */
-export async function adoptEmbeddingSpace(sql: Sql, orgId: string): Promise<void> {
-  const space = await embeddingSpace();
+export async function adoptEmbeddingSpace(
+  embedder: Embedder,
+  sql: Sql,
+  orgId: string,
+): Promise<void> {
+  const space = await embedder.space();
   if (!space) throw new Error("embedding space unknown: the bulk embedding lane did not answer");
   await sql`insert into embedding_space (org_id, fingerprint, detail)
     values (${orgId}::uuid, ${space.fingerprint}, ${sql.json(space.detail)})

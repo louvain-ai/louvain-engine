@@ -1,40 +1,25 @@
-import type { Embedder, EmbedLane } from "@louvain/embeddings";
+import type { Embedder } from "@louvain/embeddings";
 
 /**
- * THE PROCESS'S ONE EMBEDDER, bound once: the reads and writes that embed still ask this binding, not the engine they
- * run under, so an entry binds the embedder its engine holds (`bindEmbedder(engine.embedder)`), the one value both
- * see. Unbound, an embed throws. The functions below are the bound embedder's, so a caller names what it does, not
- * which instance does it; unbound, each rejects like any failed embed.
+ * THE ENGINE'S EMBEDDER, as its reads and writes reach it: `createEngine` puts its own (`EngineParts.embedder`) among
+ * the hooks of the context and the writes it makes, and a read or a write that embeds asks `embedderOf`, never a
+ * process binding. A build never passes one: it is the engine's part, not something a build adds.
  */
 export class EmbedderUnbound extends Error {
   constructor() {
     super(
-      "no embedder is bound; an entry binds its engine's embedder (bindEmbedder(engine.embedder)) before anything embeds",
+      "no embedder in this read's or write's hooks: a context or writes made by createEngine carry its embedder",
     );
     this.name = "EmbedderUnbound";
   }
 }
 
-let bound: Embedder | undefined;
+/** The member `createEngine` adds to the hooks it hands a read and a write. */
+export type Embedded = { readonly embedder?: Embedder };
 
-/** Fix this process's embedder. The same again is a no-op; a different one throws. */
-export function bindEmbedder(e: Embedder): void {
-  if (bound === e) return;
-  if (bound !== undefined)
-    throw new Error("a different embedder is already bound: a process binds one, once");
-  bound = e;
+/** The embedder a read's context or a write's writes carry; without one, nothing embeds (`EmbedderUnbound`). */
+export function embedderOf(on: { readonly hooks?: Embedded | undefined }): Embedder {
+  const embedder = on.hooks?.embedder;
+  if (embedder === undefined) throw new EmbedderUnbound();
+  return embedder;
 }
-
-/** The bound embedder. */
-export function embedder(): Embedder {
-  if (bound === undefined) throw new EmbedderUnbound();
-  return bound;
-}
-
-export const embed = async (texts: string[], lane?: EmbedLane): Promise<number[][]> =>
-  embedder().embed(texts, lane);
-export const embedQuery = async (text: string): Promise<number[]> => embedder().embedQuery(text);
-export const embeddingSettings = () => embedder().settings();
-export const remoteTokenCounts = async (texts: string[]): Promise<number[]> =>
-  embedder().remoteTokenCounts(texts);
-export const embeddingSpace = async (opts?: { fresh?: boolean }) => embedder().space(opts);

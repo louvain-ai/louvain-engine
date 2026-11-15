@@ -1,7 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { toPgVector } from "@louvain/embeddings";
+import { type Embedder as ModelEmbedder, toPgVector } from "@louvain/embeddings";
 import type { AsOf, Span } from "@louvain/engine-core";
-import { embed } from "../../embedder.js";
 import type { KnownPrecision } from "./precision.js";
 import { queryVectorFor } from "./question.js";
 
@@ -125,10 +124,11 @@ export type Embedder = {
   documents(texts: string[]): Promise<number[][]>;
 };
 
-export const productEmbedder: Embedder = {
-  query: (text, orgId) => queryVectorFor(text, orgId),
-  documents: (texts) => embed(texts, "bulk"),
-};
+/** The read primitives' two sides of a model embedder (`@louvain/embeddings`): its query lane memoised, its bulk lane. */
+export const readEmbedderOf = (model: ModelEmbedder): Embedder => ({
+  query: (text, orgId) => queryVectorFor(model, text, orgId),
+  documents: (texts) => model.embed(texts, "bulk"),
+});
 
 export const asPgVector = (v: number[] | string): string =>
   typeof v === "string" ? v : toPgVector(v);

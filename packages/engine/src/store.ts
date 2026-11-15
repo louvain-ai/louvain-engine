@@ -3,7 +3,7 @@ import { jitPolicy, planCachePolicy } from "./db-settings.js";
 import { telemetry } from "./telemetry.js";
 
 /**
- * THE STORE: the pool the engine reads and writes through, as a value its caller opens and ends. A bounded read is a
+ * The store: the pool the engine reads and writes through, as a value its caller opens and ends. A bounded read is a
  * transaction whose statements are cut at a timeout, plan for their own parameters and never JIT-compile; each is a
  * `set local`, so it reaches the right backend through any pooler and never leaks into the next statement.
  */
@@ -61,7 +61,7 @@ type StoreSettings = {
 };
 
 /**
- * OPEN A STORE on a database: its pool, its prepared statements planned as the settings decide (`db-settings.ts`: a
+ * Open a store on a database: its pool, its prepared statements planned as the settings decide (`db-settings.ts`: a
  * `set local` in every bounded read wherever prepared statements are on, a startup parameter as well only where the
  * address cannot be a pooler), JIT off at connect where no pooler can refuse it, and the read bounds every bounded read
  * keeps. Nothing connects until the first statement; the caller ends it (`Store.end`, or the engine's `close`).

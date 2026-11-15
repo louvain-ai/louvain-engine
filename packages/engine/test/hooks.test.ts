@@ -45,8 +45,9 @@ const OPEN = {
 } satisfies Required<ReadHooks>;
 
 test("an engine with no hooks reads each hook as the open build's own constant", () => {
-  const { context } = createEngine(parts());
-  assert.equal(context.hooks, undefined);
+  const { context, embedder } = createEngine(parts());
+  // The engine's own embedder rides with them (`embedderOf`), and nothing a build adds.
+  assert.deepEqual(context.hooks, { embedder });
   const hooks = hooksOf(context);
   assert.deepEqual(Object.keys(hooks).sort(), Object.keys(OPEN).sort());
   for (const [key, open] of Object.entries(OPEN))

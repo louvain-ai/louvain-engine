@@ -7,7 +7,7 @@ import { missingFromStatement, sidecarDisagreement } from "../src/space-statemen
 import { settingsOf, withFetch } from "./helpers.js";
 
 /**
- * AN EMBEDDER IS MADE FROM ITS SETTINGS AND HOLDS ITS OWN STATE. A model's conventions are configuration and unset they
+ * An embedder is made from its settings and holds its own state. A model's conventions are configuration and unset they
  * are bge-base's; a Matryoshka cut is declared, never inferred; a query is timed for the host whichever way it ends; the
  * space is the producer's, freshest statement first; and two embedders share nothing. Stub `fetch`, no model loaded.
  */

@@ -6,7 +6,7 @@ import type { RemoteFailure } from "../src/remote.js";
 import { remoteOf, vectorsFor, withFetch } from "./helpers.js";
 
 /**
- * THE REMOTE CLIENT, ONE PER EMBEDDER: request batches keep their lane and order; a bulk request that never connected
+ * The remote client, one per embedder: request batches keep their lane and order; a bulk request that never connected
  * is tried again before it is a failure, a query never is; each lane has its own limit; every failure reaches the
  * embedder's observer with a bounded reason; fallback is opt-in; the bearer rides on every request; `/count` is the
  * bulk sidecar's own tokenizer. Stub `fetch` or a local server, no clock.

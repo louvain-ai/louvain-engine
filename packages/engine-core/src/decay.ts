@@ -1,5 +1,5 @@
 /**
- * A ROW'S RELEVANCE, SCALED BY ITS AGE, WITHIN ONE LEG. Rank fusion keeps no relevance — the gap between
+ * A row's relevance, scaled by its age, within one leg. Rank fusion keeps no relevance — the gap between
  * places 1 and 12 says nothing about how near either is — so a penalty in places moved a sole old source below a dozen
  * newer rows that barely matched. Inside a leg the native score does carry it: each row's score over the leg's best,
  * times its retention R = floor + (1 − floor) · e^(−age / S), re-sorted. A row with no score keeps its place (a leg

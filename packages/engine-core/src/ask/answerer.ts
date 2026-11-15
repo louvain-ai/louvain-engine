@@ -1,5 +1,5 @@
 /**
- * AN ANSWERER: a question in, answer events out, through the tools the engine binds for that one answer. What decides
+ * An answerer: a question in, answer events out, through the tools the engine binds for that one answer. What decides
  * sight and spend stays the engine's: which tools it binds, which citations reach the reader, the lookups, the time and
  * the stop. A configuration names one answerer, or none (`EngineConfig.answerer`).
  */

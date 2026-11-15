@@ -4,26 +4,26 @@
  * from one call and are written together.
  */
 import { toPgVector } from "@louvain/embeddings";
-import { embed } from "../embedder.js";
+import { embedderOf } from "../embedder.js";
 import type { PlannedContext } from "../memory/passage-context-write.js";
 import type { Piece } from "../memory/store.js";
-import { checkWork } from "../memory/work-seam.js";
-import type { PassageRules } from "./passage-rules.js";
+import { type Writes, writeHooksOf } from "../writes.js";
 
 /** One embedding request for the slice: every bare chunk, then the contextual text of each chunk that has a context. */
 export async function embedSlice(
-  rules: PassageRules,
+  writes: Writes,
   missing: readonly Piece[],
   planned: readonly PlannedContext[] | null,
 ): Promise<SliceRow[]> {
-  checkWork();
+  const { passageRules: rules, work } = writeHooksOf(writes);
+  work.check();
   const contexts = missing.map(({ seq }) => planned?.[seq] ?? null);
   const embedsContext = rules.contextVector !== null;
-  const vectors = await embed([
+  const vectors = await embedderOf(writes).embed([
     ...missing.map((part) => part.body),
     ...(embedsContext ? contexts.flatMap((c) => (c ? [c.embedText] : [])) : []),
   ]);
-  checkWork();
+  work.check();
   let next = missing.length;
   return missing.map(({ body, seq }, i) => {
     const vector = vectors[i];

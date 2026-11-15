@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 /**
- * THE SCORED TEXTS, EXACTLY AS THE MODEL WAS SHOWN THEM. Each file is pinned by its sha256: a text that changed is a
+ * The scored texts, exactly as the model was shown them. Each file is pinned by its sha256: a text that changed is a
  * different configuration, so it refuses to load rather than run under this profile's name. The harness's own lines
  * (base, question line, last call, nudge, floor) were taken from its source by evaluating the strings, not retyped.
  * `tools.json` is pinned by what it parses to (`JSON.stringify` of it), which is what the model is sent: its layout is

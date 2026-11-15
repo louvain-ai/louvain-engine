@@ -1,5 +1,5 @@
 /**
- * WHAT AN AGENT DOES WITH THE ENGINE, WITHOUT THE AGENT: connect to the tool server over MCP with its token, list the
+ * What an agent does with the engine, without the agent: connect to the tool server over MCP with its token, list the
  * tools, search, read the top document and print the passage that matched, with its source. No model, no API key: this
  * is the tools' side of the conversation, and it exits non-zero when any step fails, so it also checks the server.
  * The default question asks the sample corpus, whose company, people and places are invented.

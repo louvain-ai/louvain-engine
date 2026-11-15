@@ -53,7 +53,7 @@ def openpyxl_workbook(path):
     book.save(path)
 
 
-# THE AGENT-SHAPED WORKBOOK: the shape an agent writes through openpyxl (inline strings, a bold frozen header row, set
+# The agent-shaped workbook: the shape an agent writes through openpyxl (inline strings, a bold frozen header row, set
 # column widths, an autofilter, blank cells as empty strings), which a reader once read as its sheet names alone.
 # Its content is invented: the stock list of a fictional bicycle shop.
 STOCK_HEADER = ["id", "item", "aisle", "section", "count_jan", "count_feb", "count_mar", "notes"]

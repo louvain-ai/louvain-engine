@@ -83,7 +83,7 @@ export async function searchPassages(
   const decay = decayOf(opts, limit);
   const legLimit = decay ? Math.min(limit * 2, LIMIT_MAX) : limit;
   // Every leg reads one fence, filters and query; the keyword leg returns its `degraded`, the rest add to it.
-  const { filters: added, reading, spaces, keyword: index } = hooksOf(context);
+  const { filters: added, reading, keyword: index } = hooksOf(context);
   const read = { fence: reader, query, filters, added, contextual, degraded };
   const [vector, keyword, recency] = await Promise.all([
     opts.mode === "keyword" || query.trim() === "" || timeAlone
@@ -91,7 +91,7 @@ export async function searchPassages(
       : vectorLegTold(context, {
           ...read,
           limit: legLimit,
-          space: await vectorSpaceFor(spaces, reader.orgId, opts.embedder),
+          space: await vectorSpaceFor(context, reader.orgId, opts.embedder),
           window,
         }),
     opts.mode === "vector" || query.trim() === "" || timeAlone

@@ -1,7 +1,7 @@
 import { isObject, str } from "./text.js";
 
 /**
- * WHAT KIND OF RECORD THIS IS, BY WHAT IT SAYS OF ITSELF: its presentation first, then its listing's type
+ * What kind of record this is, by what it says of itself: its presentation first, then its listing's type
  * (`source_revision.kind`), then its connector. One rule for every reader of it — which search hits are a
  * conversation's messages (`passagesAround`, `kg/read/passages.ts`), and a build that heads a passage by its record's
  * kind — so a source cannot be a chat to one and a document to the other. Anything not recognised is a document.

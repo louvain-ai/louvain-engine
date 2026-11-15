@@ -1,11 +1,10 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { toPgVector } from "@louvain/embeddings";
+import { type Embedder, toPgVector } from "@louvain/embeddings";
 import type { AskMode } from "@louvain/engine-core";
-import { embedQuery } from "../../embedder.js";
 import type { QuestionReading } from "../../nlp/client-question.js";
 import { stage as timedStage } from "../../observability/stage.js";
 import { type Tags, telemetry } from "../../telemetry.js";
-import { recentVector } from "./recent-vectors.js";
+import { queryLoader, recentVector } from "./recent-vectors.js";
 
 /**
  * One context per question: what a question resolves to (the readable set, the query vector, the shape, the named
@@ -118,10 +117,6 @@ const storage = new AsyncLocalStorage<AskContext>();
 /** Cancellation alone, for a caller that has no answer budget of its own. */
 const abortScope = new AsyncLocalStorage<AbortSignal>();
 
-/** The configured query embedding, as a pgvector literal: the interactive lane, timed as `ask.embed`. */
-export const embedProduct = async (text: string): Promise<string> =>
-  toPgVector(await embedQuery(text));
-
 /**
  * The `ask.embed` stage, which never reports an error. A failed embedding is a designed degradation: every leg
  * catches it, counts `kg.read.embed.unavailable` and answers from its other leg. So the stage settles normally,
@@ -181,14 +176,14 @@ const vectorMemo = new AsyncLocalStorage<VectorMemo>();
 
 /**
  * Run `fn` with one query-vector memo: every `queryVectorFor` inside it embeds a distinct text once.
- * Inside an `AskContext` the context's own memo still wins (`queryVectorFor`). `loaders.vector` is the
- * test seam; absent, the configured embedder.
+ * Inside an `AskContext` the context's own memo still wins (`queryVectorFor`). `load` is the query lane the memo embeds
+ * with (`queryLoader(embedder)`, or a test's).
  */
 export function withQueryVectorMemo<T>(
   fn: () => Promise<T>,
-  loaders: { vector?: (text: string) => Promise<string> } = {},
+  load: (text: string) => Promise<string>,
 ): Promise<T> {
-  return vectorMemo.run({ vectors: new Map(), load: loaders.vector ?? embedProduct }, fn);
+  return vectorMemo.run({ vectors: new Map(), load }, fn);
 }
 
 export function withAskAbort<T>(signal: AbortSignal | undefined, fn: () => Promise<T>): Promise<T> {
@@ -209,14 +204,13 @@ export function askContext(): AskContext | undefined {
  * A query vector — memoised on the current question when there is one, else on the enclosing
  * `withQueryVectorMemo` scope when there is one, else shared within `orgId` for a minute (`recent-vectors.ts`).
  */
-export function queryVectorFor(text: string, orgId?: string): Promise<string> {
+export function queryVectorFor(embedder: Embedder, text: string, orgId?: string): Promise<string> {
   const ctx = askContext();
   if (ctx) return ctx.vector(text);
   const memo = vectorMemo.getStore();
   if (memo) return memoisedVector(memo.vectors, memo.load, text);
-  return recentVector({ loader: embedProduct, orgId, text: text.trim() }, () =>
-    timedEmbed(embedProduct, text),
-  );
+  const load = queryLoader(embedder);
+  return recentVector({ loader: load, orgId, text: text.trim() }, () => timedEmbed(load, text));
 }
 
 /**

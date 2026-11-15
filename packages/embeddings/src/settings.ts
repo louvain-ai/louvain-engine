@@ -1,6 +1,6 @@
 /**
- * The embedding model's identity and conventions: what every vector is made with, read from the deployment. EVERY
- * SETTING THIS PACKAGE READS is declared once, here, as the engine declares its own (`@louvain/engine/config/settings`,
+ * The embedding model's identity and conventions: what every vector is made with, read from the deployment. Every
+ * setting this package reads is declared once, here, as the engine declares its own (`@louvain/engine/config/settings`,
  * which composes this one): `AtLoad`, read once and memoised by what builds from it (the model, the sidecar's
  * address), and `Live`, read at each call.
  * Where a setting's trimming or words are not plain zod, a short transform on its field says them.

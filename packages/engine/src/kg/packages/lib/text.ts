@@ -35,7 +35,7 @@ function folded(text: string, from = 0, to = text.length): { chars: string; offs
 }
 
 /**
- * WHERE A QUOTE SITS IN THE RECORD, found by code — never taken from the model.
+ * Where a quote sits in the record, found by code — never taken from the model.
  *
  * Exact first; then with whitespace collapsed and typographic quotes and dashes folded, which is what a
  * model changes when it copies a sentence out of a wrapped mail. Searched only inside `within` (the
@@ -292,7 +292,7 @@ export function parseModelJson(raw: string): unknown {
 }
 
 /**
- * THE STATEMENTS A CUT-OFF REPLY FINISHED. A reply that reached its token budget ends mid-object, and as JSON it is
+ * The statements a cut-off reply finished. A reply that reached its token budget ends mid-object, and as JSON it is
  * nothing — so a dense document section that said a great deal used to come back as nothing at all, and the
  * corrective retry, at the same budget, was cut off the same way (measured on an ERB pull request: 2 × 4,000 output
  * tokens, no statements). Every element of the `statements` array that CLOSED before the cut is a complete,

@@ -120,7 +120,7 @@ def main() -> None:
                           str(pages))
                     check("ON: FS-4471 puts the titled datasheet first", pages["fs4471"][:1] == ["datasheet"],
                           str(pages))
-                    # THE LAST TOKEN, of any type, completes over the held terms it begins, under the fence; a held
+                    # The last token, of any type, completes over the held terms it begins, under the fence; a held
                     # one, a short one and an edit complete nothing.
                     def completed(key: str) -> tuple[list[str], list[str]]:
                         r = request(base, "POST", "/search", {"org": "o1", "containers": ["c1"], "query": key,

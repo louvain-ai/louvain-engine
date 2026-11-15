@@ -1,3 +1,4 @@
+import { type Embedder, toPgVector } from "@louvain/embeddings";
 import { LRUCache } from "lru-cache";
 
 /** What a recent vector is keyed by: the loader that embeds it, the workspace and the words. */
@@ -45,4 +46,19 @@ export function recentVector(
 /** Forget the shared query vectors (tests; a sidecar swapped under a running process). */
 export function forgetRecentQueryVectors(): void {
   recentByLoader = new WeakMap();
+}
+
+/**
+ * An embedder's query embedding, as a pgvector literal: its interactive lane, timed as `ask.embed`. One function per
+ * embedder, so every memo keyed by its loader (`recent-vectors.ts`, `queryVectorWith`) is keyed by the embedder and a
+ * vector from one never stands in for another's.
+ */
+const queryLoaders = new WeakMap<Embedder, (text: string) => Promise<string>>();
+export function queryLoader(embedder: Embedder): (text: string) => Promise<string> {
+  let load = queryLoaders.get(embedder);
+  if (!load) {
+    load = async (text) => toPgVector(await embedder.embedQuery(text));
+    queryLoaders.set(embedder, load);
+  }
+  return load;
 }

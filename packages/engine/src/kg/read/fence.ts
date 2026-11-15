@@ -7,6 +7,7 @@
 import type { ReadableSetResolver, Viewer } from "@louvain/engine-core";
 import type { PendingQuery, Row, TransactionSql } from "postgres";
 import { sanitizeId } from "../../db-ids.js";
+import type { Embedded } from "../../embedder.js";
 import { readPreamble, type Store } from "../../store.js";
 import { type Queryable, UUID } from "../core/sql.js";
 import type { ReadHooks } from "./hooks.js";
@@ -24,7 +25,7 @@ export type ReadContext = {
   readonly store: Store;
   readonly sql: Queryable;
   readonly readable: ReadableSetResolver;
-  readonly hooks?: ReadHooks;
+  readonly hooks?: ReadHooks & Embedded;
   readonly [madeAsContext]: true;
 };
 
@@ -37,7 +38,7 @@ export type ReadContext = {
 export const readContextOf = (
   on: { readonly store: Store; readonly sql: Queryable },
   readable: ReadableSetResolver,
-  hooks?: ReadHooks,
+  hooks?: ReadHooks & Embedded,
 ): ReadContext =>
   ({ store: on.store, sql: on.sql, readable, ...(hooks ? { hooks } : {}) }) as ReadContext;
 

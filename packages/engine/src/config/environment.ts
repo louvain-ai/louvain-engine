@@ -1,5 +1,5 @@
 /**
- * EVERY ENVIRONMENT NAME THE OPEN ENGINE READS, DECLARED ONCE: its name, what it accepts, its default and one line of
+ * Every environment name the open engine reads, declared once: its name, what it accepts, its default and one line of
  * what it does. How a search reads and ranks is not here: that is `settings` in `engine.config.ts` (`settings.ts`). Two
  * schemas, by when a name is read: `AtLoad`, parsed once where its module loads (or where `config` is built), and
  * `Live`, parsed at each call, so one process can serve both arms of a measurement. `environment(name)` parses

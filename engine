@@ -106,7 +106,7 @@ cmd_search() {
   run_ts "$SEARCH_ENTRY" "$@"
 }
 
-# THE UPGRADE AND THE KEYWORD INDEX: a database the release before made is upgraded in place, then the keyword index is
+# The upgrade and the keyword index: a database the release before made is upgraded in place, then the keyword index is
 # rebuilt, so both hold what this release gives. The documents and their passages stay. Run again, it changes nothing
 # in the schema and rebuilds the index again.
 cmd_reindex() {
@@ -1026,7 +1026,7 @@ rebuild_keyword_index() {
   up_built bm25
 }
 
-# THE KEYWORD INDEX IS DERIVED: one an earlier release built, which this release's sidecar cannot open or reads only in
+# The keyword index is derived: one an earlier release built, which this release's sidecar cannot open or reads only in
 # part (its `/healthz` says `rebuild`), is rebuilt from the records loaded, so an upgrade never stops `up`.
 keyword_index_stale() {
   curl -s --max-time 5 "$LOUVAIN_BM25_URL/healthz" 2>/dev/null | grep -q '"rebuild": *true'

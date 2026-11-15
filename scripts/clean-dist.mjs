@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * THE BUILD STARTS FROM NOTHING. `tsc` writes what the source holds and deletes nothing, so a module removed or renamed
+ * The build starts from nothing. `tsc` writes what the source holds and deletes nothing, so a module removed or renamed
  * in `src` would stay importable from `dist` under its old name, and a caller of it would keep passing against code that
  * no longer exists. A package's build removes its `dist` first, and any incremental build info beside its tsconfig, so
  * `tsc` cannot skip an emit it believes is already there. Every package's `build` starts with this one script.

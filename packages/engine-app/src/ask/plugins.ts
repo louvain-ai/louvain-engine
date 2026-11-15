@@ -9,7 +9,7 @@ import type { Model } from "./model.js";
 export { scripted } from "./scripted.js";
 
 /**
- * THE ANSWERERS A CONFIGURATION NAMES, as values: `engine.config.ts` writes
+ * The answerers a configuration names, as values: `engine.config.ts` writes
  * `answerer: agent({ model: anthropic({ model: "claude-sonnet-5-5" }) })`, or `scripted()`, which needs no model, or
  * one of its own made with `definePlugin`. None named, Ask says it has no answerer. The environment carries the key
  * alone: a model without one is `Unready`, the agent over it starts not ready, and Ask says which setting it needs.

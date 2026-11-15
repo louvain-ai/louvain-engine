@@ -7,7 +7,6 @@
 import { realpathSync } from "node:fs";
 import { isAbsolute, relative } from "node:path";
 import { parseArgs } from "node:util";
-import { bindEmbedder } from "@louvain/engine/embedder";
 import type { Engine } from "@louvain/engine/engine";
 import { openHost } from "@louvain/engine/kg/read/open-readable-set";
 import { fileReaderLane } from "@louvain/engine/open/file-readers/index";
@@ -45,7 +44,6 @@ const usageOf = (plugins: PluginRegistry) =>
 
 const [name, ...argv] = process.argv.slice(2);
 const engine = await openEngine(openHost).catch(stopOn(PluginRefused));
-bindEmbedder(engine.embedder);
 if (name === undefined || name.startsWith("-")) usage(usageOf(engine.plugins));
 await ingest(engine, name, argv)
   .catch(refused)

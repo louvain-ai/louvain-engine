@@ -3,7 +3,7 @@ import { isNotReady } from "./kinds.js";
 import { type Contracts, type Plugin, refuse } from "./plugin.js";
 
 /**
- * THE PLUGIN REGISTRY: the started plugins of one engine, made whole from a configuration at start-up and never
+ * The plugin registry: the started plugins of one engine, made whole from a configuration at start-up and never
  * changed after. Each plugin starts in the configuration's order; one that fails stops the start, by name, and those
  * already started are closed, latest first. It is a value passed from the entry to what reads it, never module state:
  * the host's bindings are the only thing a process binds once.

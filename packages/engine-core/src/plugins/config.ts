@@ -3,7 +3,7 @@ import { KINDS } from "./kinds.js";
 import { type Contracts, type Plugin, refuse } from "./plugin.js";
 
 /**
- * WHAT A DEPLOYMENT RUNS, said once, in code: `engine.config.ts` exports `defineEngine({ … })`. Each kind is a list,
+ * What a deployment runs, said once, in code: `engine.config.ts` exports `defineEngine({ … })`. Each kind is a list,
  * run in the order written, so no import order decides it. The environment never names a plugin; it carries
  * addresses, keys and ports, which a plugin's factory reads. Nothing here binds who may read what or how a call is
  * metered: those are the host's, bound in code.
@@ -102,6 +102,5 @@ function checked<K extends keyof Contracts>(field: string, kind: K, list: readon
 /** The host's members, so a file in plain JavaScript naming one is refused by name; kept equal to `Host` by type. */
 const HOST_BINDINGS = Object.keys({
   readableSet: true,
-  work: true,
   endpoints: true,
 } satisfies Record<keyof Host, true>);

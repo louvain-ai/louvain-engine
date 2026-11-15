@@ -2,7 +2,7 @@ import type { RecordView } from "@louvain/engine-core";
 import { isObject } from "./text.js";
 
 /**
- * WHERE A DOCUMENT'S OWN TEXT STARTS, AND WHICH OF ITS LINES ARE HEADINGS: what a passage's header and a document's
+ * Where a document's own text starts, and which of its lines are headings: what a passage's header and a document's
  * sections both read off a record's text. Pure, and the only part of `document.ts` the open indexer needs (a passage's
  * context, `memory/passage-context.ts`); `document.ts` re-exports it.
  */
@@ -29,7 +29,7 @@ const NUMBERED_HEADING =
 const blank = (line: string | undefined): boolean => line === undefined || line.trim() === "";
 
 /**
- * A HEADING IS WHERE A LINE STANDS, NOT HOW IT IS CAPITALISED. A markdown heading says so itself. A numbered line
+ * A heading is where a line stands, not how it is capitalised. A markdown heading says so itself. A numbered line
  * is a heading when it stands alone — a blank line (or the text's edge) on both sides — because a numbered LIST runs
  * item into item. A short unnumbered line (at most eight words, no closing punctuation) is a heading when it stands
  * alone AND a longer paragraph follows: a title above its section, not a sign-off at the end of a letter. Which case its

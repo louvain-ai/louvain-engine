@@ -1,5 +1,5 @@
 /**
- * A RERANKER: a plugin of the `reranker` kind that reads the search and each candidate's text together and scores how
+ * A reranker: a plugin of the `reranker` kind that reads the search and each candidate's text together and scores how
  * well the candidate answers it, from 0 (not at all) to 1. The engine orders by these scores and may use them to say
  * which documents match; a reranker that cannot answer says so, and the engine keeps the order it had, named as not
  * reranked, never as ranked.

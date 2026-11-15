@@ -20,7 +20,7 @@ export function safeSourceUrl(value: unknown): string | null {
   }
 }
 /**
- * THE WAYS A DOCUMENT ARRIVES THAT MAKE IT GENERATED: an agent wrote it (`agent`) or
+ * The ways a document arrives that make it generated: an agent wrote it (`agent`) or
  * the system wrote a version for a person (`assistant`). Generated text is read for passages only, folds into
  * nothing and is labelled wherever it is shown. EVERY check of "was this generated" goes through this list —
  * in TypeScript `isGeneratedVia`, in SQL `= any(GENERATED_VIAS)` — because a check that names one value is
@@ -30,7 +30,7 @@ export const GENERATED_VIAS = ["agent", "assistant"] as const;
 /** Which record, in a source: the identity pair every record key spells. */
 export type RecordRef = { objectType: string; nativeId: string };
 /**
- * A RECORD'S KEY, as it is stored and listed: `<objectType>:<nativeId>`. `objectType` cannot contain `:` (the contract
+ * A record's key, as it is stored and listed: `<objectType>:<nativeId>`. `objectType` cannot contain `:` (the contract
  * refuses it), so the first colon separates the halves, and a native id may hold as many as it likes.
  */
 export const keyOfRecord = (r: RecordRef): string => `${r.objectType}:${r.nativeId}`;

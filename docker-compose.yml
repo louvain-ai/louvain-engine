@@ -2,7 +2,7 @@
 #
 #   ./engine up                                  # makes this install's secrets, then starts and readies the stack
 #
-# NO DEFAULT CREDENTIAL: every port is published on the loopback address only, where any local user and any web page
+# No default credential: every port is published on the loopback address only, where any local user and any web page
 # in a browser can reach it, so Postgres and the sidecars each require a per-install secret. `./engine up` makes them
 # in .engine/ (mode 600) and hands them to Compose through its environment. Run by hand, Compose needs them too:
 #

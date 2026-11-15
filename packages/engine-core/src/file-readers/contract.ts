@@ -1,5 +1,5 @@
 /**
- * A FILE READER: the plugin contract the open loader reads every file through.
+ * A file reader: the plugin contract the open loader reads every file through.
  *
  * A reader is a name, what it claims, and one function from a file's bytes to its text. It decides nothing else: it
  * is never handed a path, a descriptor or the folder, and THE ENGINE HOLDS IT TO THESE BOUNDS (`bounded.ts`): it

@@ -1,4 +1,5 @@
 import type { SourceSearch } from "@louvain/engine-core";
+import { embedderOf } from "../embedder.js";
 import { bounded, fenced, narrow as narrowed, type ReadContext } from "../kg/read/fence.js";
 import { hooksOf } from "../kg/read/hooks.js";
 import { log } from "../observability/logging.js";
@@ -6,7 +7,7 @@ import { telemetry } from "../telemetry.js";
 import { isUnreachable } from "../unreachable.js";
 import { REACH_DOCS, REACH_EVENTS } from "./bounds.js";
 import { emptySearch } from "./empty-search.js";
-import { sourceQueryVector } from "./query-vector.js";
+import { sourceQueryVectorOf } from "./query-vector.js";
 import { type Owner, type Scope, scope, summary } from "./read-core.js";
 import { indexListing } from "./read-index-listing.js";
 import { keywordSources } from "./read-listing.js";
@@ -80,7 +81,7 @@ export async function searchSources(
   context: ReadContext,
   owner: Owner,
   input: SearchInput,
-  embed: (query: string) => Promise<number[] | null> = sourceQueryVector,
+  embed: (query: string) => Promise<number[] | null> = sourceQueryVectorOf(embedderOf(context)),
 ): Promise<SourceSearch> {
   const { keyword, filters } = hooksOf(context);
   if (input.q !== "" && !keyword.documents)

@@ -2,7 +2,7 @@ import type { Viewer } from "@louvain/engine-core";
 import type { Embedder } from "./context.js";
 import { fence, fenced, type ReadContext } from "./fence.js";
 import { hooksOf } from "./hooks.js";
-import { queryIn, type VectorSpaces, vectorSpaceFor } from "./space.js";
+import { queryIn, vectorSpaceFor } from "./space.js";
 
 /**
  * HOW WELL EACH SHOWN DOCUMENT MATCHES THE SEARCH, in two facts a person can check:
@@ -31,7 +31,7 @@ export async function relevanceOf(
   const reader = await fence(context, viewer);
   if (!reader || ids.length === 0 || query.trim() === "") return new Map();
   const vector = opts.meaning
-    ? await queryVector(hooksOf(context).spaces, reader.orgId, opts.meaning, opts.embedder)
+    ? await queryVector(context, reader.orgId, opts.meaning, opts.embedder)
     : null;
   const rows = await sql<{ id: string; meaning: number | null }[]>`
     select p.event_id as id,
@@ -106,14 +106,14 @@ export const fold = (text: string): string =>
 
 /** The search's vector in the space the vector leg reads, and the column it reads; null when it cannot answer. */
 async function queryVector(
-  spaces: VectorSpaces,
+  context: ReadContext,
   orgId: string,
   query: string,
   embedder?: Embedder,
 ) {
   try {
     const { space, vector } = await queryIn(
-      await vectorSpaceFor(spaces, orgId, embedder),
+      await vectorSpaceFor(context, orgId, embedder),
       query,
       orgId,
     );

@@ -1,10 +1,10 @@
 /**
- * THE HOST: what a deployment decides, in one type. The engine reads, indexes and serves; who may read what, how a work
- * item's effects are committed and how sidecars are reached are the deployment's answers (what a search reads is a
- * plugin, `search/retriever.ts`, never a binding). A deployment hands its host to the engine it builds
- * (`createEngine`), whose reads ask the host's resolver through their context; each member below says what happens
- * when a host has none: the readable set is REQUIRED, because a default would be a wider read; the work transaction
- * and the sidecars fall back to plain ones.
+ * THE HOST: what a deployment decides, in one type. The engine reads, indexes and serves; who may read what and how
+ * sidecars are reached are the deployment's answers (what a search reads is a plugin, `search/retriever.ts`, never a
+ * binding; how a work item's effects are committed is a write hook of the engine a build makes). A deployment hands
+ * its host to the engine it builds (`createEngine`), whose reads ask the host's resolver through their context; each
+ * member below says what happens when a host has none: the readable set is REQUIRED, because a default would be a
+ * wider read; the sidecars fall back to plain ones.
  */
 
 /**
@@ -37,22 +37,10 @@ export type SidecarEndpoints = {
   queryEndpoint(endpoint: string): Promise<string>;
 };
 
-/**
- * The deployment's binding of every seam. `Transaction`: the handle a work item's effects are written in, the
- * deployment's own; the core never opens one.
- */
-export type Host<Transaction = unknown> = {
+/** What a deployment decides for the engine it builds. */
+export type Host = {
   /** Who may read what (above). */
   readableSet: ReadableSetResolver;
-  /**
-   * How a work item's effects are committed and whether it still holds its claim. OPTIONAL: unbound, a plain
-   * transaction, never guarded (the open build has no queue to hold a claim).
-   */
-  work?: {
-    check(): void;
-    transaction<T>(fn: (trx: Transaction) => Promise<T>): Promise<T>;
-    durable(): boolean;
-  };
   /** How sidecars that are not plain always-up HTTP services are reached (above). OPTIONAL; bound once. */
   endpoints?: SidecarEndpoints;
 };
