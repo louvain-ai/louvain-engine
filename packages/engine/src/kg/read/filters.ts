@@ -1,3 +1,4 @@
+import type { RecordFilters } from "@louvain/engine-core";
 import type { PendingQuery, Row } from "postgres";
 import {
   type AddedFilters,
@@ -10,31 +11,13 @@ import type { Queryable } from "../core/sql.js";
 import { connectorsOfApp } from "./connector-apps.js";
 
 /**
- * Filters on the record a row came from, shared by `passages.search` and `records.window`. Each narrows inside the
- * fence the caller already put in the same WHERE clause; none can widen it.
+ * Filters on the record a row came from, shared by `passages.search` and `records.window` (the core's type, which a
+ * retriever's scope carries). Each narrows inside the fence the caller already put in the same WHERE clause; none can
+ * widen it. `apps` is only for a read whose candidates are already bound (the passage legs): `records.window` has no
+ * `apps`, since its walk would probe every event in the period; a genre is the predicate an application binds
+ * (`filter-seam.ts` `genreIn`), refused where none is.
  */
-export type RecordFilters = {
-  /** The actor (`actor_id` or `actor_email`), or a `from` participant where one is bound (`names`), lower-cased. */
-  sender?: string;
-  /** Every listed identifier appears as the actor or as a participant in any role; refused where none is bound. */
-  participants?: string[];
-  /** `from` inclusive, `to` exclusive, on the record's own time. */
-  window?: { from?: string; to?: string };
-  /** The record's connector. */
-  connectors?: string[];
-  /**
-   * The app the record shows as (its own `presentation.service`, else its connector's app), or its connector's type.
-   * A label and a filter, never an ACL input. Only for a read whose candidates are already bound (the passage legs):
-   * `records.window` has no `apps`, since its walk would probe every event in the period.
-   */
-  apps?: string[];
-  /**
-   * The record's genre, by the predicate an application binds (`filter-seam.ts` `genreIn`), refused where none is:
-   * `include` needs one in the list, so a record with none does not match; `exclude` drops a record with one in the
-   * list and keeps one with none.
-   */
-  genre?: { include?: string[]; exclude?: string[] };
-};
+export type { RecordFilters } from "@louvain/engine-core";
 
 type Fragment = PendingQuery<Row[]>;
 

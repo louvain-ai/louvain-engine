@@ -1,6 +1,7 @@
 import type {
   Candidate,
   FencedReading,
+  ReadingScope,
   Reranker,
   Retrieved,
   RetrieverAsk,
@@ -9,9 +10,10 @@ import type {
 } from "@louvain/engine-core";
 import { attempt } from "../ask/degrade.js";
 import type { WithIds } from "../ask/evidence.js";
-import type { ReadContext } from "../kg/read/fence.js";
+import { fence, type ReadContext } from "../kg/read/fence.js";
 import { passages } from "../kg/read/passages-api.js";
 import { readableRecords } from "../kg/read/readable-records.js";
+import { recordsAsPassages } from "../kg/read/records-as-passages.js";
 import { telemetry } from "../telemetry.js";
 import type { SearchOptions, SearchPool } from "./document.js";
 import { fused } from "./fused.js";
@@ -19,13 +21,11 @@ import { stage } from "./stage.js";
 import { withQuestion } from "./with-question.js";
 
 /**
- * THE OPEN SEARCH'S POOL: the configuration's retriever plugins, each handed a reading fenced to the search, every row
- * they return re-checked against that fence by id, then fused (`fused.ts`) in their order. A row the reading did not
- * hand out, or one outside the search's scope, is dropped and counted (`search.retriever_foreign_dropped`).
- *
- * The shipped retrievers (`plugins/retriever-*`) are the legs the answer path's `candidates()` reads for a query with
- * no plan, at the same depth and in the same fusion, so the open page is the answer path's page. A search with no
- * retriever configured is refused in one sentence. The configuration's reranker, or `null`, travels with the pool.
+ * The search's pool: the configuration's retriever plugins, each handed a reading fenced to the search, every record
+ * they return read again under that fence as the keyword index's hits are (`records-as-passages.ts`), then fused
+ * (`fused.ts`) in their order. A record outside the search's scope is dropped and counted
+ * (`search.retriever_foreign_dropped`). A search with no retriever configured is refused in one sentence. The
+ * configuration's reranker, or `null`, travels with the pool.
  */
 export function retrieverPool(
   retrievers: readonly Started<"retriever">[],
@@ -36,7 +36,7 @@ export function retrieverPool(
       "No retriever is configured, so nothing can be searched: list at least one in engine.config.ts.",
     );
   const pool: SearchPool = async (context, viewer, query, question, depth, opts) => {
-    const reading = fencedReading(context, viewer, opts);
+    const reading = await fencedReading(context, viewer, opts);
     const read = async (q: string) => {
       const mode = opts.mode ?? "hybrid";
       const ask: RetrieverAsk = { query: q, limit: depth, mode, bounded: reading.bounded };
@@ -72,15 +72,18 @@ const legsOf = (
   Promise.all(retrievers.map(async ({ name, plugin }) => ({ name, got: await call(plugin) })));
 
 /**
- * A READING FENCED TO ONE SEARCH: the reader, the search's narrowing and its as-of, never the pool. It remembers every
- * row it hands out, so what a retriever returns is kept only when this reading produced it, and `recheck` then reads
- * the survivors' records again under the search's fence, by id.
+ * A READING FENCED TO ONE SEARCH: the reader, the search's narrowing and its as-of, never the pool, and their
+ * description (`scope`) for a retriever that asks an index of its own. A row it handed out is kept as handed (two legs
+ * hand out the same passage with their own scores, so the row itself, not its id); any other a retriever returns is
+ * its record, read again as the keyword index's hits are (`recordsAsPassages`). `recheck` then reads every
+ * survivor's record under the fence, by id.
  */
-function fencedReading(context: ReadContext, viewer: Viewer, opts: SearchOptions) {
-  const handed = new Map<Candidate, WithIds>();
+async function fencedReading(context: ReadContext, viewer: Viewer, opts: SearchOptions) {
+  const handed = new Set<Candidate>();
   const filters = { ...opts.narrow, ...(opts.asOf ? { asOf: opts.asOf } : {}) };
   const bounded = opts.recall === "bounded";
   const read: FencedReading = {
+    scope: await scopeOf(context, viewer, opts),
     passages: async (q, how) => {
       const page = await passagesRead(how.digits ? "digits" : how.mode, () =>
         passages.search(context, viewer, q, {
@@ -91,16 +94,12 @@ function fencedReading(context: ReadContext, viewer: Viewer, opts: SearchOptions
           ...(opts.embedder ? { embedder: opts.embedder } : {}),
         }),
       );
-      for (const hit of page.hits) handed.set(hit, hit);
+      for (const hit of page.hits) handed.add(hit);
       return page;
     },
   };
   const recheck = async (named: readonly Named[]) => {
-    const own = named.map(({ name, got }) => ({
-      name,
-      got,
-      legs: got.legs.map((l) => ({ leg: l.leg, rows: rowsOf(name, l.rows, handed) })),
-    }));
+    const own = await ownRows(context, viewer, { named, handed, opts });
     const ids = own.flatMap((n) => n.legs.flatMap((l) => l.rows.map((row) => row.recordId)));
     const containers = opts.narrow?.containers;
     const readable = await readableRecords(context, viewer, { recordIds: ids, containers });
@@ -117,20 +116,68 @@ function fencedReading(context: ReadContext, viewer: Viewer, opts: SearchOptions
   return { read, recheck, bounded };
 }
 
+/** What the reading is narrowed to, as a retriever with an index of its own passes it on (`ReadingScope`). */
+async function scopeOf(
+  context: ReadContext,
+  viewer: Viewer,
+  opts: SearchOptions,
+): Promise<ReadingScope> {
+  const { containers, ...filters } = opts.narrow ?? {};
+  const reader = await fence(context, viewer, containers);
+  return {
+    orgId: viewer.orgId,
+    containers: reader ? [...reader.containers] : [],
+    ...(opts.asOf ? { asOf: opts.asOf } : {}),
+    filters,
+  };
+}
+
+/**
+ * Each leg's rows as the engine's own evidence: the passage the reading handed out, by its id, else the record read
+ * again (`recordsAsPassages`); one neither gives is dropped and counted.
+ */
+async function ownRows(
+  context: ReadContext,
+  viewer: Viewer,
+  { named, handed, opts }: { named: readonly Named[]; handed: Set<Candidate>; opts: SearchOptions },
+) {
+  const handedOf = (row: Candidate) => (handed.has(row) ? (row as WithIds) : undefined);
+  const foreign = named.flatMap(({ got }) =>
+    got.legs.flatMap((l) => l.rows.filter((row) => !handedOf(row)).map((row) => row.recordId)),
+  );
+  const reread = await recordsAsPassages(context, viewer, {
+    recordIds: foreign,
+    ...(opts.asOf ? { asOf: opts.asOf } : {}),
+    ...(opts.narrow ? { narrow: opts.narrow } : {}),
+  });
+  return named.map(({ name, got }) => ({
+    name,
+    got,
+    legs: got.legs.map((l) => ({
+      leg: l.leg,
+      rows: rowsOf(name, l.rows, (row) => handedOf(row) ?? reread.get(row.recordId)),
+    })),
+  }));
+}
+
 /** One passages read, timed. A read that fails is reported once and comes back with no hits, named by what it read. */
 async function passagesRead(read: string, search: () => ReturnType<typeof passages.search>) {
   const staged = await stage("passages", () => attempt(`passages:${read}`, null, search));
   return staged.value ?? { hits: [], degraded: [...staged.degraded] };
 }
 
-/** The rows of a leg this reading handed out, as the engine's own; any other is dropped and counted. */
-function rowsOf(name: string, rows: readonly Candidate[], handed: Map<Candidate, WithIds>) {
-  const own = rows.flatMap((row) => {
-    const evidence = handed.get(row);
+/** A leg's rows as the engine's own evidence, in their order; any the engine cannot read is dropped and counted. */
+function rowsOf(
+  name: string,
+  rows: readonly Candidate[],
+  own: (row: Candidate) => WithIds | undefined,
+) {
+  const out = rows.flatMap((row) => {
+    const evidence = own(row);
     return evidence ? [evidence] : [];
   });
-  dropped(name, rows.length - own.length);
-  return own;
+  dropped(name, rows.length - out.length);
+  return out;
 }
 
 function kept<T>(name: string, rows: readonly T[], keep: (row: T) => boolean): T[] {

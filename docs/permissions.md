@@ -39,12 +39,17 @@ one per process.
 
 ### Retrievers
 
-A retriever plugin never gets the database pool, only a `FencedReading` narrowed to the search's reader and filters.
-Before fusion (`packages/engine/src/search/pool.ts`), the engine:
+A retriever plugin never gets the database pool, only a `FencedReading` narrowed to the search's reader and filters,
+and its scope as a description to pass to an index of its own. Before fusion (`packages/engine/src/search/pool.ts`),
+the engine:
 
-1. keeps a row only if that reading handed it out;
-2. reads each kept row again under the fence, by id, and drops any outside it;
+1. keeps a row the reading handed out with its passage, and reads any other record a retriever returns again, as its
+   own keyword index's hits are read (`kg/read/records-as-passages.ts`): the version current as of the search, every
+   narrowing, the first passage the reader may read, read back by id under the fence;
+2. reads every row's record again under the fence, by id, and drops any outside it;
 3. counts each drop as `search.retriever_foreign_dropped`.
+
+So every word, date and place on a page is the engine's own: a retriever chooses which records, never what they say.
 
 This is defence in depth, not a sandbox: a retriever runs in the engine's process.
 

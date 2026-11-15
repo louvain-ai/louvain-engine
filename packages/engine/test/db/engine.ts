@@ -172,6 +172,8 @@ async function surface({ engine, sql, readContext, orgId, ids }: Awaited<ReturnT
     writes: engine.writes,
     ids,
     pool,
+    /** The read context every surface below reads on, for a test that builds its own pool. */
+    readContext,
     /** Who a reader is, to the engine's own calls. */
     owner,
     /** The tool an agent calls, as the open build's one reader. */

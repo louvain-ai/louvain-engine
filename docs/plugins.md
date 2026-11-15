@@ -395,6 +395,8 @@ export type RetrieverAsk = {
 export type Candidate = { readonly recordId: string };
 
 export type FencedReading = {
+  /** What the reading is narrowed to, for a retriever that asks an index of its own (its filter clauses). */
+  readonly scope: ReadingScope;
   /** By meaning and by words, fused (`hybrid`), or one alone (`vector`, `keyword`); `digits`: passages stating a figure. */
   passages(
     query: string,
@@ -406,6 +408,13 @@ export type FencedReading = {
   ): Promise<{ readonly hits: readonly Candidate[]; readonly degraded: readonly string[] }>;
 };
 
+export type ReadingScope = {
+  readonly orgId: string;
+  readonly containers: readonly string[]; // what the reader may read, narrowed to the search's collections
+  readonly asOf?: string;
+  readonly filters: Readonly<RecordFilters>; // sender, participants, window, connectors, apps, genre
+};
+
 export type Retrieved = {
   readonly legs: readonly { readonly leg: string; readonly rows: readonly Candidate[] }[];
   readonly degraded: readonly string[];
@@ -414,7 +423,11 @@ export type Retrieved = {
 
 - A retriever never gets the database. It reads through `FencedReading`, already narrowed to the search's reader and
   filters, and returns legs, each in its own rank order.
-- The engine keeps only rows that reading handed out, re-reads each under the reader's fence, and drops the rest
-  (counted as `search.retriever_foreign_dropped`). A row it made itself, such as `{ recordId: "…" }`, is dropped.
+- A retriever with an index of its own asks it with `read.scope` as filter clauses (the org, the containers, the as-of,
+  the narrowings) and returns the records it found, `{ recordId: "…" }`, in its own order.
+- The engine reads every record a retriever returns again, as it reads its own keyword index's hits: under the reader's
+  fence, in the version current as of the search, inside every narrowing, each shown by the engine's own passage. A row
+  the reading handed out keeps its passage. Anything else the reader cannot read is dropped and counted
+  (`search.retriever_foreign_dropped`); nothing a retriever says reaches the page but which records, in which order.
 - The legs of every retriever are fused by reciprocal rank. A leg that cannot answer reports it in `degraded`
   (`passages:<mode>`) and returns no rows.

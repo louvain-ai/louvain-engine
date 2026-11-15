@@ -24,6 +24,7 @@ export * from "./plugins/surface.js";
 export * from "./record-view.js";
 export * from "./search/reranker.js";
 export * from "./search/retriever.js";
+export * from "./search/scope.js";
 export * from "./search-types.js";
 export * from "./sources.js";
 export * from "./viewer.js";
