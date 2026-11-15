@@ -1,4 +1,4 @@
-"""The BM25 sidecar's compound spellings (`bm25.py` `_joined`, `_split`, the `variants` field, `LOUVAIN_BM25_VARIANTS`).
+"""The BM25 sidecar's compound spellings (`bm25_schema.py` `_joined`, `_split`, the `variants` field, `LOUVAIN_BM25_VARIANTS`).
 
 Self-contained, like `test_bm25.py`, whose helpers it uses: real servers on free ports, temporary index directories.
 Every document here is invented: a pottery studio's notes, written for this test.

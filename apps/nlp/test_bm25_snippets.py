@@ -1,4 +1,4 @@
-"""SNIPPETS (`bm25.py` `_snippet`): every `/search` and `/list` hit carries tantivy's snippet of its own text.
+"""SNIPPETS (`bm25_query.py` `_snippet`): every `/search` and `/list` hit carries tantivy's snippet of its own text.
 
 Self-contained, like `test_bm25.py`, whose helpers it uses: real servers on free ports, temporary index directories.
 Every document here is invented.
@@ -68,7 +68,7 @@ def main() -> None:
         Path(older).mkdir()
         here = str(Path(__file__).parent)
         make = (f"import os, sys; os.environ['LOUVAIN_BM25_DIR'] = {older + '-scratch'!r}; sys.path.insert(0, {here!r}); "
-                f"import bm25, tantivy; tantivy.Index(bm25._schema(stored_text=False), path={older!r})")
+                f"import bm25_schema, tantivy; tantivy.Index(bm25_schema._schema(stored_text=False), path={older!r})")
         subprocess.run([sys.executable, "-c", make], check=True, capture_output=True)
         proc, base = server(older)
         try:

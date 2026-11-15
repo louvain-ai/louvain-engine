@@ -89,7 +89,7 @@ export type KeywordIndex = {
 
 /**
  * THE OPEN BUILD'S BEST PASSAGE: the one holding the index's snippet for its record, the fragment where the search's
- * words fell (`apps/nlp/bm25.py` `_highlight`), compared with runs of whitespace as one space, since a passage is
+ * words fell (`apps/nlp/bm25_query.py` `_highlight`), compared with runs of whitespace as one space, since a passage is
  * stored on one line and the record keeps its breaks. Measured on the search table and the engine's cases: every
  * snippet lies whole in one passage. A record with no snippet (its words only in its title) shows its first.
  */

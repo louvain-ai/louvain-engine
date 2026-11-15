@@ -84,7 +84,7 @@ def main() -> None:
         Path(older).mkdir()
         here = str(Path(__file__).parent)
         make = (f"import os, sys; os.environ['LOUVAIN_BM25_DIR'] = {older + '-scratch'!r}; sys.path.insert(0, {here!r}); "
-                f"import bm25, tantivy; tantivy.Index(bm25._schema(figures=False), path={older!r})")
+                f"import bm25_schema, tantivy; tantivy.Index(bm25_schema._schema(figures=False), path={older!r})")
         subprocess.run([sys.executable, "-c", make], check=True, capture_output=True)
         proc, base = start(older)
         try:

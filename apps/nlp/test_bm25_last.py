@@ -1,4 +1,4 @@
-"""`/search` under `strategy: "last"` (`bm25.py` `search_last`): Meilisearch's matching
+"""`/search` under `strategy: "last"` (`bm25_last.py` `search_last`): Meilisearch's matching
 strategy, Elasticsearch's relevance recipe within each tier, under the fence.
 
 Self-contained, like `test_bm25.py`, whose helpers it uses: a real server on a free port, a temporary index directory.

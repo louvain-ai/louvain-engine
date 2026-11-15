@@ -1,4 +1,4 @@
-"""`/search` with `order: "newest"` (`bm25.py` `search`): the fenced matches sorted by when each record was said.
+"""`/search` with `order: "newest"` (`bm25_query.py` `search`): the fenced matches sorted by when each record was said.
 
 Self-contained, like `test_bm25.py`, whose helpers it uses: a real server on a free port, a temporary index directory.
 Every document here is invented.

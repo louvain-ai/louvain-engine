@@ -1,4 +1,4 @@
-"""The keyword index's DOCUMENT ENTRIES and `/list` (`bm25.py` `listing`): the listing's page, total and facets from the
+"""The keyword index's DOCUMENT ENTRIES and `/list` (`bm25_listing.py` `listing`): the listing's page, total and facets from the
 index, under the fence.
 
 Self-contained, like `test_bm25.py`, whose helpers it uses: a real server on a free port, a temporary index directory.
@@ -62,12 +62,12 @@ def server(tmpdir: str) -> tuple[subprocess.Popen, str]:
 
 
 def older(tmpdir: str, **schema: bool) -> None:
-    """An index made with an earlier schema (`bm25._schema(**schema)`), opened by this sidecar: no listing, and no
+    """An index made with an earlier schema (`bm25_schema._schema(**schema)`), opened by this sidecar: no listing, and no
     document entry stored."""
     made = str(Path(tmpdir) / ("older-" + "-".join(sorted(schema))))
     here = str(Path(__file__).parent)
     make = (f"import os, sys; os.environ['LOUVAIN_BM25_DIR'] = {made + '-scratch'!r}; sys.path.insert(0, {here!r}); "
-            f"import bm25, tantivy; tantivy.Index(bm25._schema(**{schema!r}), path={made!r})")
+            f"import bm25_schema, tantivy; tantivy.Index(bm25_schema._schema(**{schema!r}), path={made!r})")
     Path(made).mkdir()
     subprocess.run([sys.executable, "-c", make], check=True, capture_output=True)
     proc, base = server(made)

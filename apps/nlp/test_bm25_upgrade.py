@@ -1,4 +1,4 @@
-"""An index an earlier release built, with a schema this sidecar cannot open (`bm25.py` `UNREADABLE`).
+"""An index an earlier release built, with a schema this sidecar cannot open (`bm25_store.py` `Store.unreadable`).
 
 Self-contained, like `test_bm25.py`, whose helpers it uses: a real server on a free port, a temporary index directory.
 

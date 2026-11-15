@@ -1,4 +1,4 @@
-"""The BM25 sidecar's unstemmed field (`bm25.py` `exact`, `LOUVAIN_BM25_EXACT_BOOST`, the request's `exactBoost`).
+"""The BM25 sidecar's unstemmed field (`bm25_schema.py` `exact`, `LOUVAIN_BM25_EXACT_BOOST`, the request's `exactBoost`).
 
 Self-contained, like `test_bm25.py`, whose helpers it uses: real servers on free ports, temporary index directories.
 Every document here is invented: a fictional freight company, written for this test.

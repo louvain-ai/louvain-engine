@@ -3,7 +3,7 @@ import { bm25Settings } from "../kg/read/bm25.js";
 import { documentEntryId, documentOfEntry } from "./keyword-documents.js";
 import type { Scope } from "./read-core.js";
 
-/** A listed entry's snippet (`apps/nlp/bm25.py` `_snippet`): the fragment where the search's words fell. */
+/** A listed entry's snippet (`apps/nlp/bm25_query.py` `_snippet`): the fragment where the search's words fell. */
 type Snippet = { text: string; marks: [number, number][] } | null;
 
 /**
@@ -39,7 +39,7 @@ export async function documentsListedFor(
   return listed.ids.map(documentOfEntry);
 }
 
-/** One `/list` call (`apps/nlp/bm25.py` `listing`), the body as the caller built it. */
+/** One `/list` call (`apps/nlp/bm25_listing.py` `listing`), the body as the caller built it. */
 export async function postList(body: Record<string, unknown>): Promise<Listed> {
   const { endpoint, timeoutMs } = bm25Settings();
   if (!endpoint) throw new Error("index listing: LOUVAIN_BM25_URL is not configured");

@@ -31,7 +31,9 @@ pooling and width, and the engine's embedding client reports a sidecar whose spa
 
 One entry per document, with its title and text. The fence is inside the query: a search names the containers the
 caller may read, and the index never returns a document outside them. The index lives in the `bm25index` volume;
-`/index` adds or replaces a document and `/search` returns ranked document ids.
+`/index` adds or replaces a document and `/search` returns ranked document ids. `bm25.py` is the server and reads
+the settings; the index's fields are `bm25_schema.py`, the index on disk `bm25_store.py`, the fence and `/search`
+`bm25_query.py`, `strategy: "last"` `bm25_last.py` and `/list` `bm25_listing.py`.
 
 ## Tests
 

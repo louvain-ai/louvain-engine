@@ -9,8 +9,8 @@ ENV PYTHONUNBUFFERED=1
 COPY apps/nlp/requirements-bm25.txt ./
 RUN pip install --no-cache-dir -r requirements-bm25.txt
 
-# The shared bearer check travels with every sidecar (verify-nlp.mjs checks it).
-COPY apps/nlp/bm25.py apps/nlp/analyzer.py apps/nlp/sidecar_auth.py ./
+# The server and its modules (`bm25*.py`); the shared bearer check travels with every sidecar (verify-nlp.mjs checks it).
+COPY apps/nlp/bm25*.py apps/nlp/analyzer.py apps/nlp/sidecar_auth.py ./
 
 # Not root, like the other sidecars: it reads and writes one directory and
 # answers HTTP.

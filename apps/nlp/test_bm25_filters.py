@@ -1,4 +1,4 @@
-"""The BM25 sidecar's narrowings (`bm25.py` `_narrowing`, the `app` field): an app set and a time range, beside the fence.
+"""The BM25 sidecar's narrowings (`bm25_query.py` `_narrowing`, the `app` field): an app set and a time range, beside the fence.
 
 Self-contained, like `test_bm25.py`, whose helpers it uses: real servers on free ports, temporary index directories.
 
