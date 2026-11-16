@@ -3,6 +3,7 @@ import { request as httpRequest, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, test } from "node:test";
 import type { Reading, Route } from "@louvain/engine-core";
+import { engineVersion } from "../src/open/mcp-protocol.js";
 import { RouteClash, routeTable } from "../src/open/routes.js";
 import { canonicalPath, type ServeSettings, serve } from "../src/open/serve.js";
 import { mcp } from "../src/plugins/surface-mcp/index.js";
@@ -192,8 +193,13 @@ test("mcp() answers POST /mcp for the read token, with the server's headers", as
   const reply = await call("/mcp", { method: "POST", body: initialize, token: TOKEN });
   assert.equal(reply.status, 200);
   assert.equal(reply.headers.get("x-frame-options"), "DENY");
-  const body = (await reply.json()) as { result: { serverInfo: { name: string } } };
+  const body = (await reply.json()) as {
+    result: { serverInfo: { name: string; version: string } };
+  };
   assert.equal(body.result.serverInfo.name, "louvain-engine");
+  // The version the surface read when it was made: the one the package declares.
+  assert.equal(body.result.serverInfo.version, engineVersion());
+  assert.match(engineVersion(), /^\d+\.\d+\.\d+/);
 });
 
 test("without the token nothing is answered, not even whether a path exists, and a browser's cookie is no token", async () => {

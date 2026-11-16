@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createEngine, type EngineParts } from "../src/engine.js";
+import { logOf, telemetryOf } from "../src/given.js";
 import { bounded } from "../src/kg/read/fence.js";
 import { readPreamble, storeOf } from "../src/store.js";
-import { registerTelemetry } from "../src/telemetry.js";
 
 /** Parts that record what was closed, in order; `fail` makes the plugins' close reject. */
 function parts(closed: string[], fail = false): EngineParts {
@@ -54,22 +54,60 @@ test("a plugin that fails to close still leaves the store ended, and the failure
   assert.deepEqual(closed, ["plugins", "store"]);
 });
 
-test("a bounded read on the engine's own pool is its store's: one transaction, its bounds, one wait timed", async () => {
+test("a bounded read on the engine's own pool is its store's: one transaction, its bounds, one wait timed to its telemetry", async () => {
   const timed: string[] = [];
   const noop = () => {};
-  registerTelemetry("engine.test", {
+  // The store's own telemetry, given as a value: nothing registered in the process.
+  const told = {
     count: noop,
-    timing: (name) => timed.push(name),
+    timing: (name: string) => timed.push(name),
     gauge: noop,
     error: noop,
-  });
+  };
   const said: string[] = [];
   const trx = { savepoint: noop, unsafe: async (statements: string) => said.push(statements) };
   const pool = { begin: async (fn: (t: typeof trx) => unknown) => fn(trx) };
-  const store = storeOf(pool as never, { readTimeoutMs: 5, plan: null });
+  const store = storeOf(pool as never, { readTimeoutMs: 5, plan: null }, told);
   const { context } = createEngine({ ...parts([]), store });
   const read = await bounded(context, async (q) => q, ["set local work_mem = '8MB'"]);
   assert.equal(read, trx);
   assert.deepEqual(said, [readPreamble(store.bounds, ["set local work_mem = '8MB'"])]);
   assert.deepEqual(timed, ["db.bounded_read_wait"]);
+});
+
+test("an engine's telemetry is the part it was given, guarded, on its reads and its writes; with none it reports nowhere", () => {
+  const counted: string[] = [];
+  const told = {
+    count: (name: string) => counted.push(name),
+    timing: () => {},
+    error: () => {
+      throw new Error("a broken sink");
+    },
+  };
+  const engine = createEngine({ ...parts([]), telemetry: told });
+  telemetryOf(engine.context).count("read", 1);
+  telemetryOf(engine.writes).count("write", 1);
+  assert.doesNotThrow(() => telemetryOf(engine.context).error("read.failed", new Error("x")));
+  assert.deepEqual(counted, ["read", "write"]);
+  const none = createEngine(parts([]));
+  assert.doesNotThrow(() => telemetryOf(none.writes).count("nowhere", 1));
+  assert.notEqual(telemetryOf(none.context), telemetryOf(engine.context));
+});
+
+test("an engine's logger is the one it was given, on its reads and its writes; with none, one of its own", () => {
+  const lines: string[] = [];
+  const noop = () => {};
+  const logger = {
+    debug: noop,
+    info: noop,
+    warn: (line: string) => lines.push(line),
+    error: noop,
+    sayOnce: (line: string) => lines.push(`once: ${line}`),
+  };
+  const engine = createEngine({ ...parts([]), logger });
+  logOf(engine.context).sayOnce("the index is down");
+  logOf(engine.writes).warn("a write went on without it");
+  assert.deepEqual(lines, ["once: the index is down", "a write went on without it"]);
+  // Two engines given none say a line once each: what one has said is not the other's.
+  assert.notEqual(logOf(createEngine(parts([])).context), logOf(createEngine(parts([])).context));
 });

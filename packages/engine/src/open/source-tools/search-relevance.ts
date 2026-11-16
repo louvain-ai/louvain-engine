@@ -6,7 +6,6 @@ import { hooksOf } from "../../kg/read/hooks.js";
 import { heldWords, literalsOf, relevanceOf, wordsOf } from "../../kg/read/relevance.js";
 import { spanTexts } from "../../kg/read/span-texts.js";
 import { excerptOf } from "../../search/excerpt.js";
-import { openPresentation } from "./presentation-seam.js";
 import { exactFirst, type Narrowing, type Placed } from "./search-exact.js";
 import { compactHit, fullHit, type ShownHit } from "./search-hits.js";
 import { type By, matchedBy, withFound } from "./search-reranked.js";
@@ -289,8 +288,8 @@ export async function asWritten<
 
 /**
  * Whether this page splits matches from loosely related documents (and shows excerpts as written, `asWritten`): as
- * `LOUVAIN_SEARCH_RELEVANCE` says, else by the build: the open build (its own presentation bound) splits, and a build
- * that binds another presentation keeps one ranked list unless the setting asks.
+ * `LOUVAIN_SEARCH_RELEVANCE` says, else by the build's presentation: the open build's splits (`splitsRelevance`), and a
+ * build that binds another keeps one ranked list unless the setting asks.
  */
 const relevanceSplit = (context: ReadContext): boolean =>
-  searchRelevanceSetting() ?? hooksOf(context).presentation === openPresentation;
+  searchRelevanceSetting() ?? hooksOf(context).presentation.splitsRelevance === true;

@@ -1,4 +1,4 @@
-import { telemetry } from "../../telemetry.js";
+import { telemetryOf } from "../../given.js";
 import { asPgVector, instantOf } from "./context.js";
 import { bounded, type ReadContext, type Reader } from "./fence.js";
 import { hooksOf } from "./hooks.js";
@@ -39,7 +39,7 @@ async function supersededCurrent(
     return rows.length > 0;
   } catch (err) {
     if (!isStatementTimeout(err)) throw err;
-    telemetry.count("kg.read.superseded_probe_timeout", 1, {});
+    telemetryOf(context).count("kg.read.superseded_probe_timeout", 1, {});
     return true;
   }
 }
@@ -116,7 +116,7 @@ async function nearestPassages(
   } catch {
     // swallowed: an embedding lane that cannot answer costs the vector leg, never the search — the
     // keyword leg still carries it, the caller is told in `degraded`, and it is counted.
-    telemetry.count("kg.read.embed.unavailable", 1, { leg: "passage" });
+    telemetryOf(context).count("kg.read.embed.unavailable", 1, { leg: "passage" });
     degraded.push("vector:embedding");
     return null;
   }
@@ -166,7 +166,7 @@ async function windowPlan(
   } catch (err) {
     if (!isStatementTimeout(err)) throw err;
     // A count the read timeout cut is a range too large to read exactly, so it is scanned.
-    telemetry.count("kg.read.vector.window_plan_cut", 1, { leg: "passage" });
+    telemetryOf(context).count("kg.read.vector.window_plan_cut", 1, { leg: "passage" });
     return "scan";
   }
 }

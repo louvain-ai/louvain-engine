@@ -1,9 +1,11 @@
 /**
  * The observability seam. The engine carries no vendor SDK (each is a dependency, a configuration surface and a
- * decision about where data goes), so the default sink is a no-op and a deployment registers its own at boot. Telemetry
+ * decision about where data goes), so an engine is given its sink as a part (`EngineParts.telemetry`, a no-op unless
+ * given), and the door below takes the one a deployment registers at boot. Telemetry
  * never carries indexed text: tags are ids, operation names and outcomes, never a question or a passage, because a
  * reader who cannot see a collection must not see it in a dashboard either.
  */
+import { guarded } from "./guarded.js";
 
 export type Tags = Record<string, string | number>;
 
@@ -18,16 +20,15 @@ export type Telemetry = {
   error(name: string, err: unknown, tags?: Tags): void;
 };
 
-const noop: Telemetry = {
-  count: () => {},
-  timing: () => {},
-  error: () => {},
-};
+/**
+ * The door's sink, for the call sites with no engine in reach (`check-engine-state.mjs` lists them, and the list only
+ * shrinks); an engine's own is the part it was given (`EngineParts.telemetry`, `given.ts` `telemetryOf`).
+ */
+let sink: Telemetry | undefined;
 
-let sink: Telemetry = noop;
 let registered: string | null = null;
 
-/** Register a telemetry sink. Last one wins; the name is reported on /healthz. */
+/** Register the door's telemetry sink. Last one wins; the name is reported on /healthz. */
 export function registerTelemetry(name: string, t: Telemetry): void {
   sink = t;
   registered = name;
@@ -37,38 +38,5 @@ export function telemetryName(): string | null {
   return registered;
 }
 
-/**
- * Every call is wrapped so a broken sink cannot break the request that emitted
- * it. Observability failing loudly inside a handler would make the monitoring
- * the outage — the exact inversion it exists to prevent.
- */
-export const telemetry: Required<Telemetry> = {
-  count(name, n, tags) {
-    try {
-      sink.count(name, n, tags);
-    } catch {
-      /* a metric is never worth a request */
-    }
-  },
-  timing(name, ms, tags) {
-    try {
-      sink.timing(name, ms, tags);
-    } catch {
-      /* as above */
-    }
-  },
-  gauge(name, value, tags) {
-    try {
-      sink.gauge?.(name, value, tags);
-    } catch {
-      // swallowed: a level is never worth a request
-    }
-  },
-  error(name, err, tags) {
-    try {
-      sink.error(name, err, tags);
-    } catch {
-      /* as above */
-    }
-  },
-};
+/** The door: whatever sink is registered, guarded. */
+export const telemetry: Required<Telemetry> = guarded(() => sink);

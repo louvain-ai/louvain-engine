@@ -21,7 +21,7 @@ export type SearchLineHit = {
 export const SHORT_ID = 12;
 
 /** The apps the engine records for what it was handed directly (a folder, its HTTP route): nothing to show. */
-const NO_APP = new Set([ITEM_FEED, "http"]);
+const NO_APP: ReadonlySet<string> = new Set([ITEM_FEED, "http"]);
 
 export function searchLine(
   hit: SearchLineHit,

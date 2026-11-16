@@ -11,7 +11,7 @@ const UNSTORABLE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC
 /** An app's name, in the pattern a record's presentation takes (`engine-core` `sources.ts`). */
 const APP = /^[a-z0-9][a-z0-9-]{0,59}$/;
 /** Names an item may not claim: the engine's own, which a reader would take it to come from. */
-const RESERVED_APPS = new Set([
+const RESERVED_APPS: ReadonlySet<string> = new Set([
   "ingest",
   "http",
   "https",

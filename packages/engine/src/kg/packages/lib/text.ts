@@ -87,7 +87,7 @@ export function namesAgree(a: string, b: string): boolean {
   return x.every((t) => y.includes(t)) || y.every((t) => x.includes(t));
 }
 
-const CORPORATE = new Set([
+const CORPORATE: ReadonlySet<string> = new Set([
   "ltd",
   "limited",
   "inc",

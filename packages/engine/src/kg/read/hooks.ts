@@ -1,7 +1,7 @@
 import { type ExactTier, openExactTier } from "../../open/source-tools/exact-seam.js";
 import {
-  openPresentation,
   type SourceToolPresentation,
+  unkeyedPresentation,
 } from "../../open/source-tools/presentation-seam.js";
 import { plainReading, type ReadingExpression } from "../../reading-effective.js";
 import { type DetailHooks, plainDetail } from "../../sources/detail-seam.js";
@@ -35,7 +35,8 @@ export type ReadHooks = {
 
 /**
  * Each hook of a read's context (or of a write's, `writes.ts`, whose own hooks hold these too): its build's, else the
- * open build's own (the same constant, not a copy).
+ * open build's own (the same constant, not a copy). The presentation is the one an engine holds of its own
+ * (`createEngine`); a context no engine made presents the open build's pages with no cursor key.
  */
 export function hooksOf(on: Pick<ReadContext, "hooks">): Required<ReadHooks> {
   const hooks = on.hooks;
@@ -43,7 +44,7 @@ export function hooksOf(on: Pick<ReadContext, "hooks">): Required<ReadHooks> {
     reading: hooks?.reading ?? plainReading,
     detail: hooks?.detail ?? plainDetail,
     filters: hooks?.filters ?? noAddedFilters,
-    presentation: hooks?.presentation ?? openPresentation,
+    presentation: hooks?.presentation ?? unkeyedPresentation,
     keyword: hooks?.keyword ?? OPEN_KEYWORD_INDEX,
     spaces: hooks?.spaces ?? ONE_SPACE,
     exact: hooks?.exact ?? openExactTier,

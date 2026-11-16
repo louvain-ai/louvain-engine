@@ -4,7 +4,7 @@ with `phrase: true` (`bm25_listing.py`)."""
 
 import tantivy
 from analyzer import keys, outside
-from bm25_query import MAX_LIMIT, _fence, _highlight, _narrowing, _snippet, _snippets, _text_query
+from bm25_query import MAX_LIMIT, _fence, _highlight, _narrowing, _snippet, _snippets, _text_query, _top
 from bm25_store import Store
 
 # Meilisearch's matching strategy, Elasticsearch's relevance recipe within each tier (`strategy: "last"`).
@@ -166,19 +166,17 @@ def search_last(
     fence = _fence(ix, org, containers, as_of)
     groups, said = [(q, stems) for _, q, stems in words], {k: [] for k in SAID}
     searcher = ix.index.searcher()
-    first = searcher.search(_tier(ix, fence, groups, narrow), limit=limit).hits
+    first = _top(searcher, _tier(ix, fence, groups, narrow), limit)
     if not first:
         groups, said = _resolved(ix, fence, words)
     seen: set[str] = set()
     hits: list[dict] = []
     for n in range(len(groups), 0, -1):
-        found = first if first and n == len(groups) else searcher.search(
-            _tier(ix, fence, groups[:n], narrow), limit=limit + len(seen)
-        ).hits
+        tier = _tier(ix, fence, groups[:n], narrow)
+        found = first if first and n == len(groups) else _top(searcher, tier, limit + len(seen))
         searched = " ".join(c for c, _, _ in words[:n])
-        generator = _snippets(ix, searcher, _highlight(ix, searched, _tier(ix, fence, groups[:n], narrow)))
-        for score, addr in found:
-            doc = searcher.doc(addr)
+        generator = _snippets(ix, searcher, _highlight(ix, searched, tier))
+        for score, doc in found:
             doc_id = doc.get_first("id")
             if doc_id not in seen and len(hits) < limit:
                 seen.add(doc_id)

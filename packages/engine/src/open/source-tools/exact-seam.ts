@@ -1,9 +1,9 @@
 import type { PendingQuery, Row } from "postgres";
-import { bm25Configured } from "../../kg/read/bm25.js";
+import { telemetryOf } from "../../given.js";
+import { endpointOf } from "../../kg/read/bm25.js";
 import type { ReadContext } from "../../kg/read/fence.js";
 import { bm25Leads, documentsListedFor } from "../../sources/index-list.js";
 import type { Scope } from "../../sources/read-core.js";
-import { telemetry } from "../../telemetry.js";
 import type { Identifier, Stored } from "./identifier.js";
 
 /**
@@ -42,7 +42,8 @@ async function titleKeyListed(
   s: Scope,
   i: Identifier,
 ): Promise<TitleKeyed | null> {
-  if (!bm25Configured() || s.containers.length === 0 || /\s/.test(i.text)) return null;
+  if (!endpointOf(context).configured() || s.containers.length === 0 || /\s/.test(i.text))
+    return null;
   try {
     const listed = await documentsListedFor(s, i.text, TITLE_KEY_LISTED);
     const ids = await openingWith(context, i, { orgId: s.orgId, ids: listed });
@@ -52,7 +53,7 @@ async function titleKeyListed(
       keyed: (src) => ids.has(src.id),
     };
   } catch (err) {
-    telemetry.error("lookup.title_key_index", err, {});
+    telemetryOf(context).error("lookup.title_key_index", err, {});
     return null;
   }
 }

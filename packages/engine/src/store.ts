@@ -1,6 +1,7 @@
 import postgres, { type Sql, type TransactionSql } from "postgres";
 import { jitPolicy, planCachePolicy } from "./db-settings.js";
-import { telemetry } from "./telemetry.js";
+import { guarded } from "./guarded.js";
+import type { Telemetry } from "./telemetry.js";
 
 /**
  * The store: the pool the engine reads and writes through, as a value its caller opens and ends. A bounded read is a
@@ -27,8 +28,12 @@ export const readPreamble = (bounds: ReadBounds, settings: readonly string[] = [
     ...settings,
   ].join("; ");
 
-/** A store around a pool its caller opened: a host that opens its own (startup parameters, a pooler) wraps it here. */
-export function storeOf(sql: Sql, bounds: ReadBounds): Store {
+/**
+ * A store around a pool its caller opened: a host that opens its own (startup parameters, a pooler) wraps it here. Its
+ * pool's waits go to `telemetry`, as the engine's own counts go to the one it is given: nowhere unless given.
+ */
+export function storeOf(sql: Sql, bounds: ReadBounds, given?: Telemetry): Store {
+  const telemetry = guarded(() => given);
   let inFlight = 0;
   async function boundedRead<T>(
     fn: (trx: TransactionSql) => Promise<T>,
@@ -66,7 +71,7 @@ type StoreSettings = {
  * address cannot be a pooler), JIT off at connect where no pooler can refuse it, and the read bounds every bounded read
  * keeps. Nothing connects until the first statement; the caller ends it (`Store.end`, or the engine's `close`).
  */
-export function openStore(url: string, settings: StoreSettings): Store {
+export function openStore(url: string, settings: StoreSettings, telemetry?: Telemetry): Store {
   const planCache = planCachePolicy({
     prepare: settings.prepare,
     mode: settings.planCacheMode,
@@ -87,5 +92,9 @@ export function openStore(url: string, settings: StoreSettings): Store {
     idle_timeout: 30,
     connect_timeout: 10,
   });
-  return storeOf(sql, { readTimeoutMs: settings.readTimeoutMs, plan: planCache.perTransaction });
+  return storeOf(
+    sql,
+    { readTimeoutMs: settings.readTimeoutMs, plan: planCache.perTransaction },
+    telemetry,
+  );
 }

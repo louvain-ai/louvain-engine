@@ -1,5 +1,4 @@
 import type { Engine as OpenedEngine } from "../../src/engine.js";
-import { useCursorToken } from "../../src/open/source-tools/cursor-key.js";
 import type { Writes } from "../../src/writes.js";
 import { type COLLECTIONS, NESTED, READERS } from "./corpus.js";
 import { createBaselineDatabase } from "./database.js";
@@ -39,8 +38,6 @@ function settings(models: string) {
   for (const name of Object.keys(process.env))
     if (name.startsWith("LOUVAIN_")) delete process.env[name];
   process.env.LOUVAIN_EMBEDDINGS_URL = models;
-  // The cursors a recording holds are sealed under this token, handed over as the server hands over its own.
-  useCursorToken("golden".repeat(11));
 }
 
 /**
@@ -77,7 +74,11 @@ export async function openEngine(purpose: string, opening: Opening = {}) {
     settings(models.url);
     if (index.url) process.env.LOUVAIN_BM25_URL = index.url;
     await prepare();
-    const engine = await surface(await load(await openTestEngine(), around, events));
+    const opened = await openTestEngine();
+    // The cursors a recording holds are sealed under this token, as the server keys its engine's from its own.
+    const { hooksOf } = await import("../../src/kg/read/hooks.js");
+    hooksOf(opened.context).presentation.keyCursorsFrom?.("golden".repeat(11));
+    const engine = await surface(await load(opened, around, events));
     const close = async () => {
       await engine.sql.end({ timeout: 5 });
       index.stop();

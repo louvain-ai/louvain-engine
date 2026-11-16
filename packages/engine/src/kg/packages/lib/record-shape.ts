@@ -8,7 +8,7 @@ import { isObject, str } from "./text.js";
  */
 export type Shape = "chat" | "email" | "ticket" | "doc";
 
-const CHAT_KINDS = new Set([
+const CHAT_KINDS: ReadonlySet<string> = new Set([
   "slack",
   "teams",
   "discord",
@@ -17,8 +17,8 @@ const CHAT_KINDS = new Set([
   "mattermost",
   "message",
 ]);
-const EMAIL_KINDS = new Set(["gmail", "outlook", "email", "mail", "exchange"]);
-const TICKET_KINDS = new Set([
+const EMAIL_KINDS: ReadonlySet<string> = new Set(["gmail", "outlook", "email", "mail", "exchange"]);
+const TICKET_KINDS: ReadonlySet<string> = new Set([
   "jira",
   "linear",
   "github",

@@ -3,7 +3,7 @@ import type { ReadContext } from "../kg/read/fence.js";
 import type { SearchWith } from "../search/document.js";
 import { retrieverPool } from "../search/pool.js";
 import type { ToolResult, ToolRun } from "./mcp-protocol.js";
-import { OPEN_PRINCIPAL, openOrgId } from "./org.js";
+import { OPEN_PRINCIPAL, orgIdOnce } from "./org.js";
 import { lookupSource } from "./source-tools/lookup.js";
 import { listedTools } from "./source-tools/open-tool-schema.js";
 import { readSourcePage } from "./source-tools/read-page.js";
@@ -26,7 +26,7 @@ type OpenTool = (asked: Record<string, unknown>, call: ToolCall) => Promise<Tool
 export type ToolEngine = Pick<Engine, "context" | "plugins" | "store" | "settings">;
 
 /** Each tool by its name: what it runs with the arguments it declared. */
-const TOOLS = new Map<string, OpenTool>([
+const TOOLS: ReadonlyMap<string, OpenTool> = new Map([
   [
     "louvain_search_sources",
     (asked, { context, reader, pool }) => searchOrList(context, asked, reader, undefined, pool),
@@ -45,8 +45,9 @@ export const poolOf = ({ plugins, settings }: Pick<Engine, "plugins" | "settings
 export function openTools(engine: ToolEngine): ToolRun {
   // Made once: with no retriever configured the start is refused, never the first search.
   const pool = poolOf(engine);
+  const orgId = orgIdOnce(engine.store.sql);
   return async (name, args) => {
-    const reader = { orgId: await openOrgId(engine.store.sql), principal: OPEN_PRINCIPAL };
+    const reader = { orgId: await orgId(), principal: OPEN_PRINCIPAL };
     const asked = toolArgs(name, args, engine.settings);
     const tool = TOOLS.get(name);
     if (!tool) throw new Error(`unknown tool: ${name}`);
@@ -57,8 +58,9 @@ export function openTools(engine: ToolEngine): ToolRun {
 /** One search as the search tool runs it, for a caller in this process (the terminal's `search`). */
 export function openSearch(engine: ToolEngine) {
   const pool = poolOf(engine);
+  const orgId = orgIdOnce(engine.store.sql);
   return async (args: Record<string, unknown>) => {
-    const reader = { orgId: await openOrgId(engine.store.sql), principal: OPEN_PRINCIPAL };
+    const reader = { orgId: await orgId(), principal: OPEN_PRINCIPAL };
     return searchOrList(
       engine.context,
       toolArgs("louvain_search_sources", args, engine.settings),

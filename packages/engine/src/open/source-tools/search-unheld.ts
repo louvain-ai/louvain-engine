@@ -1,9 +1,8 @@
 import type { Viewer } from "@louvain/engine-core";
-import { bm25Configured } from "../../kg/read/bm25.js";
+import { telemetryOf } from "../../given.js";
 import { fence, type ReadContext } from "../../kg/read/fence.js";
 import { hooksOf } from "../../kg/read/hooks.js";
 import { bm25Tiers, type Tiers } from "../../kg/read/keyword/tiers.js";
-import { telemetry } from "../../telemetry.js";
 
 /**
  * A WORD NO READABLE DOCUMENT HOLDS IS SEARCHED ANOTHER WAY, AND THE PAGE SAYS SO. The keyword index asks such a word
@@ -30,7 +29,7 @@ export async function unheldWords(
   scope: readonly string[] | undefined,
 ): Promise<Said> {
   const tiers =
-    query.trim() && hooksOf(context).keyword.tiers && bm25Configured()
+    query.trim() && hooksOf(context).keyword.tiers && hooksOf(context).keyword.endpoint.configured()
       ? await tiersOrNone(context, owner, query, scope)
       : null;
   const unheld = tiers ? unheldIn(tiers) : [];
@@ -50,7 +49,7 @@ async function tiersOrNone(
   try {
     return await bm25Tiers({ orgId: reader.orgId, containers, query, limit: 1 });
   } catch (err) {
-    telemetry.error("search.unheld_words", err, {});
+    telemetryOf(context).error("search.unheld_words", err, {});
     return null;
   }
 }

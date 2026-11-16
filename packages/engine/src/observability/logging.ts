@@ -30,7 +30,7 @@ type Level = "debug" | "info" | "warn" | "error";
  * method, a status) and the correlation ids a line may carry. A log aggregator is a third party and a search index;
  * this is the net under the rule that indexed text is never written into a line.
  */
-const BOUNDED = new Set([
+const BOUNDED: ReadonlySet<string> = new Set([
   "route",
   "method",
   "status",
@@ -63,20 +63,17 @@ function scrubbed(fields: LogFields | undefined): LogFields | undefined {
 }
 
 /**
- * The process group a deployment names (`LOUVAIN_PROCESS_GROUP`), which a log shipper reads into its `process` label.
- * Read when the first line is written, never at import: a deployment may set it in a module loaded after this one.
+ * The process group a deployment names (`LOUVAIN_PROCESS_GROUP`), which a log shipper reads into its `process` label:
+ * `group`, asked when a line is written, never at import, since a deployment may set it in a module loaded after this.
  */
-let processGroup: string | null | undefined;
-const processGroupNow = (): string | null => {
-  if (processGroup === undefined) processGroup = environment("LOUVAIN_PROCESS_GROUP");
-  return processGroup;
-};
-
-function emit(level: Level, raw: string, rawFields?: LogFields): void {
+function emit(
+  level: Level,
+  raw: string,
+  { fields: rawFields, group }: { fields: LogFields | undefined; group: string | null },
+): void {
   const ctx = storage.getStore();
   const message = scrubMessage(raw);
   const fields = scrubbed(rawFields);
-  const group = processGroupNow();
   const line = {
     ts: new Date().toISOString(),
     level,
@@ -100,7 +97,7 @@ function emit(level: Level, raw: string, rawFields?: LogFields): void {
  * structured everywhere else — the format is a property of the destination,
  * not of the code doing the logging.
  */
-function pretty(level: Level, raw: string, rawFields?: LogFields): void {
+function pretty(level: Level, raw: string, rawFields: LogFields | undefined): void {
   const ctx = storage.getStore();
   const message = scrubMessage(raw);
   const fields = scrubbed(rawFields);
@@ -111,25 +108,58 @@ function pretty(level: Level, raw: string, rawFields?: LogFields): void {
 }
 
 const structured = config.environment === "production" || logJsonOn();
-const write = structured ? emit : pretty;
 
-export const log = {
-  debug: (message: string, fields?: LogFields) => {
-    if (logDebugOn()) write("debug", message, fields);
-  },
-  info: (message: string, fields?: LogFields) => write("info", message, fields),
-  warn: (message: string, fields?: LogFields) => write("warn", message, fields),
-  error: (message: string, fields?: LogFields) => write("error", message, fields),
+/** Lines, and a warning said once, with its fix: a fixed sentence the caller writes, never data. */
+export type Logger = {
+  debug(message: string, fields?: LogFields): void;
+  info(message: string, fields?: LogFields): void;
+  warn(message: string, fields?: LogFields): void;
+  error(message: string, fields?: LogFields): void;
+  /**
+   * A warning said once in this logger's life: a page goes on without what is missing, and the line would otherwise
+   * repeat on every request.
+   */
+  sayOnce(line: string): void;
 };
 
-const said = new Set<string>();
+/** A logger over its process group (read when its first line is written) and the lines it has said once. */
+function loggerOf(group: () => string | null, spoken: Set<string>): Logger {
+  const write = (level: Level, message: string, fields?: LogFields) =>
+    structured ? emit(level, message, { fields, group: group() }) : pretty(level, message, fields);
+  const logger: Logger = {
+    debug: (message, fields) => {
+      if (logDebugOn()) write("debug", message, fields);
+    },
+    info: (message, fields) => write("info", message, fields),
+    warn: (message, fields) => write("warn", message, fields),
+    error: (message, fields) => write("error", message, fields),
+    sayOnce: (line) => {
+      if (spoken.has(line)) return;
+      spoken.add(line);
+      logger.warn(line);
+    },
+  };
+  return logger;
+}
+
+/** A logger of its own, as an engine is given one (`EngineParts.logger`, this unless given). */
+export function openLogger(): Logger {
+  let group: string | null | undefined;
+  return loggerOf(() => {
+    if (group === undefined) group = environment("LOUVAIN_PROCESS_GROUP");
+    return group;
+  }, new Set());
+}
 
 /**
- * A warning said once a process, with its fix: a page goes on without what is missing, and the line would otherwise
- * repeat on every request. The line is a fixed sentence the caller writes, never data.
+ * The door's process group and say-once, for the call sites with no engine in reach (`check-engine-state.mjs` lists
+ * them, and the list only shrinks); an engine's own logger is its part (`given.ts` `logOf`). Its say-once is `log.sayOnce`.
  */
-export function sayOnce(line: string): void {
-  if (said.has(line)) return;
-  said.add(line);
-  log.warn(line);
-}
+let processGroup: string | null | undefined;
+const said = new Set<string>();
+
+/** The door: the process's lines. */
+export const log: Logger = loggerOf(() => {
+  if (processGroup === undefined) processGroup = environment("LOUVAIN_PROCESS_GROUP");
+  return processGroup;
+}, said);

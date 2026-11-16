@@ -10,13 +10,13 @@ import type { Started } from "@louvain/engine-core";
 import { environment } from "../config/environment.js";
 import { serverSettings } from "../config/open.js";
 import type { Engine } from "../engine.js";
+import { hooksOf } from "../kg/read/hooks.js";
 import { EngineTokenRefused, engineToken } from "./engine-token.js";
 import { type IngestDoor, IngestDoorRefused, ingestDoor } from "./ingest-http.js";
 import { loadedCounts } from "./loaded-counts.js";
 import { openTools, type ToolEngine, toolList } from "./mcp-tools.js";
 import { openOrgId } from "./org.js";
 import { serve } from "./serve.js";
-import { useCursorToken } from "./source-tools/cursor-key.js";
 
 /** A server that cannot start, in the sentence that says why. */
 export class ServerRefused extends Error {}
@@ -32,8 +32,8 @@ export async function startToolServer(engine: ServedEngine, state: string): Prom
   const { plugins } = engine;
   const { port, toolDeadlineMs } = serverSettings(engine.settings);
   const doors = openDoors(engine, state);
-  // The cursor key derives from the token, handed over as a value, so a cursor this server issued outlives a restart.
-  useCursorToken(doors.token);
+  // The engine's cursors are sealed under a key its token makes, so a cursor this server issued outlives a restart.
+  hooksOf(engine.context).presentation.keyCursorsFrom?.(doors.token);
   // Fail at start, not at the first call, when the database has no default org.
   await openOrgId(engine.store.sql);
   const publicOrigin = environment("LOUVAIN_ENGINE_PUBLIC_ORIGIN")?.trim() || undefined;

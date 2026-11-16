@@ -1,5 +1,4 @@
 import type { Sql, TransactionSql } from "postgres";
-import { bm25Configured, bm25Delete } from "../kg/read/bm25.js";
 import { forgetVectorsOf } from "../memory/withdrawn-vectors.js";
 import { documentEntryId } from "../sources/keyword-documents.js";
 import { dropRevisionless, repointDocuments } from "../sources/repair-core.js";
@@ -26,7 +25,7 @@ export async function withdrawOpen(
   const ids = [...new Set(events.map((e) => e.id))];
   if (ids.length === 0) return { events: 0, keywordMissed: 0 };
   const withdrawn = await writes.sql.begin((trx) => withdrawWithin(trx, orgId, events));
-  const missed = await forgetKeywords(ids);
+  const missed = await forgetKeywords(writes, ids);
   return {
     events: withdrawn.events,
     keywordMissed: missed + (await refreshDocuments(writes, orgId, withdrawn.documents)),
@@ -101,10 +100,11 @@ async function withdrawRows(
 }
 
 /** The keyword entries' deletion, after the commit; how many the sidecar did not take. */
-export async function forgetKeywords(ids: string[]): Promise<number> {
-  if (!bm25Configured()) return 0;
+export async function forgetKeywords(writes: Writes, ids: string[]): Promise<number> {
+  const { endpoint } = writeHooksOf(writes).keyword;
+  if (!endpoint.configured()) return 0;
   try {
-    await bm25Delete(ids);
+    await endpoint.withdraw(ids);
     return 0;
   } catch {
     // swallowed: counted in the run's summary; a stale entry is never read (above).
@@ -122,14 +122,17 @@ export async function refreshDocuments(
   orgId: string,
   documents: readonly string[],
 ): Promise<number> {
-  if (documents.length === 0 || !bm25Configured() || !writeHooksOf(writes).keyword.documents)
-    return 0;
+  const { keyword } = writeHooksOf(writes);
+  if (documents.length === 0 || !keyword.endpoint.configured() || !keyword.documents) return 0;
   const { sql } = writes;
   const standing = await sql<{ id: string; current: string }[]>`
     select id, current_event_id as current from source_document
     where org_id = ${orgId} and id = any(${[...documents]}::text[]) and current_event_id is not null`;
   const kept = new Set(standing.map((d) => d.id));
-  let missed = await forgetKeywords(documents.filter((d) => !kept.has(d)).map(documentEntryId));
+  let missed = await forgetKeywords(
+    writes,
+    documents.filter((d) => !kept.has(d)).map(documentEntryId),
+  );
   const currents = standing.map((d) => d.current);
   await sql`update event_log set keyword_indexed_at = null where org_id = ${orgId} and id = any(${currents}::text[])`;
   for (const current of currents)

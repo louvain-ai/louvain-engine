@@ -1,15 +1,21 @@
 import type { Embedder } from "@louvain/embeddings";
 import type { Host, PluginRegistry } from "@louvain/engine-core";
 import type { Settings } from "./config/settings.js";
+import { guarded } from "./guarded.js";
 import { type ReadContext, readContextOf } from "./kg/read/fence.js";
 import type { ReadHooks } from "./kg/read/hooks.js";
+import { openKeywordIndex } from "./kg/read/keyword-index.js";
+import { type Logger, openLogger } from "./observability/logging.js";
+import { openPresentation } from "./open/source-tools/presentation-seam.js";
 import type { Store } from "./store.js";
+import type { Telemetry } from "./telemetry.js";
 import type { EngineHooks, Writes } from "./writes.js";
 
 /**
  * THE ENGINE: one value, built by its caller from parts it chose and handed to whatever serves, ingests or searches.
  * Nothing here opens a pool, starts a plugin or reads the environment. A part the caller did not pass is a type
- * error, never a default, so what an engine runs on is whatever its builder wrote.
+ * error, never a default, so what an engine runs on is whatever its builder wrote; but for telemetry, which reports
+ * nowhere unless given, and a logger, its own unless given.
  */
 export type EngineParts = {
   /** The pool it reads and writes through (`store.ts`). */
@@ -27,6 +33,10 @@ export type EngineParts = {
    * absent hook is the open build's own (`hooksOf`, `writeHooksOf`).
    */
   readonly hooks?: EngineHooks;
+  /** Where its counts, timings and errors go (`telemetry.ts`): nowhere unless given. */
+  readonly telemetry?: Telemetry;
+  /** Where its lines go, and what it has said once (`observability/logging.ts`): a logger of its own unless given. */
+  readonly logger?: Logger;
 };
 
 export type Engine = EngineParts & {
@@ -46,14 +56,27 @@ const readHooksOf = ({
 }: EngineHooks): ReadHooks => read;
 
 export function createEngine(parts: EngineParts): Engine {
+  const telemetry = guarded(() => parts.telemetry);
+  const logger = parts.logger ?? openLogger();
+  // One keyword index for its reads and its writes, so they share its endpoint: its settings and its group commit.
+  const keyword = parts.hooks?.keyword ?? openKeywordIndex();
   return Object.freeze({
     ...parts,
-    // Its embedder rides with the build's hooks, so a read or a write that embeds asks its own (`embedderOf`).
+    // Its embedder, telemetry and logger ride with the build's hooks, so a read or a write asks its own (`embedderOf`,
+    // `telemetryOf`, `logOf`), and a build that presents none presents the open build's pages under a cursor key of
+    // this engine's own.
     context: readContextOf({ store: parts.store, sql: parts.store.sql }, parts.host.readableSet, {
       ...(parts.hooks ? readHooksOf(parts.hooks) : {}),
+      presentation: parts.hooks?.presentation ?? openPresentation(),
+      keyword,
       embedder: parts.embedder,
+      telemetry,
+      logger,
     }),
-    writes: { sql: parts.store.sql, hooks: { ...parts.hooks, embedder: parts.embedder } },
+    writes: {
+      sql: parts.store.sql,
+      hooks: { ...parts.hooks, keyword, embedder: parts.embedder, telemetry, logger },
+    },
     close: async () => {
       try {
         await parts.plugins.close();

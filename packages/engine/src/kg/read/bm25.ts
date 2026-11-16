@@ -2,12 +2,13 @@
  * The BM25 sidecar's client (`apps/nlp/bm25.py`), used by the passage keyword
  * leg (`kg/read/keyword/`) and the reindex loader.
  *
- * Mirrors `packages/embeddings/src/remote.ts`: settings are read lazily and
- * memoised, not captured as module-level `const`s, for the same reason — a
- * module that reads `process.env` at its own import time can run before the
- * host has set its settings if a formatter sorts it above the host's settings module. Reading on first CALL instead of first IMPORT cannot be
- * undone by import order. `resetBm25Settings` exists for tests that set the
- * environment and read it back.
+ * Each endpoint (`bm25Endpoint`, one per engine's keyword index) reads its
+ * settings on its first CALL, never at import, and keeps them and its group
+ * commit itself: a module that read `process.env` at its own import time could
+ * run before the host set its settings. The `bm25*` functions are the door's,
+ * one endpoint for the call sites with no engine in reach (`bm25`);
+ * `resetBm25Settings` forgets it, for tests that set the environment and read
+ * it back.
  *
  * Unlike the embedding client this one does not fall back to an in-process
  * implementation when unconfigured — there is no in-process BM25 index to
@@ -24,43 +25,28 @@
 
 import { config } from "../../config/engine.js";
 import { sidecarAuthHeaders } from "../../config/sidecar-auth.js";
-import { appsShownBy } from "./connector-apps.js";
+import type { Bm25Doc } from "./bm25-doc.js";
 
 type Bm25Settings = {
   endpoint: string | undefined;
   timeoutMs: number;
 };
 
-let settings: Bm25Settings | null = null;
-
-function env(): Bm25Settings {
-  if (settings) return settings;
+/** An endpoint's settings, read from the environment on its first call (`bm25Endpoint`). */
+function readSettings(): Bm25Settings {
   const url = process.env.LOUVAIN_BM25_URL;
-  settings = {
+  return {
     // Compose writes an unset optional as an empty string
     // (`LOUVAIN_BM25_URL: ${LOUVAIN_BM25_URL:-}`), and an empty string is
     // truthy enough to survive `||` but is not a URL — treat it as absent.
     endpoint: url && url.trim() !== "" ? url : undefined,
     timeoutMs: Number(process.env.LOUVAIN_BM25_TIMEOUT_MS ?? 3_000) || 3_000,
   };
-  return settings;
 }
 
-/** Forget the memo. For tests that set the environment and read it back. */
-export function resetBm25Settings(): void {
-  settings = null;
-}
+type Bm25Hit = { id: string; score: number; snippet?: { text: string } | null };
 
-export function bm25Configured(): boolean {
-  return env().endpoint !== undefined;
-}
-
-/** Where the sidecar answers and how long a call to it may take, for its other clients (`keyword/tiers.ts`). */
-export const bm25Settings = (): Bm25Settings => env();
-
-export type Bm25Hit = { id: string; score: number; snippet?: { text: string } | null };
-
-export type Bm25SearchArgs = {
+type Bm25SearchArgs = {
   orgId: string;
   /** Already resolved to what the asking principal can read. */
   containers: string[];
@@ -90,99 +76,34 @@ export type Bm25SearchArgs = {
  * never the question — the same "degrade the leg, not the answer" contract
  * every other leg carries.
  */
-export async function bm25Search(args: Bm25SearchArgs): Promise<Bm25Hit[]> {
-  const { endpoint, timeoutMs } = env();
-  if (!endpoint) throw new Error("bm25 search: LOUVAIN_BM25_URL is not configured");
-  const res = await fetch(`${endpoint.replace(/\/$/, "")}/search`, {
-    method: "POST",
-    headers: { "content-type": "application/json", ...sidecarAuthHeaders() },
-    body: JSON.stringify({
-      org: args.orgId,
-      containers: args.containers,
-      query: args.query,
-      limit: args.limit,
-      ...(args.asOf ? { asOf: args.asOf } : {}),
-      ...(args.apps ? { apps: args.apps } : {}),
-      ...(args.from ? { from: args.from } : {}),
-      ...(args.to ? { to: args.to } : {}),
-      ...(args.ids ? { ids: args.ids } : {}),
-      ...(args.figures ? { figures: true } : {}),
-    }),
-    signal: AbortSignal.timeout(timeoutMs),
+async function search(s: Bm25Settings, args: Bm25SearchArgs): Promise<Bm25Hit[]> {
+  const data = await post<{ hits?: unknown }>(s, "search", {
+    org: args.orgId,
+    containers: args.containers,
+    query: args.query,
+    limit: args.limit,
+    ...(args.asOf ? { asOf: args.asOf } : {}),
+    ...(args.apps ? { apps: args.apps } : {}),
+    ...(args.from ? { from: args.from } : {}),
+    ...(args.to ? { to: args.to } : {}),
+    ...(args.ids ? { ids: args.ids } : {}),
+    ...(args.figures ? { figures: true } : {}),
   });
-  if (!res.ok) throw new Error(`bm25 search ${res.status}`);
-  const data = (await res.json()) as { hits?: unknown };
   if (!Array.isArray(data.hits)) throw new Error("bm25 search: malformed response");
   return data.hits as Bm25Hit[];
 }
 
-export type Bm25Doc = {
-  id: string;
-  org: string;
-  /** One container per document — a content event has exactly one. */
-  container: string;
-  occurredAt: string;
-  text: string;
-  /**
-   * The record's header (the build's `PassageRules.recordHeader`, `ingest/passage-rules.ts`: the open build's is the
-   * record's title), indexed as its own field and scored with a modest boost. Built from the record's own presentation
-   * and listing row only. Absent means none.
-   */
-  header?: string;
-  /** Every app a search may name the record by (`appsOf`); absent, an app filter finds it by none. */
-  apps?: string[];
-  /** The record's title as its source lists it, indexed as its title; absent, the text's first line stands for it. */
-  title?: string;
-  /**
-   * Whether the record states a figure: any digit in its text, the passage legs' `digits` rule (`passages-filter.ts`)
-   * at the record's grain, since a record states one exactly when one of its passages does. A search for figures
-   * narrows to it in the index.
-   */
-  figures?: boolean;
-  /**
-   * A DOCUMENT ENTRY (`sources/keyword-documents.ts`): one per document, its current revision's text and header, never
-   * a search hit. `modified` orders a listing, `app` is the one it shows as, a facet.
-   */
-  kind?: "document";
-  modified?: string;
-  app?: string;
-};
-
-/** A digit anywhere: what the passage legs' `digits` filter keeps (`p.text ~ '[0-9]'`). */
-const STATES_A_FIGURE = /[0-9]/;
-
-/**
- * One record's keyword document: its text, its title as the source lists it, its header where the workspace writes
- * one, and the apps it is found by. The title is indexed as the title whatever the header says, so a document named by
- * a key ("note-05") is found by it.
- */
-export function keywordDoc(
-  ctx: { eventId: string; orgId: string; container: string; occurredAt: string },
-  record: { text: string; title: string | null; header: string | null; apps: string[] },
-): Bm25Doc {
-  const { text, title, header, apps } = record;
-  return {
-    id: ctx.eventId,
-    org: ctx.orgId,
-    container: ctx.container,
-    occurredAt: ctx.occurredAt,
-    text,
-    apps,
-    figures: STATES_A_FIGURE.test(text),
-    ...(title ? { title } : {}),
-    ...(header ? { header } : {}),
-  };
-}
-
-/**
- * THE APPS A RECORD IS FOUND BY, as the passage legs' app filter decides it (`filters.ts` `apps`): the app it shows as
- * (`source_revision.app`), its connector's type, and every app that connector shows as — exactly the apps A for which
- * `connector ∈ connectorsOfApp(A)` or the shown app is A, so the sidecar's term set and the SQL re-check agree.
- */
-export function appsOf(connector: string, shown: string | null | undefined): string[] {
-  return [
-    ...new Set([shown, connector, ...appsShownBy(connector)].filter((a): a is string => !!a)),
-  ];
+/** POSTs `body` to the sidecar's `path` and reads its JSON; throws when unconfigured and on any non-2xx. */
+async function post<T>(s: Bm25Settings, path: string, body: unknown): Promise<T> {
+  if (!s.endpoint) throw new Error(`bm25 ${path}: LOUVAIN_BM25_URL is not configured`);
+  const res = await fetch(`${s.endpoint.replace(/\/$/, "")}/${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json", ...sidecarAuthHeaders() },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(s.timeoutMs),
+  });
+  if (!res.ok) throw new Error(`bm25 ${path} ${res.status}`);
+  return (await res.json()) as T;
 }
 
 /**
@@ -195,65 +116,16 @@ export function appsOf(connector: string, shown: string | null | undefined): str
  * Postgres has, with nothing to point at until a question the missing
  * document should have answered comes back empty.
  */
-export async function bm25Index(
+async function index(
+  s: Bm25Settings,
   docs: Bm25Doc[],
-  commit = true,
+  commit: boolean,
 ): Promise<{ indexed: number; committed: boolean; boot?: string }> {
-  const { endpoint, timeoutMs } = env();
-  if (!endpoint) throw new Error("bm25 index: LOUVAIN_BM25_URL is not configured");
-  const res = await fetch(`${endpoint.replace(/\/$/, "")}/index`, {
-    method: "POST",
-    headers: { "content-type": "application/json", ...sidecarAuthHeaders() },
-    body: JSON.stringify({ docs, commit }),
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  if (!res.ok) throw new Error(`bm25 index ${res.status}`);
-  return (await res.json()) as { indexed: number; committed: boolean; boot?: string };
+  return post(s, "index", { docs, commit });
 }
 
-/**
- * ONE COMMIT FOR EVERY DOCUMENT ADDED BEFORE IT STARTED, SHARED BY WHOEVER IS WAITING.
- *
- * The sidecar keeps one writer, so a document indexed with `commit: false` waits in it until the next commit, and
- * each commit is a segment write and an fsync under the sidecar's one writer lock. Committing per document made every
- * index worker queue behind every other one's fsync. A group commit keeps the promise the index job makes — its
- * document is DURABLE in the index before the job completes and marks it, so a failure still retries the job — while
- * a burst shares one commit: the first waiter commits at once; anyone who arrives while that commit runs joins the
- * NEXT one, because the running commit may have started before their document was added. No added delay: an idle
- * process commits exactly as before.
- *
- * `LOUVAIN_BM25_GROUP_COMMIT=off` commits per document again.
- */
-let committing: Promise<string | undefined> | null = null;
-let following: Promise<string | undefined> | null = null;
-
+/** Whether index jobs share a commit (`groupCommits`): `LOUVAIN_BM25_GROUP_COMMIT=off` commits per document. */
 export const bm25GroupCommitOn = (): boolean => config.bm25GroupCommit;
-
-/** Commit what the writer holds: an empty add with `commit: true`. Resolves to the sidecar's boot id. */
-async function bm25Commit(): Promise<string | undefined> {
-  return (await bm25Index([], true)).boot;
-}
-
-/** Resolves once a commit that STARTED after this call has landed, to the boot id of the process that committed. */
-export function bm25GroupCommit(): Promise<string | undefined> {
-  if (!committing) {
-    committing = bm25Commit().finally(() => {
-      committing = null;
-    });
-    return committing;
-  }
-  if (!following) {
-    following = committing
-      .catch(() => {
-        // swallowed: the running commit's failure is its own waiters'; this group commits on its own
-      })
-      .then(() => {
-        following = null;
-        return bm25GroupCommit();
-      });
-  }
-  return following;
-}
 
 /** The sidecar restarted between an uncommitted add and the commit meant to cover it: the add is gone. */
 export class Bm25Restarted extends Error {
@@ -272,9 +144,12 @@ export class Bm25Restarted extends Error {
  * the commit's must match, or this throws `Bm25Restarted` and the index job retries — the re-add is an upsert. A
  * sidecar too old to say its boot id (both undefined) is trusted as before.
  */
-export async function bm25IndexDurably(docs: Bm25Doc[]): Promise<void> {
-  const added = await bm25Index(docs, false);
-  const committed = await bm25GroupCommit();
+async function durably(
+  on: Pick<Bm25Endpoint, "index" | "groupCommit">,
+  docs: Bm25Doc[],
+): Promise<void> {
+  const added = await on.index(docs, false);
+  const committed = await on.groupCommit();
   if (added.boot !== committed) throw new Bm25Restarted();
 }
 
@@ -285,18 +160,9 @@ export async function bm25IndexDurably(docs: Bm25Doc[]): Promise<void> {
  * but the index is meant to MIRROR `event_log`, not to remember what it once
  * held. Throws like `bm25Index`, for the same reason.
  */
-export async function bm25Delete(ids: string[]): Promise<{ deleted: number }> {
-  const { endpoint, timeoutMs } = env();
-  if (!endpoint) throw new Error("bm25 delete: LOUVAIN_BM25_URL is not configured");
-  if (ids.length === 0) return { deleted: 0 };
-  const res = await fetch(`${endpoint.replace(/\/$/, "")}/delete`, {
-    method: "POST",
-    headers: { "content-type": "application/json", ...sidecarAuthHeaders() },
-    body: JSON.stringify({ ids }),
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  if (!res.ok) throw new Error(`bm25 delete ${res.status}`);
-  return (await res.json()) as { deleted: number };
+async function remove(s: Bm25Settings, ids: string[]): Promise<{ deleted: number }> {
+  if (ids.length === 0 && s.endpoint) return { deleted: 0 };
+  return post(s, "delete", { ids });
 }
 
 /**
@@ -307,17 +173,8 @@ export async function bm25Delete(ids: string[]): Promise<{ deleted: number }> {
  * durable deletion task, which retries it; throws
  * like `bm25Delete` so the task knows to.
  */
-export async function bm25DeleteOrg(orgId: string): Promise<{ deleted: boolean }> {
-  const { endpoint, timeoutMs } = env();
-  if (!endpoint) throw new Error("bm25 delete_org: LOUVAIN_BM25_URL is not configured");
-  const res = await fetch(`${endpoint.replace(/\/$/, "")}/delete_org`, {
-    method: "POST",
-    headers: { "content-type": "application/json", ...sidecarAuthHeaders() },
-    body: JSON.stringify({ org: orgId }),
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  if (!res.ok) throw new Error(`bm25 delete_org ${res.status}`);
-  return (await res.json()) as { deleted: boolean };
+async function removeOrg(s: Bm25Settings, orgId: string): Promise<{ deleted: boolean }> {
+  return post(s, "delete_org", { org: orgId });
 }
 
 /**
@@ -325,8 +182,10 @@ export async function bm25DeleteOrg(orgId: string): Promise<{ deleted: boolean }
  * lexical legs carry retrieval alone and is not a failure; configured and
  * unreachable is reported with the reason and left to the caller to weigh.
  */
-export async function bm25Health(): Promise<{ configured: boolean; ok: boolean; reason?: string }> {
-  const { endpoint } = env();
+async function health(
+  s: Bm25Settings,
+): Promise<{ configured: boolean; ok: boolean; reason?: string }> {
+  const { endpoint } = s;
   if (!endpoint) return { configured: false, ok: true };
   try {
     const res = await fetch(`${endpoint.replace(/\/$/, "")}/healthz`, {
@@ -342,3 +201,123 @@ export async function bm25Health(): Promise<{ configured: boolean; ok: boolean; 
     return { configured: true, ok: false, reason: String(err) };
   }
 }
+
+/**
+ * One keyword-index endpoint: its settings, read from the environment on its first call, and its group commit, so two
+ * engines never share a commit or a setting. An engine's is its keyword index hook's (`KeywordIndex.endpoint`, one per
+ * engine in the open build); `bm25` below is the door's, for the call sites with no engine in reach.
+ */
+export type Bm25Endpoint = {
+  settings(): Bm25Settings;
+  configured(): boolean;
+  search(args: Bm25SearchArgs): Promise<Bm25Hit[]>;
+  index(
+    docs: Bm25Doc[],
+    commit?: boolean,
+  ): Promise<{ indexed: number; committed: boolean; boot?: string }>;
+  /** Resolves once a commit that STARTED after this call has landed, to the boot id of the process that committed. */
+  groupCommit(): Promise<string | undefined>;
+  indexDurably(docs: Bm25Doc[]): Promise<void>;
+  withdraw(ids: string[]): Promise<{ deleted: number }>;
+  withdrawOrg(orgId: string): Promise<{ deleted: boolean }>;
+  health(): Promise<{ configured: boolean; ok: boolean; reason?: string }>;
+};
+
+/**
+ * ONE COMMIT FOR EVERY DOCUMENT ADDED BEFORE IT STARTED, SHARED BY WHOEVER IS WAITING.
+ *
+ * The sidecar keeps one writer, so a document indexed with `commit: false` waits in it until the next commit, and
+ * each commit is a segment write and an fsync under the sidecar's one writer lock. Committing per document made every
+ * index worker queue behind every other one's fsync. A group commit keeps the promise the index job makes — its
+ * document is DURABLE in the index before the job completes and marks it, so a failure still retries the job — while
+ * a burst shares one commit: the first waiter commits at once; anyone who arrives while that commit runs joins the
+ * NEXT one, because the running commit may have started before their document was added. No added delay: an idle
+ * process commits exactly as before.
+ */
+function groupCommits(
+  commit: () => Promise<string | undefined>,
+): () => Promise<string | undefined> {
+  let committing: Promise<string | undefined> | null = null;
+  let following: Promise<string | undefined> | null = null;
+  const next = (): Promise<string | undefined> => {
+    if (!committing) {
+      committing = commit().finally(() => {
+        committing = null;
+      });
+      return committing;
+    }
+    if (!following) {
+      following = committing
+        .catch(() => {
+          // swallowed: the running commit's failure is its own waiters'; this group commits on its own
+        })
+        .then(() => {
+          following = null;
+          return next();
+        });
+    }
+    return following;
+  };
+  return next;
+}
+
+export function bm25Endpoint(): Bm25Endpoint {
+  let read: Bm25Settings | undefined;
+  const settings = (): Bm25Settings => {
+    read ??= readSettings();
+    return read;
+  };
+  const endpoint: Bm25Endpoint = {
+    settings,
+    configured: () => settings().endpoint !== undefined,
+    search: (args) => search(settings(), args),
+    index: (docs, commit = true) => index(settings(), docs, commit),
+    // Commit what the writer holds: an empty add with `commit: true`, resolving to the sidecar's boot id.
+    groupCommit: groupCommits(async () => (await index(settings(), [], true)).boot),
+    indexDurably: (docs) => durably(endpoint, docs),
+    withdraw: (ids) => remove(settings(), ids),
+    withdrawOrg: (orgId) => removeOrg(settings(), orgId),
+    health: () => health(settings()),
+  };
+  return endpoint;
+}
+
+/** The door's endpoint, made on its first call: listed in `check-engine-state.mjs`, for call sites with no engine. */
+let door: Bm25Endpoint | undefined;
+const doorEndpoint = (): Bm25Endpoint => {
+  door ??= bm25Endpoint();
+  return door;
+};
+
+/** The door: the process's endpoint, for the call sites with no engine in reach and a build that keeps one index. */
+export const bm25: Bm25Endpoint = {
+  settings: () => doorEndpoint().settings(),
+  configured: () => doorEndpoint().configured(),
+  search: (args) => doorEndpoint().search(args),
+  index: (docs, commit) => doorEndpoint().index(docs, commit),
+  groupCommit: () => doorEndpoint().groupCommit(),
+  indexDurably: (docs) => doorEndpoint().indexDurably(docs),
+  withdraw: (ids) => doorEndpoint().withdraw(ids),
+  withdrawOrg: (orgId) => doorEndpoint().withdrawOrg(orgId),
+  health: () => doorEndpoint().health(),
+};
+
+/**
+ * The endpoint a read's context or a write's writes carry, their keyword index's (`KeywordIndex.endpoint`); one no
+ * engine made asks the door's.
+ */
+export const endpointOf = (on: {
+  readonly hooks?: { readonly keyword?: { readonly endpoint: Bm25Endpoint } } | undefined;
+}): Bm25Endpoint => on.hooks?.keyword?.endpoint ?? bm25;
+
+/** Forget the door's endpoint, its settings with it. For tests that set the environment and read it back. */
+export function resetBm25Settings(): void {
+  door = undefined;
+}
+
+export const bm25Configured = (): boolean => bm25.configured();
+/** Where the sidecar answers and how long a call to it may take, for its other clients (`keyword/tiers.ts`). */
+export const bm25Settings = (): Bm25Settings => bm25.settings();
+export const bm25DeleteOrg = (orgId: string): Promise<{ deleted: boolean }> =>
+  bm25.withdrawOrg(orgId);
+export const bm25Health = () => bm25.health();

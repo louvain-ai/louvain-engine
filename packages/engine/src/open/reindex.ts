@@ -6,8 +6,7 @@
  * tried again, three passes in all; one that still misses is handed back by id.
  */
 import { indexOpen, OpenIndexMissing } from "../ingest/index-open.js";
-import { bm25Configured } from "../kg/read/bm25.js";
-import type { Writes } from "../writes.js";
+import { type Writes, writeHooksOf } from "../writes.js";
 import { openOrgId } from "./org.js";
 
 /** How many times a record the keyword index missed is tried. */
@@ -23,7 +22,7 @@ export class NoKeywordIndex extends Error {
 export async function reindexKeywords(
   writes: Writes,
 ): Promise<{ indexed: number; missed: string[] }> {
-  if (!bm25Configured()) throw new NoKeywordIndex();
+  if (!writeHooksOf(writes).keyword.endpoint.configured()) throw new NoKeywordIndex();
   const { sql } = writes;
   const orgId = await openOrgId(sql);
   await sql`update event_log set keyword_indexed_at = null where org_id = ${orgId}`;

@@ -1,9 +1,8 @@
 import type { SourceSearch } from "@louvain/engine-core";
 import { embedderOf } from "../embedder.js";
+import { logOf, telemetryOf } from "../given.js";
 import { bounded, fenced, narrow as narrowed, type ReadContext } from "../kg/read/fence.js";
 import { hooksOf } from "../kg/read/hooks.js";
-import { log } from "../observability/logging.js";
-import { telemetry } from "../telemetry.js";
 import { isUnreachable } from "../unreachable.js";
 import { REACH_DOCS, REACH_EVENTS } from "./bounds.js";
 import { emptySearch } from "./empty-search.js";
@@ -107,18 +106,11 @@ async function indexListingOrNone(
   try {
     return await indexListing(context, s, input);
   } catch (err) {
-    telemetry.count("source_search_index_unavailable", 1, {});
-    sayOnce(
+    telemetryOf(context).count("source_search_index_unavailable", 1, {});
+    logOf(context).sayOnce(
       "the keyword index did not answer a listing; listings with words are empty until it does: ./engine logs bm25",
     );
-    if (!isUnreachable(err)) telemetry.error("source_search.index_listing", err, {});
+    if (!isUnreachable(err)) telemetryOf(context).error("source_search.index_listing", err, {});
     return { ...emptySearch(input, sourceSort(input)), keywordUnavailable: true };
   }
-}
-
-const said = new Set<string>();
-function sayOnce(line: string): void {
-  if (said.has(line)) return;
-  said.add(line);
-  log.warn(line);
 }

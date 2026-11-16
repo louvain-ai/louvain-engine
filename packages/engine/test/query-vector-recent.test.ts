@@ -29,7 +29,6 @@ const counting = () => {
 };
 
 test("outside any memo, legs that ask together and a page asked again embed the words once", async () => {
-  forgetRecentQueryVectors();
   const other = counting();
   const together = await Promise.all([
     queryVectorWith("open renewals", other.load, ORG),
@@ -44,7 +43,6 @@ test("outside any memo, legs that ask together and a page asked again embed the 
 });
 
 test("a vector is kept per workspace: another workspace's search of the same words is its own embedding", async () => {
-  forgetRecentQueryVectors();
   const other = counting();
   await queryVectorWith("board deck", other.load, "org-a");
   await queryVectorWith("board deck", other.load, "org-b");
@@ -56,7 +54,6 @@ test("a vector is kept per workspace: another workspace's search of the same wor
 });
 
 test("a vector is kept per loader: another model's embedding of the same words is its own", async () => {
-  forgetRecentQueryVectors();
   const a = counting();
   const b = counting();
   await queryVectorWith("same words", a.load, ORG);
@@ -66,7 +63,6 @@ test("a vector is kept per loader: another model's embedding of the same words i
 });
 
 test("a failed embedding is not kept: every leg waiting on it sees the failure, the next call asks again", async () => {
-  forgetRecentQueryVectors();
   let attempts = 0;
   const load = async (text: string): Promise<number[]> => {
     attempts += 1;
@@ -85,7 +81,6 @@ test("a failed embedding is not kept: every leg waiting on it sees the failure, 
 });
 
 test("an empty vector is not kept", async () => {
-  forgetRecentQueryVectors();
   let attempts = 0;
   const load = async (): Promise<number[]> => {
     attempts += 1;
@@ -98,20 +93,18 @@ test("an empty vector is not kept", async () => {
 });
 
 test("a question's memo still memoises past the shared store, and finds what a call outside it embedded", async () => {
-  forgetRecentQueryVectors();
   const other = counting();
   await queryVectorWith("handover notes", other.load, ORG);
   await withQueryVectorMemo(async () => {
     await queryVectorWith("handover notes", other.load, ORG);
     // Forgotten from the shared store mid-question (its 60 s, its 64 texts): the question's own memo still holds it.
-    forgetRecentQueryVectors();
+    forgetRecentQueryVectors(other.load);
     await queryVectorWith("handover notes", other.load, ORG);
   });
   assert.deepEqual(other.calls, ["handover notes"]);
 });
 
 test("the current space's product embedder, outside any memo, asks the sidecar once for legs and pages alike", async () => {
-  forgetRecentQueryVectors();
   const seen: string[] = [];
   const server = createServer((req, res) => {
     let body = "";
@@ -145,6 +138,5 @@ test("the current space's product embedder, outside any memo, asks the sidecar o
     if (saved === undefined) delete process.env.LOUVAIN_EMBEDDINGS_URL;
     else process.env.LOUVAIN_EMBEDDINGS_URL = saved;
     server.close();
-    forgetRecentQueryVectors();
   }
 });

@@ -1,5 +1,5 @@
 import type { Viewer } from "@louvain/engine-core";
-import { telemetry } from "../../telemetry.js";
+import { telemetryOf } from "../../given.js";
 import type { Queryable } from "../core/sql.js";
 import { recordShape } from "../packages/lib/record-shape.js";
 import { bounded, fence, type ReadContext } from "./fence.js";
@@ -94,7 +94,7 @@ export async function passagesAround(
     // A walk cut by its statement timeout costs the context beside hits the caller already has, never the page, and
     // says so; anything else is a fault and is thrown.
     if (!isStatementTimeout(err)) throw err;
-    telemetry.count("kg.read.around.cut", 1, {});
+    telemetryOf(context).count("kg.read.around.cut", 1, {});
     return { around, degraded: ["around:cut"] };
   }
   const neighbourIds = near.map((n) => n.event_id);

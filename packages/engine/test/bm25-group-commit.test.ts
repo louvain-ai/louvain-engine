@@ -36,14 +36,14 @@ test("a burst shares commits; a late arrival waits for the next; a failure is it
   });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   process.env.LOUVAIN_BM25_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const { bm25GroupCommit } = await import("../src/kg/read/bm25.js");
+  const { bm25 } = await import("../src/kg/read/bm25.js");
   try {
     // Ten jobs at once: the first commits now, the other nine share ONE following commit.
-    await Promise.all(Array.from({ length: 10 }, () => bm25GroupCommit()));
+    await Promise.all(Array.from({ length: 10 }, () => bm25.groupCommit()));
     assert.equal(commits.length, 2, "ten waiters, two commits");
 
     // Alone, a job commits at once, as before.
-    await bm25GroupCommit();
+    await bm25.groupCommit();
     assert.equal(commits.length, 3);
 
     // A job that arrives while a commit runs waits for one that started AFTER it arrived.
@@ -51,10 +51,10 @@ test("a burst shares commits; a late arrival waits for the next; a failure is it
     const received = new Promise<void>((r) => {
       onCommit = r;
     });
-    const first = bm25GroupCommit();
+    const first = bm25.groupCommit();
     await received;
     onCommit = null;
-    const late = bm25GroupCommit();
+    const late = bm25.groupCommit();
     await Promise.all([first, late]);
     assert.equal(
       commits.length,
@@ -64,8 +64,8 @@ test("a burst shares commits; a late arrival waits for the next; a failure is it
 
     // A failed commit rejects its own waiters; the next group still commits.
     failNext = true;
-    const failing = bm25GroupCommit();
-    const next = bm25GroupCommit();
+    const failing = bm25.groupCommit();
+    const next = bm25.groupCommit();
     await assert.rejects(failing);
     await next;
     assert.equal(commits.length, 6);
@@ -92,9 +92,7 @@ test("an add and its commit from different sidecar processes are a restart: the 
   });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   process.env.LOUVAIN_BM25_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const { bm25IndexDurably, Bm25Restarted, resetBm25Settings } = await import(
-    "../src/kg/read/bm25.js"
-  );
+  const { bm25, Bm25Restarted, resetBm25Settings } = await import("../src/kg/read/bm25.js");
   resetBm25Settings();
   const doc = {
     id: "e1",
@@ -104,18 +102,18 @@ test("an add and its commit from different sidecar processes are a restart: the 
     text: "x",
   };
   try {
-    await bm25IndexDurably([doc]);
+    await bm25.indexDurably([doc]);
     restartAfterAdd = true;
     await assert.rejects(
-      bm25IndexDurably([doc]),
+      bm25.indexDurably([doc]),
       Bm25Restarted,
       "the add was lost with the old process",
     );
     restartAfterAdd = false;
-    await bm25IndexDurably([doc]);
+    await bm25.indexDurably([doc]);
     // A sidecar too old to say which process it is: trusted as before.
     boot = undefined;
-    await bm25IndexDurably([doc]);
+    await bm25.indexDurably([doc]);
   } finally {
     server.close();
   }

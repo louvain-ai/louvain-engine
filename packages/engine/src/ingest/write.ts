@@ -5,11 +5,11 @@
 import type { Sql } from "postgres";
 import { embedderOf } from "../embedder.js";
 import { recordEmbeddingSpace } from "../embedding-space.js";
+import { telemetryOf } from "../given.js";
 import { laterVersion } from "../kg/core/version.js";
 import type { MemoryWriteContext } from "../memory/store.js";
 import { dropRecordSupersededVectors } from "../memory/superseded-vectors.js";
 import { afterPassagesWritten } from "../passage-write-seam.js";
-import { telemetry } from "../telemetry.js";
 import { type Writes, writeHooksOf } from "../writes.js";
 import type { SliceRow } from "./embed.js";
 import { indexableEvent } from "./passage-rules.js";
@@ -101,7 +101,7 @@ async function insertSlice(
       where passage.text is distinct from excluded.text returning id::text as id`;
     const withContext = rows.filter((r) => r.c).length;
     if (withContext > 0)
-      telemetry.count("passage.context.written", withContext, { mode: "header" });
+      telemetryOf(writes).count("passage.context.written", withContext, { mode: "header" });
     return (written as unknown as { id: string }[]).map((w) => w.id);
   });
 }

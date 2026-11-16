@@ -1,5 +1,4 @@
 import { recordsInNarrowing } from "../bm25/records-in-narrowing.sql.js";
-import { bm25Search } from "../bm25.js";
 import { instantOf, queryTerms } from "../context.js";
 import { firstChunkRows } from "../document-rows.js";
 import { bounded, type ReadContext, type Reader } from "../fence.js";
@@ -102,7 +101,7 @@ async function indexHits(context: ReadContext, read: IndexRead): Promise<Hit[]> 
   const ask = { orgId: fence.orgId, containers: fence.containers, query, limit: limit * 2 };
   return hooksOf(context).keyword.tiers
     ? (await bm25Tiers({ ...ask, asOf: at, narrow: narrowing })).hits.map(tierOrdered)
-    : await bm25Search({ ...ask, asOf: at, ...narrowing });
+    : await hooksOf(context).keyword.endpoint.search({ ...ask, asOf: at, ...narrowing });
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { Bm25Doc } from "../kg/read/bm25.js";
+import type { Bm25Doc } from "../kg/read/bm25-doc.js";
 import { documentEntryId } from "../sources/keyword-documents.js";
 import { displayApp } from "../sources/read-core.js";
 import { type Writes, writeHooksOf } from "../writes.js";

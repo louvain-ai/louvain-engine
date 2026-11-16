@@ -1,5 +1,5 @@
-import { telemetry } from "../../telemetry.js";
-import { bm25Configured } from "./bm25.js";
+import { telemetryOf } from "../../given.js";
+import { endpointOf } from "./bm25.js";
 import { bm25Tiers, holdingEvery } from "./keyword/tiers.js";
 import type { WordsTest } from "./keyword-index.js";
 
@@ -11,8 +11,8 @@ import type { WordsTest } from "./keyword-index.js";
  * and says so in telemetry.
  */
 export const tierWords: WordsTest = {
-  async holders(_context, reader, { query, ids }) {
-    if (!bm25Configured()) return new Set();
+  async holders(context, reader, { query, ids }) {
+    if (!endpointOf(context).configured()) return new Set();
     try {
       const { orgId, containers } = reader;
       const tiers = await bm25Tiers({
@@ -24,12 +24,12 @@ export const tierWords: WordsTest = {
       });
       return new Set(holdingEvery(tiers).map((h) => h.id));
     } catch (err) {
-      telemetry.error("search.words_by_tiers", err, {});
+      telemetryOf(context).error("search.words_by_tiers", err, {});
       return new Set();
     }
   },
-  async held(_context, reader, words) {
-    if (!bm25Configured()) return new Set();
+  async held(context, reader, words) {
+    if (!endpointOf(context).configured()) return new Set();
     const held = await Promise.all(
       [...new Set(words)].map(async (word) => {
         try {
@@ -42,7 +42,7 @@ export const tierWords: WordsTest = {
           const unheld = t.completed.length + t.corrected.length + t.dropped.length;
           return t.hits.length > 0 && unheld === 0 ? [word] : [];
         } catch (err) {
-          telemetry.error("search.held_words", err, {});
+          telemetryOf(context).error("search.held_words", err, {});
           return [];
         }
       }),

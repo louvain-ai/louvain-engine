@@ -1,6 +1,6 @@
 """The keyword index's query (`bm25.py`): the fence every read carries, the narrowings beside it, the search's words
-over the text fields, and a hit's snippet. `search` is the plain `/search`; `bm25_last.py` the tiers of `strategy: "last"`,
-`bm25_listing.py` the document listing. Each takes the open index as a `Store`."""
+over the text fields, a hit's snippet, and a page's order (`_top`). `search` is the plain `/search`; `bm25_last.py` the
+tiers of `strategy: "last"`, `bm25_listing.py` the document listing. Each takes the open index as a `Store`."""
 
 import time
 
@@ -11,6 +11,8 @@ from bm25_store import Store, _to_unix_seconds
 
 MAX_LIMIT = 200
 DEFAULT_LIMIT = 20
+# How far `_top` widens a page to see every entry tied at its cut.
+MAX_TIED = 2_000
 
 
 class FilterUnsupported(Exception):
@@ -122,6 +124,22 @@ def _highlight(ix: Store, query: str, matched: tantivy.Query) -> tantivy.Query:
     return tantivy.Query.boolean_query(should) if should else matched
 
 
+def _top(searcher: tantivy.Searcher, query: tantivy.Query, limit: int) -> list[tuple[float, tantivy.Document]]:
+    """The best `limit` matches, best first, EXACT TIES BROKEN BY ID. tantivy breaks a tie by where an entry sits in the
+    index, which a merge moves, so the same index could answer two tied entries in either order, and either could make
+    the cut. Where the entry after the cut ties the last one in, the page is widened (to `MAX_TIED`) until it does not,
+    so the entries cut are decided by id too."""
+    want = limit
+    while True:
+        found = searcher.search(query, limit=want + 1).hits
+        if len(found) <= want or found[want - 1][0] != found[want][0] or want >= MAX_TIED:
+            break
+        want = min(want * 2, MAX_TIED)
+    docs = [(float(score), searcher.doc(addr)) for score, addr in found]
+    docs.sort(key=lambda hit: (-hit[0], hit[1].get_first("id")))
+    return docs[:limit]
+
+
 def _snippet(generator: tantivy.SnippetGenerator | None, doc: tantivy.Document) -> dict | None:
     """A hit's snippet: the fragment of its text where the search's words fell (tantivy's default length) and the
     marked words, as `[start, end)` character offsets into the fragment. None without one: no stored text, or no word
@@ -173,14 +191,12 @@ def search(
     generator = _snippets(ix, searcher, _highlight(ix, query, text_query))
     if order == "newest":
         result = searcher.search(fenced, limit=limit, order_by_field="occurred_at", order=tantivy.Order.Desc)
-        found = [(0.0, addr) for _, addr in result.hits]
+        found = [(0.0, searcher.doc(addr)) for _, addr in result.hits]
     else:
-        result = searcher.search(fenced, limit=limit)
-        found = [(float(score), addr) for score, addr in result.hits]
-    hits = []
-    for score, addr in found:
-        doc = searcher.doc(addr)
-        hits.append({"id": doc.get_first("id"), "score": score, "snippet": _snippet(generator, doc)})
+        found = _top(searcher, fenced, limit)
+    hits = [
+        {"id": doc.get_first("id"), "score": score, "snippet": _snippet(generator, doc)} for score, doc in found
+    ]
     took_ms = int(round((time.perf_counter() - started) * 1000))
     return hits, took_ms
 

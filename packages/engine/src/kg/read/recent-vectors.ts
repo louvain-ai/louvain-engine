@@ -11,7 +11,7 @@ export type RecentKey = { loader: object; orgId: string | undefined; text: strin
  * Bounded (64 texts per loader, 60 s); it holds a vector only, never an id, an excerpt or a readable set. A failure or
  * an empty vector is forgotten at once, and a fallback is the caller's (`space.ts` `queryIn`), never cached here.
  */
-let recentByLoader = new WeakMap<object, LRUCache<string, Promise<string>>>();
+const recentByLoader = new WeakMap<object, LRUCache<string, Promise<string>>>();
 
 export function recentVector(
   { loader, orgId, text }: RecentKey,
@@ -43,9 +43,9 @@ export function recentVector(
   return vector;
 }
 
-/** Forget the shared query vectors (tests; a sidecar swapped under a running process). */
-export function forgetRecentQueryVectors(): void {
-  recentByLoader = new WeakMap();
+/** Forget one loader's shared query vectors (tests; a sidecar swapped under a running process). */
+export function forgetRecentQueryVectors(loader: object): void {
+  recentByLoader.delete(loader);
 }
 
 /**

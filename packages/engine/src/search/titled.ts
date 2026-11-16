@@ -1,9 +1,9 @@
 import type { Viewer } from "@louvain/engine-core";
 import type { documentOrder } from "../ask/document-order.js";
 import { pageOf } from "../ask/evidence.js";
+import { telemetryOf } from "../given.js";
 import type { ReadContext } from "../kg/read/fence.js";
 import { hooksOf } from "../kg/read/hooks.js";
-import { telemetry } from "../telemetry.js";
 import type { SearchOptions } from "./document.js";
 import type { Staged } from "./stage.js";
 
@@ -42,7 +42,7 @@ export async function titledDocuments(search: TitledSearch): Promise<Staged<Rank
     return { value, degraded: [] };
   } catch (err) {
     // swallowed: the titled documents are added to the page, never its only leg; their failure is named, not thrown.
-    telemetry.error("ask.search.titles", err);
+    telemetryOf(context).error("ask.search.titles", err);
     return { value: [], degraded: ["titles:unavailable"] };
   }
 }

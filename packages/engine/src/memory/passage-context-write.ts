@@ -7,12 +7,12 @@ import { toPgVector } from "@louvain/embeddings";
 import type { PendingQuery, Row, Sql, TransactionSql } from "postgres";
 import { embedderOf } from "../embedder.js";
 import { recordEmbeddingSpace } from "../embedding-space.js";
+import { telemetryOf } from "../given.js";
 import { chunk } from "../ingest/cut.js";
 import { contextVectorNull, indexableEvent, type PassageRules } from "../ingest/passage-rules.js";
 import type { Queryable } from "../kg/core/sql.js";
 import { passageContextMode, writesPassageContext } from "../kg/read/passage-context-mode.js";
 import { afterPassagesWritten } from "../passage-write-seam.js";
-import { telemetry } from "../telemetry.js";
 import { type Writes, writeHooksOf } from "../writes.js";
 import { contextualText } from "./contextual-text.js";
 import { composeContext, contextKey, type HeaderRecord } from "./passage-context.js";
@@ -85,7 +85,7 @@ export async function indexPassageContexts(
       if (!event) return 0;
       const written = await writeContexts(trx, ctx, { write, vectors, contextual, col, rules });
       if (clear.length > 0) await clearContexts(trx, ctx, { rows: clear, rules });
-      telemetry.count("passage.context.written", written, { mode: "header" });
+      telemetryOf(writes).count("passage.context.written", written, { mode: "header" });
       return written;
     })
     .then(async (written) => {

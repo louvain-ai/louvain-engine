@@ -1,6 +1,7 @@
 import type { Viewer } from "@louvain/engine-core";
 import type { PendingQuery, Row as SqlRow } from "postgres";
 import type { Queryable } from "../core/sql.js";
+import { type Bm25Endpoint, bm25, bm25Endpoint } from "./bm25.js";
 import type { ReadContext, Reader } from "./fence.js";
 import type {
   KeywordLegRead,
@@ -76,6 +77,9 @@ export type WordsTest = {
  *                open build has none, its index holding a title as the document's header.
  *   `words`      the words test (`WordsTest`): the open build's is the index's tiers' (`tier-words.ts`); a build that
  *                keeps a second matcher hands its own.
+ *   `endpoint`   the index's endpoint (`bm25.ts` `Bm25Endpoint`): its settings, read on its first call, and its group
+ *                commit. The open build makes one per engine (`openKeywordIndex`); a build that keeps one index for
+ *                its process hands the door's (`bm25`).
  */
 export type KeywordIndex = {
   passes: KeywordPasses | null;
@@ -85,6 +89,7 @@ export type KeywordIndex = {
   documents: boolean;
   tiers: boolean;
   words: WordsTest;
+  endpoint: Bm25Endpoint;
 };
 
 /**
@@ -109,7 +114,7 @@ async function noRecency(_context: ReadContext, leg: PassageLegRead): Promise<Ro
 }
 
 /**
- * The open build's keyword index, REQUIRED: no Postgres passes answer in its place (a read it cannot answer has no
+ * The open build's keyword index, REQUIRED (a read no engine made asks it, on the door's endpoint): no Postgres passes answer in its place (a read it cannot answer has no
  * keyword leg, and says so); it holds one entry per document (`sources/keyword-documents.ts`), which its listing reads;
  * and its reads and words test ask its tiers (`keyword/tiers.ts`, `tier-words.ts`).
  */
@@ -121,4 +126,11 @@ export const OPEN_KEYWORD_INDEX: KeywordIndex = {
   documents: true,
   tiers: true,
   words: tierWords,
+  endpoint: bm25,
 };
+
+/** The open build's keyword index for one engine (`createEngine`): an endpoint of that engine's own. */
+export const openKeywordIndex = (): KeywordIndex => ({
+  ...OPEN_KEYWORD_INDEX,
+  endpoint: bm25Endpoint(),
+});

@@ -56,6 +56,7 @@ class Store:
     exact: tantivy.TextAnalyzer
     query: tantivy.TextAnalyzer
     writer: tantivy.IndexWriter
+    heap: int
     lock: threading.Lock = field(default_factory=threading.Lock)
     # Which process the writer is. An add sent with `commit: false` waits in this process's writer and dies with it; a
     # client that adds, then commits in a separate request, compares the boot id of the two answers, so a restart
@@ -153,8 +154,32 @@ def open_store(path: str, heap_mb: int, knobs: Knobs) -> Store:
     return Store(
         schema=schema, index=index, has=has, kind=kind, folded=folded, snippets=snippets, unreadable=unreadable,
         knobs=knobs, exact=exact, query=_analyzer(stem=True, fold=folded, cap=False),
-        writer=index.writer(heap_size=heap_mb * 1024 * 1024),
+        writer=_writer(index, heap_mb * 1024 * 1024), heap=heap_mb * 1024 * 1024,
     )
+
+
+# The index is a function of what was written, never of thread timing. A replaced or withdrawn entry stays in the BM25
+# statistics (document count, term frequencies, field lengths) until its segment is dropped or merged away, so the same
+# live documents score differently with it and without it, and two close results trade places. Two races decided that:
+# which indexing thread took a document (each thread writes a segment of its own, and a segment whose entries are all
+# replaced is dropped whole, while one shared with a live entry keeps the copy), and whether a background merge had
+# ended when the next search ran. So the writer indexes on ONE thread, which puts a batch in one segment, in order, and
+# measured faster here (2,000 documents in batches of 50: 8 s against 45 s on the automatic count, whose every commit
+# flushes a segment per thread); and every commit waits for the merges it started.
+def _writer(index: tantivy.Index, heap: int) -> tantivy.IndexWriter:
+    return index.writer(heap_size=heap, num_threads=1)
+
+
+def _commit(ix: Store) -> None:
+    """Commit, let every merge the commit started finish, and reload. tantivy's Python binding waits for its merging
+    threads only by dropping the writer, so a new one is opened in its place. Called under `ix.lock`, with nothing
+    uncommitted in the writer."""
+    ix.writer.commit()
+    ix.writer.wait_merging_threads()
+    ix.writer = _writer(ix.index, ix.heap)
+    # Reads use the snapshot of the last reload, not the writer's view: reloaded here, a committed batch is visible to
+    # `/search` and to `/healthz`'s count at once.
+    ix.index.reload()
 
 
 def _to_unix_seconds(iso: str) -> int:
@@ -231,10 +256,7 @@ def index_docs(ix: Store, docs: list[dict], commit: bool) -> int:
                 d.add_text("facet_container", str(doc["container"]))
             ix.writer.add_document(d)
         if commit:
-            ix.writer.commit()
-            # Reads use the snapshot of the last reload, not the writer's view: reloaded here, a committed batch is
-            # visible to `/search` and to `/healthz`'s count at once.
-            ix.index.reload()
+            _commit(ix)
     return len(docs)
 
 
@@ -247,8 +269,7 @@ def delete_docs(ix: Store, ids: list[str]) -> int:
     with ix.lock:
         for doc_id in ids:
             ix.writer.delete_documents_by_term("id", str(doc_id))
-        ix.writer.commit()
-        ix.index.reload()
+        _commit(ix)
     return len(ids)
 
 
@@ -260,5 +281,4 @@ def delete_org(ix: Store, org: str) -> None:
     """
     with ix.lock:
         ix.writer.delete_documents_by_term("org", org)
-        ix.writer.commit()
-        ix.index.reload()
+        _commit(ix)

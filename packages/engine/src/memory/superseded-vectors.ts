@@ -1,8 +1,8 @@
 import type { PendingQuery, Row, Sql } from "postgres";
+import { telemetryOf } from "../given.js";
 import { contextVectorNull } from "../ingest/passage-rules.js";
 import type { Queryable } from "../kg/core/sql.js";
 import { declaringVersions, newerVersionHeld, newerVersions } from "../kg/read/passages-filter.js";
-import { telemetry } from "../telemetry.js";
 import { type Writes, writeHooksOf } from "../writes.js";
 
 /**
@@ -87,7 +87,7 @@ export async function dropSupersededVectors(
       from (${candidates}) c
      where p.id = c.id and p.vector_dropped_at is null
     returning p.id::text as id`;
-  if (dropped.length > 0) telemetry.count("passage.vectors.dropped", dropped.length, {});
+  if (dropped.length > 0) telemetryOf(writes).count("passage.vectors.dropped", dropped.length, {});
   return { passages: dropped.length, lastEvent: last };
 }
 
@@ -130,7 +130,7 @@ export async function dropRecordSupersededVectors(
   } catch (err) {
     // swallowed: dropping superseded vectors saves space and never decides what anyone reads; a failure leaves the
     // older version embedded, as every version was before, and is counted.
-    telemetry.count("passage.vectors.drop_failed", 1, {});
+    telemetryOf(writes).count("passage.vectors.drop_failed", 1, {});
     void err;
   }
 }

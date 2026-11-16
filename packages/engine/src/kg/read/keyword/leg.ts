@@ -1,6 +1,5 @@
-import { sayOnce } from "../../../observability/logging.js";
-import { type Tags, telemetry } from "../../../telemetry.js";
-import { bm25Configured } from "../bm25.js";
+import { logOf, telemetryOf } from "../../../given.js";
+import type { Tags } from "../../../telemetry.js";
 import type { ReadContext } from "../fence.js";
 import { hooksOf } from "../hooks.js";
 import type { KeywordLegRead, Row } from "../passages-types.js";
@@ -19,7 +18,7 @@ export async function keywordLeg(
   // The sidecar narrows only by what it indexes (`bm25Narrowing`): any other filter goes to the Postgres legs, which
   // carry it in their predicate rather than paging over hits the filter then discards.
   const index = hooksOf(context).keyword;
-  const narrowing = bm25Configured() ? bm25Narrowing(index, leg.filters) : null;
+  const narrowing = index.endpoint.configured() ? bm25Narrowing(index, leg.filters) : null;
   if (narrowing) {
     const viaBm25 = await indexRows(context, leg, narrowing);
     if (viaBm25) return { rows: leg.decay ? leg.decay(viaBm25) : viaBm25, degraded: [] };
@@ -28,8 +27,8 @@ export async function keywordLeg(
   const degraded = narrowing ? ["keyword:bm25"] : [];
   if (index.passes) return { rows: await index.passes(context, leg), degraded };
   // A build that requires its index: no second matcher answers in its place.
-  const down = narrowing !== null || !bm25Configured();
-  sayOnce(
+  const down = narrowing !== null || !index.endpoint.configured();
+  logOf(context).sayOnce(
     down
       ? "the keyword index did not answer; searches find by meaning alone until it does: ./engine logs bm25"
       : "a search filter the keyword index does not carry (figures, knowledge time, a record filter) finds by meaning alone",
@@ -62,7 +61,7 @@ async function indexRows(
       } catch {
         // swallowed: the sidecar being down or late costs this leg its ranking — the build's passes answer under
         // the same fence, or none do — and the leg names it in what it returns (`keyword:bm25`).
-        telemetry.count("kg.read.passages.bm25_fallback", 1, {});
+        telemetryOf(context).count("kg.read.passages.bm25_fallback", 1, {});
         tags.up = "no";
         return null;
       }

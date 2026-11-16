@@ -1,5 +1,5 @@
 import { sidecarAuthHeaders } from "../../../config/sidecar-auth.js";
-import { sayOnce } from "../../../observability/logging.js";
+import { log } from "../../../observability/logging.js";
 import { bm25Settings } from "../bm25.js";
 import type { Bm25Narrowing } from "./rows.js";
 
@@ -55,7 +55,7 @@ export async function bm25Tiers(args: {
   if (!res.ok) throw new Error(`bm25 tiers ${res.status}`);
   const data = (await res.json()) as Partial<Tiers>;
   if (!Array.isArray(data.hits) || typeof data.asked !== "number") {
-    sayOnce("the keyword index is older than this engine; run ./engine up");
+    log.sayOnce("the keyword index is older than this engine; run ./engine up");
     throw new Error("bm25 tiers: an index older than this engine answered without tiers");
   }
   return {

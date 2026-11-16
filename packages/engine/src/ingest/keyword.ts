@@ -5,15 +5,8 @@
  */
 
 import type { Sql } from "postgres";
-import {
-  appsOf,
-  bm25Configured,
-  bm25Delete,
-  bm25GroupCommitOn,
-  bm25Index,
-  bm25IndexDurably,
-  keywordDoc,
-} from "../kg/read/bm25.js";
+import { bm25GroupCommitOn } from "../kg/read/bm25.js";
+import { appsOf, keywordDoc } from "../kg/read/bm25-doc.js";
 import { passageContextMode, writesPassageContext } from "../kg/read/passage-context-mode.js";
 import type { HeaderRecord } from "../memory/passage-context.js";
 import { documentOfEntry } from "../sources/keyword-documents.js";
@@ -32,9 +25,9 @@ export async function indexKeywords(
   /** The record's header, as its own keyword field; none leaves the field empty until the record is next indexed. */
   header: string | null = null,
 ): Promise<void> {
-  const { filters, passageRules, work } = writeHooksOf(writes);
+  const { filters, passageRules, work, keyword } = writeHooksOf(writes);
   work.check();
-  if (!bm25Configured()) return;
+  if (!keyword.endpoint.configured()) return;
   const { sql } = writes;
   const [event] =
     await sql`select keyword_indexed_at, connector, (select ${displayApp(sql, filters.app)} from source_revision r
@@ -77,16 +70,17 @@ async function writeKeywordEntry(
   entry: ReturnType<typeof keywordDoc>,
 ): Promise<void> {
   const { sql } = writes;
-  const { passageRules: rules, work } = writeHooksOf(writes);
+  const { passageRules: rules, work, keyword } = writeHooksOf(writes);
+  const { endpoint } = keyword;
   const document = await documentEntryOf(writes, entry);
   const doc = document ? [entry, document] : [entry];
   // Durable before the marker: one group commit shared with whatever else waits, or, with group commit off, its own.
-  if (bm25GroupCommitOn()) await bm25IndexDurably(doc);
-  else await bm25Index(doc);
+  if (bm25GroupCommitOn()) await endpoint.indexDurably(doc);
+  else await endpoint.index(doc);
   const [still] = await sql`
       select 1 from event_log where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableEvent(rules, sql)}`;
   if (!still) {
-    await bm25Delete([
+    await endpoint.withdraw([
       ctx.eventId,
       ...(document && (await documentGone(sql, ctx.orgId, document.id)) ? [document.id] : []),
     ]);
@@ -112,7 +106,7 @@ async function documentGone(sql: Sql, orgId: string, entryId: string): Promise<b
  * effort, as `indexKeywords`).
  */
 export async function forgetDocumentEntry(writes: Writes, eventId: string): Promise<void> {
-  if (!bm25Configured()) return;
+  if (!writeHooksOf(writes).keyword.endpoint.configured()) return;
   await bestEffort("ingest.keyword", () => deleteCurrentEntry(writes, eventId), {
     missed: missedKeyword,
     work: writeHooksOf(writes).work,
@@ -121,7 +115,7 @@ export async function forgetDocumentEntry(writes: Writes, eventId: string): Prom
 
 async function deleteCurrentEntry(writes: Writes, eventId: string): Promise<void> {
   const entry = await entryOfCurrent(writes, eventId);
-  if (entry) await bm25Delete([entry]);
+  if (entry) await writeHooksOf(writes).keyword.endpoint.withdraw([entry]);
 }
 
 function missedKeyword(err: unknown): void {

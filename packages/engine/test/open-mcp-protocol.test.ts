@@ -205,7 +205,10 @@ test("the transport's rules are the SDK's: the spec's Accept header, and a proto
 });
 
 test("MCP is the server's read route: POST /mcp, a web Request in and a JSON Response out", async () => {
-  const route = mcpRoute({ tool: run, tools: () => listedTools(settingsOf(undefined)) });
+  const route = mcpRoute(
+    { tool: run, tools: () => listedTools(settingsOf(undefined)) },
+    "0.0.0-test",
+  );
   assert.deepEqual([route.method, route.path, route.needs], ["POST", "/mcp", "read"]);
   const response = await route.handle(
     new Request("http://127.0.0.1/mcp", {

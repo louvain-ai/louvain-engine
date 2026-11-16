@@ -1,5 +1,6 @@
 import type { Sql } from "postgres";
 import type { Embedded } from "./embedder.js";
+import type { Logged, Told } from "./given.js";
 import { openPassageRules, type PassageRules } from "./ingest/passage-rules.js";
 import { hooksOf, type ReadHooks } from "./kg/read/hooks.js";
 import { plainWork, type WorkHooks } from "./memory/work-seam.js";
@@ -26,7 +27,7 @@ export type EngineHooks = ReadHooks & WriteHooks;
  * as the engine holds them (`Engine.writes`). The hooks are a required member, so a write is never handed a bare pool:
  * one handed none would write the open build's passages without a word.
  */
-export type Writes = { readonly sql: Sql; readonly hooks: EngineHooks & Embedded };
+export type Writes = { readonly sql: Sql; readonly hooks: EngineHooks & Embedded & Told & Logged };
 
 /** Each hook of a write: its build's, else the open build's own (a read's through `hooksOf`, and these two). */
 export function writeHooksOf(writes: Writes): Required<EngineHooks> {

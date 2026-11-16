@@ -18,14 +18,11 @@ import { ToolInputError } from "./source-tools/tool-helpers.js";
 
 /**
  * The engine's version, read from its own manifest (`src/open` and `dist/open` are both two levels under the package)
- * when a server first answers, never at import, so the version a client displays is the one the package declares.
+ * when the surface is made, never at import, so the version a client displays is the one the package declares.
  */
-let version: string | undefined;
-const engineVersion = (): string => {
-  version ??= JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"))
+export const engineVersion = (): string =>
+  JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"))
     .version as string;
-  return version;
-};
 
 /** What a tool returns: one JSON object, carried to the client as text and as structured content. */
 export type ToolResult = { readonly [field: string]: unknown };
@@ -49,10 +46,10 @@ function toolResult(value: unknown) {
 /** The engine's tools a route serves (`Reading.tools`), and how one runs (`Reading.tool`). */
 type Served = Pick<Reading, "tools" | "tool">;
 
-/** One request's server: the engine's name and instructions, and the two tool methods over the engine's tools. */
-function protocolServer(read: Served): Server {
+/** One request's server: the engine's name, version and instructions, and the two tool methods over its tools. */
+function protocolServer(read: Served, version: string): Server {
   const server = new Server(
-    { name: "louvain-engine", title: "Louvain engine", version: engineVersion() },
+    { name: "louvain-engine", title: "Louvain engine", version },
     { capabilities: { tools: { listChanged: false } }, instructions: INSTRUCTIONS },
   );
   server.setRequestHandler("tools/list", () => ({ tools: [...read.tools()] }));
@@ -86,9 +83,10 @@ async function callTool(
 
 /**
  * MCP as the server's read route: `POST /mcp`, behind the read token, its body already capped. Each request gets its
- * own SDK server over a stateless transport that answers in JSON, never an event stream.
+ * own SDK server over a stateless transport that answers in JSON, never an event stream. The version is the one the
+ * surface read when it was made (`engineVersion`).
  */
-export function mcpRoute(read: Served) {
+export function mcpRoute(read: Served, version: string) {
   return {
     method: "POST",
     path: "/mcp",
@@ -98,7 +96,7 @@ export function mcpRoute(read: Served) {
         sessionIdGenerator: undefined,
         enableJsonResponse: true,
       });
-      const server = protocolServer(read);
+      const server = protocolServer(read, version);
       await server.connect(transport);
       try {
         return await transport.handleRequest(request);

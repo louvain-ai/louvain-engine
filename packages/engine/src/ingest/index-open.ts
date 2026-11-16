@@ -1,5 +1,4 @@
-import { bm25Configured } from "../kg/read/bm25.js";
-import type { Writes } from "../writes.js";
+import { type Writes, writeHooksOf } from "../writes.js";
 import { indexRecord } from "./index-core.js";
 
 /**
@@ -44,7 +43,7 @@ export async function indexOpen(
     select keyword_indexed_at,
       (select count(*)::int from passage p where p.event_id = e.id and p.org_id = e.org_id) as passages
     from event_log e where id = ${eventId} and org_id = ${orgId}::uuid`;
-  const keyword = !bm25Configured()
+  const keyword = !writeHooksOf(writes).keyword.endpoint.configured()
     ? "unconfigured"
     : row?.keyword_indexed_at
       ? "indexed"
