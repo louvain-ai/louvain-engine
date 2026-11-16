@@ -28,7 +28,7 @@ importers:
         version: link:packages/engine
       '@louvain/engine-app':
         specifier: workspace:*
-        version: link:packages/engine-app
+        version: link:apps/app
       '@louvain/engine-core':
         specifier: workspace:*
         version: link:packages/engine-core
@@ -64,6 +64,25 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
+  apps/app:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.135.0
+        version: 0.135.0(zod@4.6.7)
+      '@louvain/engine-core':
+        specifier: workspace:*
+        version: link:../../packages/engine-core
+      marked:
+        specifier: 17.0.6
+        version: 17.0.6
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@louvain/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
+
   packages/cli:
     dependencies:
       '@louvain/engine':
@@ -71,7 +90,7 @@ importers:
         version: link:../engine
       '@louvain/engine-app':
         specifier: workspace:*
-        version: link:../engine-app
+        version: link:../../apps/app
       '@louvain/engine-core':
         specifier: workspace:*
         version: link:../engine-core
@@ -168,25 +187,6 @@ importers:
       '@louvain/reader-text':
         specifier: workspace:*
         version: link:../plugins/reader-text
-
-  packages/engine-app:
-    dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.135.0
-        version: 0.135.0(zod@4.6.7)
-      '@louvain/engine-core':
-        specifier: workspace:*
-        version: link:../engine-core
-      marked:
-        specifier: 17.0.6
-        version: 17.0.6
-      zod:
-        specifier: ^4.6.7
-        version: 4.6.7
-    devDependencies:
-      '@louvain/engine':
-        specifier: workspace:*
-        version: link:../engine
 
   packages/engine-core:
     dependencies:

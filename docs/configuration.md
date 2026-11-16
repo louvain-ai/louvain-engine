@@ -130,7 +130,7 @@ A configuration that fails stops the start with one sentence and exit status 2; 
 
 A profile is a folder under `profiles/` holding an `engine.config.ts`: a configuration of its own, with a corpus and
 an index of its own. The configuration a published figure was scored with is one ([How this figure was
-produced](how-this-figure-was-produced.md)).
+produced](benchmark-method.md)).
 
 1. Run **`./engine down`**: the profile in use is stopped before another is set.
 2. Run **`./engine profile set <name>`**. Every command then runs that profile's `engine.config.ts`, and says so.

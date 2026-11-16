@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * What the built engine was built from: a sha256 over the sources of every package the workspace builds under
- * `packages/` (each one's `src`, and `web` where it has one, its tsconfig files and its manifest), the compiler settings
+ * `packages/`, and the open app (`apps/app`) (each one's `src`, and `web` where it has one, its tsconfig files and its
+ * manifest), the compiler settings
  * they extend and the root lockfile, each by path and bytes in path order. A package is one the workspace file
  * (`pnpm-workspace.yaml`) names and whose manifest has a `build` script, so adding one needs no list here. The build
  * writes it to `dist/.source-hash` of the engine; a test or a dev run in the API reads the engine from `dist`, so the
@@ -26,15 +27,19 @@ function files(dir) {
 /** What a package's `tsconfig.json` extends, from the package's directory. */
 const BASE_TSCONFIG = "../../tsconfig.base.json";
 
-/** The workspace file's entries under `packages/`: `packages/*` is every directory there, else the one named. */
+/** The open app, which lives outside `packages/`: in the workspace whether it is named alone or by `apps/*`. */
+const APP = "apps/app";
+
+/** The workspace file's entries under `packages/`, and the app: `packages/*` is every directory there, else the one named. */
 function workspaceDirs(root) {
   const file = join(root, "pnpm-workspace.yaml");
   if (!existsSync(file)) return [];
   const entries = [...readFileSync(file, "utf8").matchAll(/^\s*-\s*["']?([^"'\s#]+)/gm)].map(
     (m) => m[1],
   );
-  return entries
-    .filter((e) => e.startsWith("packages/"))
+  const app = entries.some((e) => e === APP || e === "apps/*") ? [APP] : [];
+  return [...entries.filter((e) => e.startsWith("packages/")), ...app]
+    .filter((e, i, all) => all.indexOf(e) === i)
     .flatMap((e) =>
       e.endsWith("/*")
         ? readdirSync(join(root, e.slice(0, -2)), { withFileTypes: true })

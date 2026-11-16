@@ -77,7 +77,7 @@ lane, and states which vector space its vectors are in.
 address, connect to the address that was checked. The fetch the engine hands a source (`tools.fetch`) goes through
 it.
 
-**`packages/engine-app`**: the app at `/app/` (the `app()` surface): Search and Ask in a browser, and the answerers
+**`apps/app`**: the app at `/app/` (the `app()` surface): Search and Ask in a browser, and the answerers
 Ask writes with (`agent`, `scripted`).
 
 **`apps/nlp`**: the Python sidecars: `embed.py` (embeddings), `bm25.py` (the keyword index) and `rerank.py` (the
@@ -87,7 +87,7 @@ local reranker). Each takes the install's sidecar token.
 applies to a database the release before made.
 
 **`profiles/`**: configurations of their own, each with its own corpus and index. The one the published figure was
-produced with ships here ([How the figure was produced](how-this-figure-was-produced.md)).
+produced with ships here ([How the figure was produced](benchmark-method.md)).
 
 ## Where each command starts
 

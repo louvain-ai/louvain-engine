@@ -31,7 +31,7 @@ The address follows `LOUVAIN_ENGINE_PORT` (8080 by default). `./engine status` s
 `./engine down` stops the app with the tool server. The app is a surface of the tool server, `app()`, which the
 defaults serve beside `mcp()`; to serve the tools alone, write `surfaces: [mcp()]` in `engine.config.ts`
 ([Configuration](configuration.md)). The server keeps the sign-in, the cookie, the host and cross-site checks and the
-headers; the app's routes (`packages/engine-app/src/index.ts`) say only which of its paths anyone may fetch.
+headers; the app's routes (`apps/app/src/index.ts`) say only which of its paths anyone may fetch.
 
 ## Sign in
 

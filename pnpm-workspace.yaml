@@ -1,9 +1,9 @@
 packages:
+  - "apps/app"
   - "packages/cli"
   - "packages/doctext"
   - "packages/embeddings"
   - "packages/engine"
-  - "packages/engine-app"
   - "packages/engine-core"
   - "packages/netguard"
   - "packages/plugins/*"

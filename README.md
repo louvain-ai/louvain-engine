@@ -188,7 +188,7 @@ configuration ships as one ([Profiles](docs/configuration.md#profiles)).
 | `packages/engine` | Ingest, the fenced reads, search and the tool server |
 | `packages/cli` | `./engine`'s commands: loads `engine.config.ts` and starts the engine |
 | `packages/plugins` | `reader-documents` (PDF, Word, Excel, PowerPoint, OpenDocument, EPUB, RTF, HTML, CSV, mail), `reader-text` (text, Markdown), `reranker-sidecar` (`BAAI/bge-reranker-v2-m3` on your machine, a 2.3 GB download, best with a GPU), `reranker-cohere` (Cohere's Rerank API), `source-http` (an ingest door, off unless configured) |
-| `packages/engine-app` | Search and Ask in a browser, at `/app/` |
+| `apps/app` | Search and Ask in a browser, at `/app/` |
 | `apps/nlp` | The embedding sidecar (`Xenova/bge-base-en-v1.5`) and the BM25 keyword sidecar |
 | `examples/` | `sample-corpus` (four invented documents), `agent` (an agent's side of the tools), `an-ingest-source` |
 
@@ -238,7 +238,7 @@ The engine starts with the two readers, the `folder` and `records` sources, the 
 | Louvain's scored configuration | **91.32%** (preliminary) |
 
 The figure is the scored configuration's, not the build `./engine up` starts: a tuned embedder, Cohere's reranker, an
-agent and its guidance, each listed in [docs/how-this-figure-was-produced.md](docs/how-this-figure-was-produced.md).
+agent and its guidance, each listed in [docs/benchmark-method.md](docs/benchmark-method.md).
 
 ## Documentation
 
@@ -254,7 +254,7 @@ agent and its guidance, each listed in [docs/how-this-figure-was-produced.md](do
 | [Security model](docs/security-model.md) | What the fence guarantees and what it does not, the tokens, what an operator must do, and how each is checked |
 | [Limits and known defects](docs/limits.md) | Every bound, and the defects the tests record |
 | [The app](docs/app.md) | Search and Ask in a browser: turning it on, the model key, what each page does |
-| [How the figure was produced](docs/how-this-figure-was-produced.md) | The benchmark run, part by part |
+| [How the figure was produced](docs/benchmark-method.md) | The benchmark run, part by part |
 
 ## Contributing, security, licence and trademarks
 

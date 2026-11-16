@@ -16,7 +16,7 @@ read one before you add it.
 The kinds are the keys of `Contracts` in `packages/engine-core/src/plugins/plugin.ts`. The readers, the rerankers and
 the HTTP door are packages under `packages/plugins/` (`reader-documents`, `reader-text`, `reranker-sidecar`,
 `reranker-cohere`, `source-http`); the folder and records sources, the retrievers and `mcp` live in
-`packages/engine/src/plugins/`; `app` and the answerers are the app's, `packages/engine-app`. Each has a README.
+`packages/engine/src/plugins/`; `app` and the answerers are the app's, `apps/app`. Each has a README.
 
 ## Start one
 
