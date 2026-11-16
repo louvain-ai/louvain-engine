@@ -63,7 +63,8 @@ Ready.
 | --- | --- |
 | `.engine/db-password` | The Postgres password. Every `up` sets the database role's password to it |
 | `.engine/sidecar-token` | The token the embedding and keyword sidecars require |
-| `.engine/token` | The bearer token an agent sends, written by the tool server at its first start |
+| `.engine/token` | The bearer token an agent sends, written by the tool server at its first start: the default reader's |
+| `.engine/readers/<name>` | A named reader's token, made by `./engine reader add <name>` ([Permissions](permissions.md)) |
 
 To rotate one, run **`./engine down`**, delete its file, then run **`./engine up`**. A `DATABASE_URL` you set yourself
 is yours: `./engine` never changes its password.
@@ -125,8 +126,9 @@ The server speaks MCP's Streamable HTTP at `/mcp`, through the official MCP Type
 JSON. It needs `Authorization: Bearer <token>` on every request (`LOUVAIN_ENGINE_TOKEN`, at least 32 characters,
 replaces the file's token) and, as the protocol requires, `Accept: application/json, text/event-stream` on every POST;
 the SDK agrees the protocol version and refuses a `MCP-Protocol-Version` header it does not speak. `/mcp` takes POST alone:
-any other method is 405. It is the `mcp()` surface (`engine.config.ts`, `surfaces`). It reads everything loaded, so keep it on
-`127.0.0.1`; reach it from another machine only through a tunnel or proxy you secure. `examples/agent` calls the three
+any other method is 405. It is the `mcp()` surface (`engine.config.ts`, `surfaces`). The engine's own token reads
+everything loaded; give an agent that should read less a reader's token of its own ([Permissions](permissions.md)).
+Keep the server on `127.0.0.1`; reach it from another machine only through a tunnel or proxy you secure. `examples/agent` calls the three
 tools the way an agent does, with no model.
 
 ## Open the app

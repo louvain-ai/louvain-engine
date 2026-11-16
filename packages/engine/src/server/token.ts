@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import {
   chmodSync,
   closeSync,
@@ -44,6 +44,22 @@ export function engineToken(o: {
   const dir = dirname(o.file);
   mkdirSync(dir, { recursive: true, mode: 0o700 });
   const uid = o.uid ?? process.getuid?.();
+  ownDirectory(dir, uid);
+  createOnce(o.file, o.write ?? writeSync);
+  return { token: readToken(o.file, uid), from: o.file };
+}
+
+/**
+ * A token another start or command made, read the same safe way from a directory of this user's own. It is never made
+ * here, so a token removed while it was being looked for stays removed.
+ */
+export function heldToken(file: string, uid = process.getuid?.()): string {
+  ownDirectory(dirname(file), uid);
+  return readToken(file, uid);
+}
+
+/** `dir` kept owner-only; a link, a file or another user's directory is refused by name. */
+function ownDirectory(dir: string, uid: number | undefined): void {
   const d = lstatSync(dir);
   if (d.isSymbolicLink() || !d.isDirectory())
     throw new EngineTokenRefused(
@@ -54,8 +70,6 @@ export function engineToken(o: {
       `${dir} belongs to another user: refusing to keep a token in a directory this user does not own`,
     );
   chmodSync(dir, 0o700);
-  createOnce(o.file, o.write ?? writeSync);
-  return { token: readToken(o.file, uid), from: o.file };
 }
 
 const weak = (where: string): EngineTokenRefused =>
@@ -131,13 +145,4 @@ function singleName(fd: number): number {
     links = fstatSync(fd).nlink;
   }
   return links;
-}
-
-/** Whether a request's Authorization header carries the token, compared in constant time over equal-length digests. */
-export function authorized(header: string | undefined, token: string): boolean {
-  const given = /^Bearer\s+(\S+)\s*$/i.exec(header ?? "")?.[1];
-  if (!given) return false;
-  const a = createHash("sha256").update(given).digest();
-  const b = createHash("sha256").update(token).digest();
-  return timingSafeEqual(a, b);
 }

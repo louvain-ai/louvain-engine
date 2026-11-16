@@ -6,6 +6,7 @@ import type { ItemOutcome } from "../ingest/summary.js";
 import type { Writes } from "../ingest/writes.js";
 import { log } from "../observability/logging.js";
 import { telemetry } from "../observability/telemetry.js";
+import type { Readers } from "./readers.js";
 
 /**
  * POST /ingest: a batch of items into a collection, answered item by item, a write route of the server's own table. It is
@@ -23,12 +24,12 @@ export class IngestDoorRefused extends Error {}
 export type IngestDoor = { plugins: PluginRegistry; writes: Writes; name: string; token: string };
 
 /**
- * The engine's door, or null when no configured source has one; two doors, or one opened with the read token, refuse
- * the start.
+ * The engine's door, or null when no configured source has one; two doors, or one opened with a reader's token,
+ * refuse the start.
  */
 export function ingestDoor(
   engine: { readonly plugins: PluginRegistry; readonly writes: Writes },
-  readToken: string,
+  readers: Pick<Readers, "of">,
 ): IngestDoor | null {
   const { plugins, writes } = engine;
   const [door, ...more] = doorSources(plugins);
@@ -37,9 +38,9 @@ export function ingestDoor(
     throw new IngestDoorRefused(
       `engine.config.ts opens ${more.length + 1} ingest doors (${[door, ...more].map((d) => d.name).join(", ")}); the server has one.`,
     );
-  if (door.token === readToken)
+  if (readers.of(door.token) !== null)
     throw new IngestDoorRefused(
-      `the "${door.name}" source's token is the read token, which agents hold: give the door its own secret.`,
+      `the "${door.name}" source's token is a reader's token, which agents hold: give the door its own secret.`,
     );
   return { plugins, writes, ...door };
 }

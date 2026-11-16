@@ -1,8 +1,59 @@
 # Permissions and threat model
 
-**In short:** this build has one reader: whoever holds the token in `.engine/token` reads every document loaded. Keep
-the server on `127.0.0.1`, and read any plugin before you add it. The [security model](security-model.md) states what the fence guarantees, what it
-does not, and how each guarantee is checked.
+**In short:** every reader has a token of its own and reads only the collections `engine.config.ts` grants it. The
+engine's own token, in `.engine/token`, reads everything loaded. Keep the server on `127.0.0.1`, and read any plugin
+before you add it. The [security model](security-model.md) states what the fence guarantees, what it does not, and
+which test checks each guarantee.
+
+## Readers and grants
+
+A **reader** is a name and a token. Make one, and the engine keeps its token beside its own, in a file only you can
+read:
+
+```text
+$ ./engine reader add alice
+alice reads with the token in .engine/readers/alice: give it to alice as you would a password.
+It reads nothing until engine.config.ts grants it a collection: grants: { "alice": ["<collection>"] }
+```
+
+A **grant** says which collections a reader may read. Grants are code, in `engine.config.ts`:
+
+```ts
+export default defineEngine({
+  grants: {
+    alice: ["handbook", "desk"],
+    bob: ["handbook"],
+  },
+});
+```
+
+Run `./engine up` after you change a grant: it starts the server again on the new file. `./engine reader add` and
+`./engine reader remove` restart a running server themselves.
+
+```text
+$ ./engine reader list
+engine-reader  .engine/token          every collection loaded
+alice          .engine/readers/alice  handbook, desk
+bob            .engine/readers/bob    handbook
+```
+
+Give a reader's token to its agent (`Authorization: Bearer <token>`, as for the engine's own), or sign in to the app
+with it. Either way, everything that reader does is fenced to its collections: the search, the document it opens, and
+the counts the app's status shows.
+
+- **A grant names a collection**, the name `ingest` gave it (the folder's name unless you passed `--collection`). It
+  covers every folder in that collection, including folders loaded after the grant was written.
+- **No grant is no read.** A reader with a token and no grant reads nothing, and so does a grant for a collection
+  nothing has loaded yet, until it is loaded.
+- **The default reader**, `engine-reader`, is the engine's own token and the command line (`./engine search`). It reads
+  every collection loaded and takes no grant.
+- **Removing a token ends the reader.** `./engine reader remove alice` deletes its file and restarts the server, which
+  then refuses that token with `401`, as it refuses any other.
+- **A reader's name** is lower-case letters, digits, dashes and underscores, at most 64. A grant that names anything
+  else stops the start at the configuration's line, and so does a token file whose name is not a reader's.
+- **It is flat, and you can replace it.** Readers and grants are what the engine's own host reads: a plain function over
+  your configuration. A deployment with access rules of its own binds a host whose `readableSet` answers them (The
+  host, below), and every read is fenced by that answer the same way.
 
 ## Who can read what
 
@@ -11,14 +62,15 @@ does not, and how each guarantee is checked.
   carries (the host's `readableSet`) and returns a `Reader`. Only `readContextOf` makes a context, so no read can be
   handed a resolver it was not made with. Only `fence()` can make a `Reader`, so no read can build a set of its own.
   Every statement puts the reader in its WHERE clause through one predicate, `fenced()`, before it orders, limits or
-  folds. No row outside the set is ranked, counted or returned, and no search stage builds a WHERE clause of its own.
+  folds. No row outside the set is ranked, counted or returned, and no read writes a collection filter of its own.
 - **It fails closed.** An empty set, an unknown reader or a malformed org id reads nothing. A permission store that
   cannot answer is an error, never an empty set.
-- **This build's host serves one reader in one org**, whose set is every collection loaded. A build with more
-  readers binds a host whose set differs per reader; the fence and its checks are the same code.
+- **This build's host serves one org.** The default reader's set is every collection loaded, and a named reader's is
+  the loaded collections its grant names (`packages/engine/src/host/standalone.ts`).
 
-The engine's database tests read as a reader of part of the corpus: a hidden collection is never listed or searched, a
-hidden document never opened, and an identifier only a hidden document holds is answered as one that does not exist.
+The engine's database tests read as two readers through the real server, and as readers of part of the corpus: a
+hidden collection is never listed, counted or searched, a hidden document never opened, and an identifier only a hidden
+document holds is answered as one that does not exist.
 
 ### The host
 
@@ -29,14 +81,15 @@ What a deployment decides, the engine reads through one `Host` (`packages/engine
 | `readableSet` | Who may read what: the collections a reader may read, and any record admitted by id (none here) | Required |
 | `endpoints` | How a sidecar that is not a plain HTTP service is reached | Plain HTTP |
 
-Each entry point hands its host to the engine it builds (`createEngine({ host: openHost(store.sql), … })`), and every
-read runs on the engine's context, which carries that host's `readableSet` (`fence(context, viewer)`): nothing binds
-it, and no read reaches a resolver its context was not made with. A deployment whose work is owned by a queue hands
-the queue's work to the engine it builds as a write hook (`WriteHooks.work`, `packages/engine/src/ingest/work.ts`),
-and its writes check the claim and commit through it; this build has none, so its writes commit plainly. The
-embedder an entry makes for its host (`embedderFor(host)`) is a part of the engine it builds, and the engine carries it
-on its context and its writes: a read or a write that embeds asks the engine's own (`embedderOf`), and nothing binds
-one per process.
+Each entry point hands its host to the engine it builds (`createEngine({ host: openHost(store.sql, grants), … })`), and
+every read runs on the engine's context, which carries that host's `readableSet` (`fence(context, viewer)`): nothing
+binds it, and no read reaches a resolver its context was not made with. A deployment with access rules of its own
+binds a host whose `readableSet` answers them, in code; a configuration cannot name one. A deployment whose work is
+owned by a queue hands the queue's work to the engine it builds as a write hook (`WriteHooks.work`,
+`packages/engine/src/ingest/work.ts`), and its writes check the claim and commit through it; this build has none, so
+its writes commit plainly. The embedder an entry makes for its host (`embedderFor(host)`) is a part of the engine it
+builds, and the engine carries it on its context and its writes: a read or a write that embeds asks the engine's own
+(`embedderOf`), and nothing binds one per process.
 
 ### Retrievers
 
@@ -67,14 +120,16 @@ This is defence in depth, not a sandbox: a retriever runs in the engine's proces
 
 **Hostile callers.**
 
-- The tool server listens on `127.0.0.1` only, and every request needs a bearer token of at least 32 characters,
-  compared in constant time.
-- `POST /ingest` is off unless its own token is set, and that token may not be the read token, so an agent's token
+- The tool server listens on `127.0.0.1` only, and every request needs a reader's bearer token, at least 32
+  characters, matched in constant time against every reader's token with no early exit. A request reads as the reader
+  whose token it carries, and as nobody else.
+- `POST /ingest` is off unless its own token is set, and that token may not be any reader's, so an agent's token
   never writes. A request is at most 8 MB and 500 items and never names a file the server reads.
 - A tool passes on only the arguments it declares.
-- The app signs in with the same token, compared in constant time, and answers with an httpOnly, `SameSite=Strict`
-  cookie signed with a key made from the token. It answers only the hosts it is reached at and refuses a write from any
-  other origin. The browser keeps neither the token nor a model key, and a restart ends every sign-in.
+- The app signs in with a reader's token, matched the same way, and answers with an httpOnly, `SameSite=Strict`
+  cookie signed with a key made from the engine's own token. The cookie carries a random id; which reader it reads as
+  stays on the server. It answers only the hosts it is reached at and refuses a write from any other origin. The
+  browser keeps neither the token nor a model key, and a restart ends every sign-in.
 - Postgres and the sidecars listen on `127.0.0.1` and each needs a secret made for this install; none has a default
   credential, because any local user and any web page can reach a loopback port.
 - `.env` is data: `./engine` takes only the names `.env.example` lists and expands nothing.
@@ -83,7 +138,7 @@ This is defence in depth, not a sandbox: a retriever runs in the engine's proces
 
 - **`engine.config.ts` and every plugin it imports.** They run in the engine's process, as you, with the database and
   the tokens.
-- **The machine's own user**, who can read the secrets in the `.engine` directory.
+- **The machine's own user**, who can read the secrets in the `.engine` directory, every reader's token among them.
 - **A reranker you configure.** A remote reranker receives each search and the text of the documents it reranks.
 - **A model provider you configure.** With `ANTHROPIC_API_KEY` set, the app's Ask sends each question and the text of
   the documents it reads to the model.
@@ -103,4 +158,5 @@ This is defence in depth, not a sandbox: a retriever runs in the engine's proces
 1. Follow **`SECURITY.md`** to report privately a way to read past the readable set, reach a service without its
    secret, bypass a token, or escape a reader's bounds.
 
-One token reading everything is this build's expected behaviour, not a hole.
+The engine's own token reading every collection is expected, not a hole; a named reader reading a collection its grant
+does not name is one.

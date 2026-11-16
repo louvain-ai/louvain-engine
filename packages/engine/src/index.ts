@@ -32,7 +32,12 @@ export { IngestDoorRefused, ingestDoor } from "./server/ingest-route.js";
 // Serving: the tool server, its HTTP door, its routes, and the tools it serves.
 export { ServerRefused, startToolServer } from "./server/main.js";
 export type { ToolResult } from "./server/protocol.js";
+// Readers: each one's token, made, listed and removed from the terminal.
+export { addReader, readerFiles, removeReader } from "./server/reader-files.js";
+export { readerTable } from "./server/readers.js";
+export { openReading } from "./server/reading.js";
 export { RouteClash } from "./server/routes.js";
 export { serve } from "./server/serve.js";
+export { EngineTokenRefused } from "./server/token.js";
 export { openSearch, poolOf } from "./server/tools/run.js";
 export { openStore } from "./store/pool.js";

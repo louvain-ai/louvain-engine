@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { request as httpRequest, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, test } from "node:test";
-import type { Reading, Route } from "@louvain/engine-core";
+import { DEFAULT_READER, type Reading, type Route } from "@louvain/engine-core";
 import { mcp } from "../src/plugins/surface-mcp/index.js";
 import { engineVersion } from "../src/server/protocol.js";
+import { readerTable } from "../src/server/readers.js";
 import { RouteClash, routeTable } from "../src/server/routes.js";
 import { canonicalPath, type ServeSettings, serve } from "../src/server/serve.js";
 
@@ -13,9 +14,11 @@ import { canonicalPath, type ServeSettings, serve } from "../src/server/serve.js
  * route that needs it (and before saying whether a path exists), one canonical path, a method the path does not take
  * refused with what it does, and the security headers on every answer. A browser signs in once for a cookie named for
  * this server, only at a host it is reached at and only from its own pages; a route never sees a credential; an answer
- * streams as its route writes it, and a closed connection aborts the request. MCP is one such surface, `mcp()`.
+ * streams as its route writes it, and a closed connection aborts the request. Each reader's token, and a sign-in with
+ * it, reads as that reader. MCP is one such surface, `mcp()`.
  */
 const TOKEN = "t".repeat(40);
+const ALICE = "a".repeat(40);
 const route = (method: Route["method"], path: Route["path"]): Route => ({
   method,
   path,
@@ -63,9 +66,11 @@ let cancelled: () => void = () => {};
 const streamCancelled = new Promise<void>((resolve) => {
   cancelled = resolve;
 });
-const seen = (request: Request, reading?: Reading) =>
+/** What a route saw: who it was told reads, whose reading it was handed, and whether a credential reached it. */
+const seen = async (request: Request, reading?: Reading) =>
   Response.json({
     reader: reading?.reader ?? null,
+    readsAs: (await reading?.counts())?.collections[0]?.name ?? null,
     authorization: request.headers.has("authorization"),
     cookie: request.headers.has("cookie"),
   });
@@ -112,24 +117,35 @@ const page = {
   },
 };
 const tools = await mcp().create();
-const read = {
+/** A reading that names the reader it was bound to, as its one collection. */
+const reading = (principal: string) => ({
   tools: () => [],
   tool: async () => ({}),
-  counts: async () => ({ documents: 0, collections: [] }),
+  counts: async () => ({ documents: 0, collections: [{ name: principal, documents: 0 }] }),
   answerer: null,
+});
+const readers = readerTable([
+  { principal: DEFAULT_READER, token: TOKEN },
+  { principal: "alice", token: ALICE },
+]);
+const settings: ServeSettings = {
+  port: 0,
+  toolDeadlineMs: 5_000,
+  token: TOKEN,
+  readers,
+  door: null,
 };
-const settings: ServeSettings = { port: 0, toolDeadlineMs: 5_000, token: TOKEN, door: null };
 
 let local: Server;
 let bare: Server;
 const portOf = (server: Server) => (server.address() as AddressInfo).port;
 const base = (server: Server = local) => `http://127.0.0.1:${portOf(server)}`;
 const withSurfaces = (more: Partial<ServeSettings> = {}) =>
-  serve({ ...settings, ...more }, [{ name: "mcp", plugin: tools }, page], read);
+  serve({ ...settings, ...more }, [{ name: "mcp", plugin: tools }, page], reading);
 
 before(async () => {
   local = await withSurfaces();
-  bare = await serve(settings, [], read);
+  bare = await serve(settings, [], reading);
 });
 after(() => {
   local.close();
@@ -298,9 +314,28 @@ test("the page goes to anyone, its data to a signed-in browser or the token, as 
   const byToken = (await (await call("/page/api/who", { token: TOKEN })).json()) as {
     reader: string;
   };
-  assert.equal(byToken.reader, "token");
+  assert.equal(byToken.reader, `token ${DEFAULT_READER}`);
   const forged = cookie.replace(/.$/, (c) => (c === "A" ? "B" : "A"));
   assert.equal((await call("/page/api/who", { headers: { cookie: forged } })).status, 401);
+});
+
+test("each reader's token reads as that reader, and so does a sign-in with it; any other token is no reader", async () => {
+  type Who = { reader: string; readsAs: string };
+  const who = async (init: RequestInit & { token?: string }) =>
+    (await (await call("/page/api/who", init)).json()) as Who;
+  const byToken = await who({ token: ALICE });
+  assert.deepEqual([byToken.reader, byToken.readsAs], ["token alice", "alice"]);
+  assert.equal((await who({ token: TOKEN })).readsAs, DEFAULT_READER);
+  const alice = cookieOf(await signIn(ALICE));
+  const signedIn = await who({ headers: { cookie: alice } });
+  assert.match(signedIn.reader, /^browser [\w-]{16}$/);
+  assert.equal(signedIn.readsAs, "alice");
+  assert.equal(
+    (await who({ headers: { cookie: cookieOf(await signIn(TOKEN)) } })).readsAs,
+    DEFAULT_READER,
+  );
+  assert.equal((await call("/page/api/who", { token: "x".repeat(40) })).status, 401);
+  assert.equal((await signIn("x".repeat(40))).status, 401);
 });
 
 test("a sign-out revokes the sign-in: the same cookie, sent again, is refused", async () => {
@@ -370,11 +405,12 @@ test("a write route takes the write token and nothing else: the read token, a si
     maxBodyBytes: 1_000,
     handle: async (_request, { writer }) => Response.json({ writer }),
   };
-  const server = await serve(settings, [{ name: "w", plugin: { routes: [writes] } }], read);
+  const server = await serve(settings, [{ name: "w", plugin: { routes: [writes] } }], reading);
   try {
     const at = (headers: Record<string, string>) =>
       fetch(`${base(server)}/w`, { method: "POST", body: "{}", headers });
     assert.equal((await at({ authorization: `Bearer ${TOKEN}` })).status, 401);
+    assert.equal((await at({ authorization: `Bearer ${ALICE}` })).status, 401);
     assert.equal((await at({})).status, 401);
   } finally {
     server.close();

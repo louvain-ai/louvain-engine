@@ -15,8 +15,9 @@
               where g.org_id = passage.org_id and g.id = passage.event_id
                 and coalesce('knowledge'::text, 'reference') <> 'knowledge') as reference
       from passage
-     where org_id = $2 and event_id = any($3::text[])
-       and container = any($4)
+     where org_id = $2
+       and container = any($3::text[])
+       and event_id = any($4::text[])
       and occurred_at <= $5
       
      order by event_id,

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { settingsOf } from "../src/config/settings.js";
 import { mcpRoute, type ToolRun } from "../src/server/protocol.js";
-import { authorized } from "../src/server/token.js";
+import { authorized } from "../src/server/readers.js";
 import { ToolInputError } from "../src/server/tools/arguments.js";
 import { listedTools } from "../src/server/tools/schema.js";
 import { askServer } from "./mcp-answer.js";

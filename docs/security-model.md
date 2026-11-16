@@ -1,17 +1,17 @@
 # Security model
 
 This page is for anyone deciding whether to trust the engine with documents that not every reader may see. Each part
-says what holds, what does not, and what checks it. Some checks are tests in this repository. Others run only in the
-repository the engine is developed in, and each of those is marked as such.
-[Permissions](permissions.md) covers the practical side: the host, hostile files and what the engine trusts.
+says what holds, what does not, and which test in this repository checks it.
+[Permissions](permissions.md) covers the practical side: readers and grants, the host, hostile files and what the
+engine trusts.
 
 ## The shape of a read
 
 A read is made for a viewer: an organisation and a reader id. Which documents that viewer may read is the **host's**
 answer, not the engine's. The host answers with a **readable set**: the collections the viewer may read, plus any
-records admitted by id. The engine never grants a permission; it enforces the host's answer on every read. This build's
-host has one reader, who reads every collection loaded, so the guarantees below matter once a build binds a host with
-more than one.
+records admitted by id. The engine enforces the host's answer on every read. This build's host answers from
+`engine.config.ts`: the default reader, whom the engine's own token reads as, reads every collection loaded; a named
+reader reads the loaded collections its grant names; any other reader reads nothing.
 
 ## What the fence guarantees
 
@@ -56,17 +56,8 @@ more than one.
   else does not type-check. That module's single cast is the only maker of a `Reader`, and a read context is made only
   by the engine when it is built.
 - A brand is a compile-time rule, and TypeScript can be told to forget it: an `as` cast forges one, and a spread copies
-  one. So in the development repository, `check-fence-makers` reads the code through the TypeScript checker on every
-  change and refuses three things:
-  - a call to the context maker outside its listed callers;
-  - a spread of a `Reader` or a context that then sets its collections, admitted records, resolver, store or hooks;
-  - a cast to a branded type outside the fence's module.
-
-  It fails closed when it cannot find what it checks.
-- Also in the development repository, `check-fences` looks for the known ways of writing a collection filter by hand,
-  and for any read of the readable-set table, outside the fence's own modules. A use that is not a read fence must
-  carry a stated reason, and none without one is allowed. It matches how a filter is written, so a filter written some
-  new way would pass it; the type rule above is what stops a read from making its own `Reader`.
+  one. So read a change for either. No read outside `packages/engine/src/read/fence.ts` casts to `Reader` or spreads
+  one, and no read writes a collection filter of its own: every one goes through `fenced()`.
 
 ## A retriever's rows are read again
 
@@ -78,26 +69,44 @@ more than one.
 - So a retriever decides which records are considered. It never decides what they say, or whether the reader may see
   them. This is defence in depth, not isolation: the retriever runs in the engine's process.
 
+## Readers and their tokens
+
+- A reader is a name and a token. The engine's own token reads as the default reader; each named reader's token is a
+  file of its own, `.engine/readers/<name>`, made the way the engine's own is (an owner-only directory, written whole
+  and linked into place at 0600, read without following a link) and never printed.
+- A token is matched against every reader's token, as a digest, in constant time and with no early exit, so how long a
+  match takes says nothing about which reader holds it. Two readers holding one token stop the start.
+- A request reads as the reader whose token it carries, and the server binds the engine's tools and counts to that
+  reader before a route sees them. A route is handed the reading, never the token.
+- A browser signs in with a reader's token. The cookie carries a random id; which reader the sign-in reads as is kept
+  on the server, so no cookie can name another reader.
+- Grants are read when the server starts, from `engine.config.ts`, and checked there: a reader's name is one
+  alphabet, never the default reader's, and a grant names collections by their names. A grant covers every folder of a
+  collection, including folders loaded after it was written.
+- Removing a reader's token ends the reader once the server starts again; `./engine reader remove` starts a running
+  server again itself. Until it starts again, the server still holds the token.
+
 ## Tokens and the server's admission
 
 - The server listens on `127.0.0.1` only, and speaks plain HTTP.
 - Who a request reads or writes as is decided before its body is read:
   - A write route takes the write token and nothing else.
-  - The read token reads every other route.
+  - A reader's token reads every other route, as that reader.
   - Without a token, only the browser's routes answer: the open ones, the sign-in among them, and those that take a
     session cookie. They answer only at a host the server is reached at, and a change only from a page it served.
   - Every other request gets the same `401`, on every path.
-- The read token and the ingest door's token are each at least 32 characters, and both are compared in constant
-  time. A route's handler gets the request without its
-  credentials.
-- The ingest door is off unless its source sets a token of its own. The server refuses to start when that token is the
-  read token, which agents hold, or when two sources each open a door. A request to the door is at most 8 MB.
+- Every reader's token and the ingest door's token are each at least 32 characters, and all are compared in constant
+  time. A route's handler gets the request without its credentials.
+- The ingest door is off unless its source sets a token of its own. The server refuses to start when that token is any
+  reader's, which agents hold, or when two sources each open a door. A request to the door is at most 8 MB.
 - A search cursor is sealed with authenticated encryption (AES-256-GCM) under a key made from the server's token. A
   client can neither read nor alter one. It opens on the server that issued it, also after a restart, and on no server
-  holding a different token. An engine run without a server seals its cursors under a random key of its own.
+  holding a different token. An engine run without a server seals its cursors under a random key of its own. A cursor
+  names no reader: another reader presenting it pages their own search, read under their own fence, and the documents
+  it skips are ones it can only hide, never show.
 - Each engine holds its own search cursor key, keyword-index endpoint (its settings and its group commit), telemetry
   and logger, so two engines in one process do not share them. A few things are still kept once per process, each
-  listed by the guard below: the telemetry and logging a call site with no engine in reach reports to, the keyword
+  listed here: the telemetry and logging a call site with no engine in reach reports to, the keyword
   index's settings as its listing and tier clients read them, each workspace's passage-context mode (15 seconds, by
   organisation), and the apps a connector shows. Memos kept beside a value, such as an embedder's recent query vectors,
   are shared by engines that share that value.
@@ -110,22 +119,32 @@ more than one.
 - **Give the sidecars their token.** With `LOUVAIN_SIDECAR_TOKEN` set, each sidecar refuses a request that does not
   carry it, except its health check. `./engine up` makes a token per install, and the bundled compose file will not start a
   sidecar without it. A sidecar started any other way with the token unset answers anyone who reaches it.
-- **Guard the state directory.** The read token, the database password and the sidecar token live in it, with mode
-  600. The engine refuses to keep its token in a directory that is a link, or that another user owns. Anyone who can
-  read that directory can read every document.
+- **Guard the state directory.** Every reader's token, the database password and the sidecar token live in it,
+  with mode 600. The engine refuses to keep a token in a directory that is a link, or that another user owns. Anyone
+  who can read that directory can read every document.
 - **Read every plugin before you add it**, and know what each remote service you configure receives.
 
 ## How each guarantee is checked
 
-| Guarantee | Check | Where |
-| --- | --- | --- |
-| The fence fails closed, narrows without widening, filters by one predicate, and hides a document the reader cannot read | The database tests, which read as readers of part of the corpus and assert each case above | Here: `pnpm --filter @louvain/engine test:db` |
-| The fence's decisions are tested | Mutation runs over a kept list of the fence's decisions: each listed decision is removed in turn, and a named test must fail on an assertion. A test that did not run, or a failure that does not repeat, is refused as a kill | Development repository. Too long for every check, it is run by hand after a change to that code. Every change is checked to leave no mutant without the code it removes, so the set cannot silently shrink |
-| A build's hooks, and the engine's embedder, reach its reads and writes | Hook mutants: the embedder the engine lays on its reads and on its writes, and each hook the development build passes, are removed in turn, and a named test must fail. The presentation, keyword index, telemetry and logger the engine lays when a build passes none are covered by the engine's own tests instead | Mutants: development repository, as above. Tests: here |
-| A `Reader` and a read context come only from their makers | The brands, enforced by the compiler; `check-fence-makers` and `check-fences` | Brands: here. Guards: development repository, every change |
-| A retriever's rows are the engine's own, and a foreign one is dropped | The retriever contract test: a readable record survives with the engine's own text; a hidden one, a garbage id, and one outside the search's narrowing or date are dropped | Here, in the database tests |
-| Admission and the server's tokens | The server's tests: the routes each token opens, the `401`, the host and origin checks | Here: `pnpm --filter @louvain/engine test` |
-| No new module state, and what is per engine stays so | `check-engine-state`, which refuses module state in the engine but for the listed exceptions above, a list that may only shrink; and tests that two engines seal their cursors under different keys and hold different keyword-index endpoints | Guard: development repository, every change. Test: here |
-| Loading the engine opens nothing | A test that imports the engine in a bare environment and finds no socket, file or timer opened; and `check-engine-door`, which follows everything the engine's entry point reaches | Test: here, in the command line's tests. Guard: development repository, every change |
+| Guarantee | Test here |
+| --- | --- |
+| The fence fails closed: an org id that is not a UUID or a blank reader asks the host nothing and reads nothing, an empty set or a narrowing that keeps nothing reads nothing, and a host that cannot answer is an error | `packages/engine/test/fence.test.ts` |
+| A narrowing never widens, and drops every record admitted by id | `packages/engine/test/fence.test.ts` |
+| Two readers through the real server: each token searches, opens and counts its own collections alone, over MCP and the app; the other's document answers as one that does not exist; a token with no grant reads nothing; the engine's own token reads both; a removed token is refused | `packages/engine/test/db/two-readers.test.ts` |
+| A token reads as the one reader holding it and as no other; reader tokens are owner-only files named by reader; the host reads a grant over the collections loaded, and anyone ungranted reads nothing | `packages/engine/test/readers.test.ts` |
+| A grant is checked at the configuration's line: a reader's name, never the default reader's, and collections' names | `packages/engine-core/test/grants.test.ts` |
+| A hidden document does not exist to the reader: never listed, counted or searched, never opened, its identifier answered as missing | `packages/engine/test/db/search.golden.test.ts` |
+| Every read filters through the one predicate before it orders or limits | The SQL text of every read, recorded in `packages/engine/test/db/sql/` and compared on every run (`packages/engine/test/db/sql-text.test.ts`) |
+| A retriever's rows are the engine's own, and a foreign one is dropped | `packages/engine/test/db/retriever-contract.test.ts` |
+| Admission: the routes each token opens, the `401`, a sign-in reading as its reader, the host and origin checks | `packages/engine/test/open-surfaces.test.ts` |
+| What is per engine stays so: cursor keys, keyword-index endpoints | `packages/engine/test/hooks.test.ts` |
+| Loading the engine opens nothing | `packages/cli/test/door.test.ts` |
+| A `Reader` and a read context come only from their makers | The brands, checked by the compiler: `pnpm run typecheck` |
+
+`pnpm run test` runs the unit tests. The database tests need a Postgres server with pgvector named by
+`TEST_AUTH_DATABASE_URL`, and the keyword index's image: `pnpm --filter @louvain/engine test:db`, as the CI's
+`database` job runs them. The repository the engine is developed in also runs mutation runs over the fence's decisions
+and guards against a forged `Reader`, a hand-written collection filter and new module state on every change; they are
+extra, and nothing on this page rests on them.
 
 Report a way past any of this privately, as `SECURITY.md` describes.

@@ -7,6 +7,7 @@ import type { Engine } from "@louvain/engine";
 import {
   counted,
   openHost,
+  openReading,
   openSearch,
   SEARCH_USAGE,
   type SearchArgs,
@@ -14,7 +15,7 @@ import {
   searchArgs,
   searchLine,
 } from "@louvain/engine";
-import { PluginRefused } from "@louvain/engine-core";
+import { DEFAULT_READER, PluginRefused } from "@louvain/engine-core";
 import { openEngine } from "./engine.js";
 import { stopOn, usage } from "./stop.js";
 
@@ -59,10 +60,7 @@ async function failed(engine: Engine, err: unknown) {
   process.exitCode = 1;
 }
 
-/** How many documents are loaded. */
+/** How many documents the search's reader reads, counted under its fence as the search was. */
 async function loadedCount(engine: Engine): Promise<number> {
-  const [row] = await engine.store.sql<
-    { n: number }[]
-  >`select count(*)::int as n from source_document`;
-  return row?.n ?? 0;
+  return (await openReading(engine)(DEFAULT_READER).counts()).documents;
 }

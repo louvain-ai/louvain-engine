@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { Route } from "@louvain/engine-core";
+import { DEFAULT_READER, type Route } from "@louvain/engine-core";
 import { errorsToLog } from "../src/observability/errors-to-log.js";
 import { telemetry } from "../src/observability/telemetry.js";
+import { readerTable } from "../src/server/readers.js";
 import { type ServeSettings, serve } from "../src/server/serve.js";
 
 /**
@@ -41,6 +42,7 @@ test("a route that throws answers internal and leaves a scrubbed line naming it 
     port: 0,
     toolDeadlineMs: 5_000,
     token: "t".repeat(40),
+    readers: readerTable([{ principal: DEFAULT_READER, token: "t".repeat(40) }]),
     door: null,
   };
   const read = {
@@ -49,7 +51,11 @@ test("a route that throws answers internal and leaves a scrubbed line naming it 
     counts: async () => ({ documents: 0, collections: [] }),
     answerer: null,
   };
-  const server = await serve(settings, [{ name: "page", plugin: { routes: [throwing] } }], read);
+  const server = await serve(
+    settings,
+    [{ name: "page", plugin: { routes: [throwing] } }],
+    () => read,
+  );
   const { port } = server.address() as { port: number };
   let status = 0;
   let body = "";

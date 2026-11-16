@@ -20,7 +20,6 @@ export const onStatus = (then: (s: Status | null) => void) => {
 };
 
 const documents = (n: number) => `${n.toLocaleString("en-GB")} document${n === 1 ? "" : "s"}`;
-const collectionName = (name: string) => (name === "." ? "Top level" : name);
 
 function drawCard(s: Status): void {
   card.replaceChildren(
@@ -31,12 +30,7 @@ function drawCard(s: Status): void {
       "ul",
       { className: "card-list" },
       ...s.collections.map((c) =>
-        h(
-          "li",
-          {},
-          h("span", {}, collectionName(c.name)),
-          h("span", { className: "mono" }, String(c.documents)),
-        ),
+        h("li", {}, h("span", {}, c.name), h("span", { className: "mono" }, String(c.documents))),
       ),
     ),
     h(

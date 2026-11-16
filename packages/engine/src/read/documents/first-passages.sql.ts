@@ -6,13 +6,15 @@
 import { GENERATED_VIAS } from "@louvain/engine-core";
 import type { PendingQuery, Row } from "postgres";
 import type { Queryable } from "../../store/sql.js";
+import type { Reader } from "../fence.js";
+import { fenced } from "../fenced.js";
 import type { KnownPrecision } from "../precision.js";
 import type { ReadingExpression } from "../reading.js";
 
 type FirstPassagesRead = {
-  orgId: string;
+  /** Whose read it is: its org, and the containers it may read, as the fence made them. */
+  reader: Reader;
   eventIds: string[];
-  containers: string[];
   asOf?: string;
   /** An order over `passage` that puts each document's best-matching passage first (`keyword-index.ts` `best`). */
   best?: PendingQuery<Row[]> | null;
@@ -54,8 +56,9 @@ export const firstPassages = (
               where g.org_id = passage.org_id and g.id = passage.event_id
                 and coalesce(${reading(sql, "g")}, 'reference') <> 'knowledge') as reference
       from passage
-     where org_id = ${args.orgId} and event_id = any(${args.eventIds}::text[])
-       and container = any(${args.containers})
+     where org_id = ${args.reader.orgId}
+       and ${fenced(sql, args.reader, { column: sql`container`, shape: "any" })}
+       and event_id = any(${args.eventIds}::text[])
       ${saidBy(sql, args.asOf)}
       ${args.digits ? sql`and text ~ '[0-9]'` /* sql-shape: over the given records' passages only */ : sql``}
      order by event_id,

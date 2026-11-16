@@ -133,9 +133,8 @@ async function passageRows(context: ReadContext, read: IndexRead, kept: Hit[]): 
   const { fence, query, asOf, narrowing = {} } = read;
   const best = read.best ? bestOf(context, query, kept) : null;
   const byEvent = await firstChunkRows(context.sql, hooksOf(context).reading, {
-    orgId: fence.orgId,
+    reader: fence,
     eventIds: kept.map((h) => h.id),
-    containers: fence.containers,
     asOf: instantOf(asOf, "passages.search").validAt,
     ...(best ? { best } : {}),
     // A figures read shows the passage that states the figure, as the passage legs read it.

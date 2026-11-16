@@ -41,14 +41,15 @@ out, the page's data answers nothing:
 ```text
 GET  /app/api/status                        → 401 {"error":"unauthorized"}
 POST /session {"token":"nope"}              → 401 {"error":"wrong_token"}
-POST /session {"token":"<.engine/token>"}   → 204, with the cookie
-GET  /app/api/status                        → 200 {"documents":4,"collections":[{"name":".","documents":4}],"ask":{"ready":false,"needs":"ANTHROPIC_API_KEY"}}
+POST /session {"token":"<a reader's token>"} → 204, with the cookie
+GET  /app/api/status                        → 200 {"documents":4,"collections":[{"name":"sample-corpus","documents":4}],"ask":{"ready":false,"needs":"ANTHROPIC_API_KEY"}}
 ```
 
 The cookie is httpOnly, `SameSite=Strict` and named for the server's port. The page answers only the hosts it is
 reached at (loopback on its port, and `LOUVAIN_ENGINE_PUBLIC_ORIGIN` behind a TLS proxy you run), refuses a write from
-any other origin, and loads nothing from another host. The corner of the page shows how many documents are loaded, in
-which collections, and whether Ask is ready.
+any other origin, and loads nothing from another host. The corner of the page shows how many documents its reader may
+read, in which collections, and whether Ask is ready. The counts are read under the reader's fence, so a collection
+the reader cannot read is neither named nor counted.
 
 ## Search
 

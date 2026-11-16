@@ -1,5 +1,6 @@
 import type { PendingQuery, Row } from "postgres";
 import type { Queryable } from "../../store/sql.js";
+import type { Reader } from "../fence.js";
 import type { KnownPrecision } from "../precision.js";
 import type { ReadingExpression } from "../reading.js";
 import { firstPassages } from "./first-passages.sql.js";
@@ -24,7 +25,7 @@ export type FirstChunkRow = {
 
 /**
  * One passage row per document, fenced again. A retriever that ranks whole documents hands back event ids; each is
- * represented by its first readable chunk, read under the caller's org, containers and as-of. The seam is trusted to
+ * represented by its first readable chunk, read under the caller's fence (`reader`) and as-of. The seam is trusted to
  * self-fence and re-fenced here anyway. With `best` (the build's keyword index's order, `keyword-index.ts`) it is the
  * document's best-matching readable passage instead, its first on a tie or none, so a document found by words in its fifth passage reaches the reranker as that
  * passage. A document with no readable passage is absent. Whether each is reference is the build's `reading`'s.
@@ -33,9 +34,8 @@ export async function firstChunkRows(
   sql: Queryable,
   reading: ReadingExpression,
   args: {
-    orgId: string;
+    reader: Reader;
     eventIds: string[];
-    containers: string[];
     asOf?: string;
     best?: PendingQuery<Row[]> | null;
     /** Only a passage that states a figure. */

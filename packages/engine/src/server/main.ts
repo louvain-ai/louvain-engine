@@ -1,7 +1,8 @@
 /**
- * The tool server's start: the read token from the state directory it is handed and the ingest door its configuration opens, the cursor key
- * from the read token, the default org checked, then `serve()` with the configured surfaces and the engine's reading
- * (its tools, its counts, its answerer), and where everything is said. A token it may not read, or a door set wrong, is
+ * The tool server's start: from the state directory it is handed, the engine's own token and every named reader's;
+ * the ingest door its configuration opens; the cursor key from the engine's token; the default org checked; then
+ * `serve()` with the configured surfaces and the engine's reading (its tools, its counts, its answerer), bound per
+ * request to the reader a token names, and where everything is said. A token it may not read, or a door set wrong, is
  * a `ServerRefused` in one sentence, never a stack trace.
  */
 import type { Server } from "node:http";
@@ -11,18 +12,19 @@ import { environment } from "../config/environment.js";
 import { serverSettings } from "../config/standalone.js";
 import type { Engine } from "../engine.js";
 import { hooksOf } from "../read/hooks.js";
-import { loadedCounts } from "../read/loaded-counts.js";
 import { workspaceIdOf } from "../store/tenant.js";
 import { type IngestDoor, IngestDoorRefused, ingestDoor } from "./ingest-route.js";
+import { type Readers, readersOf } from "./readers.js";
+import { openReading } from "./reading.js";
 import { serve } from "./serve.js";
 import { EngineTokenRefused, engineToken } from "./token.js";
-import { openTools, type ToolEngine, toolList } from "./tools/run.js";
+import type { ToolEngine } from "./tools/run.js";
 
 /** A server that cannot start, in the sentence that says why. */
 export class ServerRefused extends Error {}
 
-/** The server's two doors: the read token every tool call carries, and the configured source POST /ingest opens, if any. */
-type Doors = { token: string; from: string; door: IngestDoor | null };
+/** The server's doors: the engine's own token and every reader's, and the source POST /ingest opens, if any. */
+type Doors = { token: string; from: string; readers: Readers; door: IngestDoor | null };
 
 /** What the server runs on: the engine's reads, its plugins, its store and its writes (the ingest door's). */
 export type ServedEngine = ToolEngine & Pick<Engine, "writes">;
@@ -37,14 +39,10 @@ export async function startToolServer(engine: ServedEngine, state: string): Prom
   // Fail at start, not at the first call, when the database has no default org.
   await workspaceIdOf(engine.store.sql);
   const publicOrigin = environment("LOUVAIN_ENGINE_PUBLIC_ORIGIN")?.trim() || undefined;
-  const { token, door } = doors;
+  const { token, readers, door } = doors;
   const surfaces = plugins.list("surface");
-  const server = await serve({ port, toolDeadlineMs, token, door, publicOrigin }, surfaces, {
-    tools: () => toolList(engine),
-    tool: openTools(engine),
-    counts: () => loadedCounts(engine.store.sql),
-    answerer: plugins.one("answerer"),
-  });
+  const settings = { port, toolDeadlineMs, token, readers, door, publicOrigin };
+  const server = await serve(settings, surfaces, openReading(engine));
   sayWhere(port, doors, surfaces);
   return server;
 }
@@ -55,7 +53,8 @@ function openDoors(engine: ServedEngine, state: string): Doors {
       env: environment("LOUVAIN_ENGINE_TOKEN"),
       file: join(state, "token"),
     });
-    return { token, from, door: ingestDoor(engine, token) };
+    const readers = readersOf(state, token);
+    return { token, from, readers, door: ingestDoor(engine, readers) };
   } catch (err) {
     const unreadable = err instanceof Error && "code" in err;
     if (!(err instanceof EngineTokenRefused || err instanceof IngestDoorRefused || unreadable))
@@ -78,6 +77,11 @@ function sayWhere(port: number, doors: Doors, surfaces: readonly Started<"surfac
   console.log(
     `Louvain Engine is listening at ${base}${mcp ? "/mcp" : ""}; its bearer token is in ${tokenAt}.`,
   );
+  const named = doors.readers.named;
+  if (named.length > 0)
+    console.log(
+      `It also reads as ${named.join(", ")}, each with a token of its own (./engine reader list).`,
+    );
   if (doors.door)
     console.log(`It takes items at ${base}/ingest, with the "${doors.door.name}" source's token.`);
   for (const { name, plugin } of surfaces) {

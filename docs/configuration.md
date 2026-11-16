@@ -90,7 +90,7 @@ export default defineEngine({
 });
 ```
 
-2. Change a field. `defineEngine` takes six:
+2. Change a field. `defineEngine` takes seven:
    - **`readers`**: the file readers, in order. A list replaces the defaults, so list `documents()` and `text()` to keep
      them. `readers: []` reads no file. Each shipped reader takes `extensions`, which narrows what it claims:
      `text({ extensions: ["txt"] })` leaves Markdown to another reader.
@@ -104,6 +104,9 @@ export default defineEngine({
      out): `agent({ model })` over a model such as `anthropic({ model })`, `scripted()`, which needs no model, or one of
      your own ([Plugins](plugins.md)). With none, Ask says it has no answerer ([The app](app.md)).
    - **`settings`**: how the engine searches and serves, key by key (above).
+   - **`grants`**: the collections each reader `./engine reader add` made may read, as
+     `{ alice: ["handbook"] }`. The engine's own token reads every collection; a reader no grant names reads
+     nothing ([Permissions](permissions.md)).
 3. Run **`./engine down`**, then **`./engine up`**. `ingest`, `search`, `reindex` and the tool server each read the
    file once, at start. With no `engine.config.ts` the defaults run.
 
@@ -117,8 +120,9 @@ A configuration that fails stops the start with one sentence and exit status 2; 
 | Cause | What the engine says |
 | --- | --- |
 | The file throws | `engine.config.ts:2 could not be loaded: not finished. The engine does not start on its defaults in place of a configuration that failed` |
-| A field that does not exist | `engine.config.ts:2 could not be loaded: a configuration has no "retrievers"; it names readers, reranker, sources, surfaces, answerer, settings. …` |
+| A field that does not exist | `engine.config.ts:2 could not be loaded: a configuration has no "retrievers"; it names readers, reranker, sources, surfaces, answerer, settings, grants. …` |
 | A setting that does not exist, or out of range | `engine.config.ts settings.rerank.blend: Too big: expected number to be <=1` |
+| A grant naming something that is not a reader | `engine.config.ts:4 could not be loaded: the configuration's grants name "Alice": a reader's name is lower-case letters, digits, dashes and underscores, at most 64, starting with a letter or digit. …` |
 | A plugin named twice | `engine.config.ts:3 could not be loaded: the configuration's readers names "text" twice. …` |
 | A setting a plugin refuses | `engine.config.ts:40 could not be loaded: the fileReader "recipe" refuses its settings: ✖ Invalid input: expected string, received number → at servesLabel. …` |
 | No default export from `defineEngine` | `engine.config.ts must export defineEngine({ … }) as its default` |

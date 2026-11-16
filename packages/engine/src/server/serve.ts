@@ -4,8 +4,8 @@
  * surfaces'. Every path is canonical or refused, who a request reads as is decided
  * before its body is read (`respond.ts`), a body is capped before anything parses it, every answer carries the security
  * headers and streams as its route writes it, a closed connection aborts the request a route is answering, and a tool
- * call's reply is bounded by the deadline while the work under way runs on. The caller binds the reads and hands over
- * the surfaces and the reading (`main.ts`), so nothing here chooses them.
+ * call's reply is bounded by the deadline while the work under way runs on. The caller hands over the readers, the
+ * surfaces and the reading, bound per request to the reader it admits (`main.ts`), so nothing here chooses them.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -13,6 +13,8 @@ import { type Reading, type Started, withDeadline } from "@louvain/engine-core";
 import { telemetry } from "../observability/telemetry.js";
 import { browserSessions, SECURITY_HEADERS } from "./browser-session.js";
 import { doorRoutes, type IngestDoor } from "./ingest-route.js";
+import type { Readers } from "./readers.js";
+import type { ReadingFor } from "./reading.js";
 import { type Answering, admit, respond, signInRoutes } from "./respond.js";
 import { type RouteTable, routeTable } from "./routes.js";
 import { ToolInputError } from "./tools/arguments.js";
@@ -21,8 +23,10 @@ export type ServeSettings = {
   port: number;
   /** How long a tool call's reply may take. */
   toolDeadlineMs: number;
-  /** The read token, for every read route and the browser's sign-in. */
+  /** The engine's own token: the key its sign-ins are signed with, and the default reader's. */
   token: string;
+  /** Which reader each read token reads as, the engine's own among them (`readers.ts`). */
+  readers: Readers;
   /** The source `POST /ingest` opens and its token, or null for no door (`ingest-route.ts`). */
   door: IngestDoor | null;
   /** The origin of a proxy in front, when browsers reach the server through one. */
@@ -38,7 +42,7 @@ const HEADERS_TIMEOUT_MS = 10_000;
 export async function serve(
   settings: ServeSettings,
   surfaces: readonly Started<"surface">[],
-  read: Omit<Reading, "reader">,
+  reading: ReadingFor,
 ): Promise<Server> {
   const server = createServer();
   server.requestTimeout = REQUEST_TIMEOUT_MS;
@@ -58,11 +62,11 @@ export async function serve(
     throw err;
   }
   const answering: Answering = {
-    token: settings.token,
+    readers: settings.readers,
     writeToken: settings.door?.token ?? null,
     sessions,
     routes,
-    read: { ...read, tool: withinDeadline(read.tool, settings.toolDeadlineMs) },
+    reading: deadlined(reading, settings.toolDeadlineMs),
   };
   server.on("request", (req: IncomingMessage, res: ServerResponse) => {
     // A route that throws is a 500, its exception to telemetry, never to the caller.
@@ -84,7 +88,10 @@ function own(
   const signsIn = surfaces.some(({ plugin }) =>
     plugin.routes.some((route) => route.needs === "read" && route.signIn === "cookie"),
   );
-  return [...(signsIn ? signInRoutes(settings.token, sessions) : []), ...doorRoutes(settings.door)];
+  return [
+    ...(signsIn ? signInRoutes(settings.readers, sessions) : []),
+    ...doorRoutes(settings.door),
+  ];
 }
 
 /**
@@ -94,6 +101,14 @@ function own(
 export function canonicalPath(url: string | undefined): string | null {
   const path = (url ?? "/").split("?")[0] ?? "/";
   return !path.startsWith("/") || /%2f|%5c|%2e|\/\/|\/\.\.?(\/|$)|\\/i.test(path) ? null : path;
+}
+
+/** Each reader's reading, its tool calls bounded by the deadline (`withinDeadline`). */
+function deadlined(reading: ReadingFor, ms: number): ReadingFor {
+  return (principal) => {
+    const read = reading(principal);
+    return { ...read, tool: withinDeadline(read.tool, ms) };
+  };
 }
 
 /**

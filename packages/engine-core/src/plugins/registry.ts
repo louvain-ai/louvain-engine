@@ -37,8 +37,8 @@ export async function createPluginRegistry(plugins: Plugins): Promise<PluginRegi
   const started = new Map<keyof Contracts, readonly Started<keyof Contracts>[]>();
   const waiting = new Map<keyof Contracts, readonly Waiting[]>();
   const running: Running[] = [];
-  // The configuration's settings ride with its plugins; only the kinds start.
-  const { settings: _settings, ...kinds } = plugins;
+  // The configuration's settings and grants ride with its plugins; only the kinds start.
+  const { settings: _settings, grants: _grants, ...kinds } = plugins;
   for (const kind of Object.keys(kinds) as (keyof Contracts)[]) {
     const ready: Started<keyof Contracts>[] = [];
     const held: Waiting[] = [];

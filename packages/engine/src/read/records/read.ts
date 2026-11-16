@@ -87,19 +87,8 @@ export async function readRevision(
   const instant = instantOf(opts.at, "records.read");
   const target = opts.version ?? recordId;
   const [text, extents, row, summaries] = await Promise.all([
-    readSource(context, {
-      orgId: reader.orgId,
-      containers: reader.containers,
-      eventId: target,
-      at: instant.validAt,
-      selection: null,
-    }),
-    sourceExtents(context, {
-      orgId: reader.orgId,
-      containers: reader.containers,
-      eventIds: [target],
-      at: instant.validAt,
-    }),
+    readSource(context, { reader, eventId: target, at: instant.validAt }),
+    sourceExtents(context, { reader, eventIds: [target], at: instant.validAt }),
     recordRow(context, { fence: reader, target, instant }),
     revisionSummaries(context, viewer, [target]),
   ]);

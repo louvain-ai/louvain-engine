@@ -1,8 +1,9 @@
+import { DEFAULT_READER } from "@louvain/engine-core";
 import type { Engine } from "../../engine.js";
 import type { ReadContext } from "../../read/fence.js";
 import { retrieverPool } from "../../search/pool.js";
 import type { SearchWith } from "../../search/pool-types.js";
-import { OPEN_PRINCIPAL, workspaceIdOnce } from "../../store/tenant.js";
+import { workspaceIdOnce } from "../../store/tenant.js";
 import type { ToolResult, ToolRun } from "../protocol.js";
 import { str, ToolInputError } from "./arguments.js";
 import { toolArgs } from "./input.js";
@@ -12,13 +13,13 @@ import { listedTools } from "./schema.js";
 import { searchOrList } from "./search-apps.js";
 
 /**
- * The tools a request names, run as the engine's one reader on the engine's read context, each on its
+ * The tools a request names, run as the reader the server admitted on the engine's read context, each on its
  * arguments parsed once by the schema `tools/list` serves (`input.ts`): an undeclared or wrong argument is refused
  * with a sentence, never dropped.
  */
 type ReaderId = { orgId: string; principal: string };
 type Pool = SearchWith;
-/** What a tool call runs on: the engine's read context, the one reader, and the search pool. */
+/** What a tool call runs on: the engine's read context, the reader, and the search pool. */
 type ToolCall = { context: ReadContext; reader: ReaderId; pool: Pool };
 type OpenTool = (asked: Record<string, unknown>, call: ToolCall) => Promise<ToolResult>;
 
@@ -41,13 +42,16 @@ export const poolOf = ({ plugins, settings }: Pick<Engine, "plugins" | "settings
   settings,
 });
 
-/** The open tools over this engine: a search reads the configuration's retrievers and reranker (`search/pool.ts`). */
-export function openTools(engine: ToolEngine): ToolRun {
+/**
+ * The open tools over this engine, bound to one reader at a time, so every call reads under that reader's fence. A
+ * search reads the configuration's retrievers and reranker (`search/pool.ts`).
+ */
+export function openTools(engine: ToolEngine): (principal: string) => ToolRun {
   // Made once: with no retriever configured the start is refused, never the first search.
   const pool = poolOf(engine);
   const orgId = workspaceIdOnce(engine.store.sql);
-  return async (name, args) => {
-    const reader = { orgId: await orgId(), principal: OPEN_PRINCIPAL };
+  return (principal) => async (name, args) => {
+    const reader = { orgId: await orgId(), principal };
     const asked = toolArgs(name, args, engine.settings);
     const tool = TOOLS.get(name);
     if (!tool) throw new Error(`unknown tool: ${name}`);
@@ -55,12 +59,12 @@ export function openTools(engine: ToolEngine): ToolRun {
   };
 }
 
-/** One search as the search tool runs it, for a caller in this process (the terminal's `search`). */
+/** One search as the search tool runs it, for a caller in this process (the terminal's `search`): the default reader's. */
 export function openSearch(engine: ToolEngine) {
   const pool = poolOf(engine);
   const orgId = workspaceIdOnce(engine.store.sql);
   return async (args: Record<string, unknown>) => {
-    const reader = { orgId: await orgId(), principal: OPEN_PRINCIPAL };
+    const reader = { orgId: await orgId(), principal: DEFAULT_READER };
     return searchOrList(
       engine.context,
       toolArgs("louvain_search_sources", args, engine.settings),

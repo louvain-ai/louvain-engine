@@ -97,7 +97,7 @@ export async function openBenchEngine(embedding: "real" | "stand-in"): Promise<E
     retriever: [vectorRetriever(), keywordRetriever(), figuresRetriever()],
   });
   const store = openStore(process.env.DATABASE_URL as string, storeSettings);
-  const host = openHost(store.sql);
+  const host = openHost(store.sql, {});
   const real = embedderFor(host);
   return createEngine({
     store,

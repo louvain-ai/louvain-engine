@@ -42,9 +42,8 @@ export async function revisionsAsPassages(
     }),
   );
   const first = await firstChunkRows(context.sql, hooksOf(context).reading, {
-    orgId: reader.orgId,
+    reader,
     eventIds: kept.map((r) => r.id),
-    containers: reader.containers,
     asOf: instantOf(ask.asOf, "passages.search").validAt,
   });
   const { passages } = await passagesById(

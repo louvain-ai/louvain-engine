@@ -49,8 +49,8 @@ what, what none of them does, and how each is checked is the [security model](se
   statement it sends. Listing and reading documents, by collection and folder, are `src/read/listing/`.
 - `src/search/`: the search as stages: the pool, the fused legs, the rerank, the documents.
 - `src/server/`: the tool server: its routes, the MCP tools (`src/server/tools/`) and the HTTP ingest door.
-- `src/cli/`: what `./engine` prints and parses; `src/host/`: how an entry builds its engine (the standalone reader,
-  the embedder).
+- `src/cli/`: what `./engine` prints and parses; `src/host/`: how an entry builds its engine (whose set each reader
+  reads, from the configuration's grants; the embedder).
 - `src/store/`: the pool, its settings and ids, and the clients of the keyword index and the embedder.
 - `src/readers/`: the bounds every file reader is held to (`src/readers/bounded.ts`) and their registry.
 - `src/text/`: pure text helpers.
@@ -104,9 +104,9 @@ produced with ships here ([How the figure was produced](benchmark-method.md)).
 
 ## What is deliberately absent
 
-- **No second reader.** This build's host has one reader, who reads every collection loaded. The fence is still
-  applied in every statement, so an engine built on a host with another readable set narrows every read without a
-  change to them.
+- **No accounts.** A reader is a name and a token, and a grant names whole collections ([Permissions](permissions.md)).
+  A deployment with access rules of its own binds a host whose readable set answers them; the fence is applied in
+  every statement, so every read narrows to that set without a change to it.
 - **No queue and no worker.** Ingest runs in the process that took the items (the command, or the server for the
   HTTP door) and says what it changed when it ends.
 - **No language model in ingest.** No model reads a document; passages are cut by rule and embedded.

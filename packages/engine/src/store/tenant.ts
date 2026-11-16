@@ -1,11 +1,9 @@
 import type { Sql } from "postgres";
 
 /**
- * Who the engine serves, one definition for the loader and the tool server: one organisation (the `default` one the
- * schema creates, so nothing here creates one) and one fixed reader, under whose id the loader writes what may be
- * read and the server reads. The resolver sanitises the id it is handed, so both sides pass this constant.
+ * The organisation the engine serves, one definition for the loader and the tool server: the `default` one the schema
+ * creates, so nothing here creates one. Who reads in it is the host's (`host/standalone.ts`).
  */
-export const OPEN_PRINCIPAL = "engine-reader";
 
 /** The engine's organisation id in this pool's database: the default organisation's. Throws when the schema has none. */
 export async function workspaceIdOf(sql: Sql): Promise<string> {
