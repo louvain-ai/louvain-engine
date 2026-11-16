@@ -6,7 +6,7 @@ import type { Writes } from "../src/ingest/writes.js";
 
 /**
  * Revisions through the open accept path and index step, one at a time, counted: how a test loads a corpus of
- * revisions it wrote by hand. Ingest itself loads items (`ingest/ingest.ts`), each made a revision by `itemEvent`.
+ * revisions it wrote by hand. Ingest itself loads items (`ingest/ingest.ts`), each made a revision by `itemRevision`.
  */
 export type LoadSummary = {
   accepted: number;

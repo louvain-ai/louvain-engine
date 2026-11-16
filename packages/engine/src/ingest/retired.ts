@@ -33,7 +33,7 @@ export async function retiredOf(
 }
 
 /** Records each revision as retired, inside the caller's transaction; one retired again keeps its later time. */
-export async function recordRetired(
+export async function noteRetired(
   trx: TransactionSql,
   collection: Collection,
   revisions: readonly HeldRevision[],

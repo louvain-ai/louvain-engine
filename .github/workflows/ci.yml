@@ -5,6 +5,8 @@
 # (examples/agent) calling the tool server over MCP, which fails unless the right document comes first.
 # `database`: Postgres and the keyword index, and the engine's database tests (packages/engine/test/db): what each search answers and
 # the SQL text each read sends, recorded, on a database each test builds from db/baseline.sql.
+# `dco` (pull requests only): every commit of the pull request carries a `Signed-off-by:` trailer naming its own author,
+# the Developer Certificate of Origin (CONTRIBUTING.md, "Sign your commits").
 name: ci
 on:
   push:
@@ -13,6 +15,32 @@ on:
 permissions:
   contents: read
 jobs:
+  dco:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      # Each commit between the base and the pull request's head needs a sign-off whose name and address are the
+      # commit's author (letter case aside). The two commits arrive as environment, never as script text.
+      - env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          missing=0
+          for commit in $(git rev-list "$BASE..$HEAD"); do
+            author="$(git log -1 --format='%an <%ae>' "$commit")"
+            if ! git log -1 --format='%(trailers:key=Signed-off-by,valueonly)' "$commit" | grep -qixF -- "$author"; then
+              echo "::error::$(git log -1 --format='%h %s' "$commit"): no 'Signed-off-by: $author'"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Sign each commit with 'git commit -s' (CONTRIBUTING.md, \"Sign your commits\"). To sign the ones here:"
+            echo "  git rebase --signoff $BASE && git push --force-with-lease"
+          fi
+          exit "$missing"
   check:
     runs-on: ubuntu-latest
     steps:

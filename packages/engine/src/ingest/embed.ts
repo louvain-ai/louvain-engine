@@ -13,7 +13,7 @@ import { type Writes, writeHooksOf } from "./writes.js";
 export type ToEmbed = { missing: readonly Piece[]; planned: readonly PlannedContext[] | null };
 
 /** One embedding call for the records' chunks: each record's rows, in the order given. */
-export async function embedRecords(
+export async function embedRevisions(
   writes: Writes,
   records: readonly ToEmbed[],
 ): Promise<SliceRow[][]> {

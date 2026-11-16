@@ -5,7 +5,7 @@
  */
 
 import type { Held } from "./holdings-types.js";
-import { type ContentItem, itemEvent, revisionProblem } from "./item-event.js";
+import { type ContentItem, itemRevision, revisionProblem } from "./item-event.js";
 import type { Read } from "./item-read.js";
 import { replays } from "./retired.js";
 import type { Revision } from "./revision.js";
@@ -65,7 +65,7 @@ function staleness(item: ContentItem, version: Version, { held, retired }: Store
 function revisionFor(run: Run, item: ContentItem, version: Version) {
   // A file without a stated date is dated by its modification time, after its revision: one only touched is unchanged.
   const dated = !item.date && version.mtime ? { ...item, date: version.mtime.toISOString() } : item;
-  const revision = itemEvent(run.collection.name, dated, { ...version, at: run.now() });
+  const revision = itemRevision(run.collection.name, dated, { ...version, at: run.now() });
   const problem = revisionProblem(revision);
   return problem ? { problem: `${problem.at}: ${problem.why}` } : { revision };
 }

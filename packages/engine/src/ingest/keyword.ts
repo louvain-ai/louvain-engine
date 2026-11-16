@@ -12,8 +12,8 @@ import { passageContextMode, writesPassageContext } from "../store/context-mode.
 import { appsOf, type Bm25Doc, keywordDoc } from "../store/keyword-document.js";
 import { bm25GroupCommitOn } from "../store/keyword-index.js";
 import { documentEntryOf, entryOfCurrent } from "./document-entry.js";
-import type { HeaderRecord } from "./passage-context.js";
-import { indexableEvent } from "./passage-rules.js";
+import type { HeaderDocument } from "./passage-context.js";
+import { indexableRevision } from "./passage-rules.js";
 import { bestEffort, stage } from "./stage.js";
 import { inOneTransaction, type Writes, writeHooksOf } from "./writes.js";
 
@@ -68,7 +68,7 @@ async function entryToWrite(writes: Writes, { ctx, text, header }: KeywordRecord
     await sql`select keyword_indexed_at, connector, (select ${displayApp(sql, filters.app)} from source_revision r
     join source_document d on d.id = r.source_id where r.event_id = event_log.id) as app,
     (select r.title from source_revision r where r.event_id = event_log.id) as title
-    from event_log where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableEvent(passageRules, sql)}`;
+    from event_log where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableRevision(passageRules, sql)}`;
   if (!event || event.keyword_indexed_at) return null;
   const apps = appsOf(event.connector, event.app);
   return keywordDoc(ctx, { text, title: event.title, header, apps });
@@ -82,10 +82,10 @@ async function entryToWrite(writes: Writes, { ctx, text, header }: KeywordRecord
 export async function keywordHeader(
   writes: Writes,
   orgId: string,
-  record: HeaderRecord,
+  record: HeaderDocument,
 ): Promise<string | null> {
   return writesPassageContext(await passageContextMode(writes.sql, orgId))
-    ? writeHooksOf(writes).passageRules.recordHeader(record)
+    ? writeHooksOf(writes).passageRules.documentHeader(record)
     : null;
 }
 
@@ -122,7 +122,7 @@ async function markOrWithdraw(
   const { sql } = writes;
   const { passageRules: rules, work, keyword } = writeHooksOf(writes);
   const [still] = await sql`
-      select 1 from event_log where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableEvent(rules, sql)}`;
+      select 1 from event_log where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableRevision(rules, sql)}`;
   if (!still) {
     await keyword.endpoint.withdraw([
       ctx.eventId,
@@ -132,7 +132,7 @@ async function markOrWithdraw(
   }
   await work.transaction(async (trx) => {
     await trx`update event_log set keyword_indexed_at = now()
-        where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableEvent(rules, trx)}`;
+        where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableRevision(rules, trx)}`;
   });
 }
 

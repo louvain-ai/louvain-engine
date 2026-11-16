@@ -10,10 +10,19 @@
 export type Collection = { orgId: string; name: string };
 
 /** One stored event of an item, as the withdrawal takes it. */
-export type HeldEvent = { id: string; connector: string; workspace: string; recordKey: string };
+export type HeldRevisionRef = {
+  id: string;
+  connector: string;
+  workspace: string;
+  recordKey: string;
+};
 
 /** A held event with its revision, and the time its source stated for it (null when it stated none). */
-export type HeldRevision = HeldEvent & { key: string; revision: string; statedAt: Date | null };
+export type HeldRevision = HeldRevisionRef & {
+  key: string;
+  revision: string;
+  statedAt: Date | null;
+};
 
 export type Held = {
   /** The newest event by placement: the item as the collection holds it now. */
@@ -23,4 +32,4 @@ export type Held = {
 };
 
 /** Every stored event of an item. */
-export const everyEvent = (held: Held): HeldRevision[] => [held.latest, ...held.older];
+export const everyRevision = (held: Held): HeldRevision[] => [held.latest, ...held.older];

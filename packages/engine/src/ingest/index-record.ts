@@ -19,7 +19,7 @@ import {
 } from "./keyword.js";
 import { indexPassageContexts } from "./passage-context-write.js";
 import { writePassages } from "./passages.js";
-import { type IndexedRecord, recordToIndex } from "./record.js";
+import { type IndexedRevision, revisionToIndex } from "./record.js";
 import { bestEffort, stage } from "./stage.js";
 import { type Writes, writeHooksOf } from "./writes.js";
 
@@ -27,7 +27,10 @@ import { type Writes, writeHooksOf } from "./writes.js";
  * Make content records findable, in the order given. Returns the passages written for each; 0 for a record with nothing
  * to index. Idempotent: passages are keyed on (event_id, seq) and a keyword entry is written once (`keyword_indexed_at`).
  */
-export async function indexRecords(writes: Writes, eventIds: readonly string[]): Promise<number[]> {
+export async function indexRevisions(
+  writes: Writes,
+  eventIds: readonly string[],
+): Promise<number[]> {
   if (eventIds.length <= 1) return indexBatch(writes, eventIds);
   try {
     return await indexBatch(writes, eventIds);
@@ -42,9 +45,9 @@ export async function indexRecords(writes: Writes, eventIds: readonly string[]):
 
 /** One batch: the records read, their passages embedded in one call and written, their contexts, their keyword entries. */
 async function indexBatch(writes: Writes, eventIds: readonly string[]): Promise<number[]> {
-  const records: (IndexedRecord | null)[] = [];
+  const records: (IndexedRevision | null)[] = [];
   for (const eventId of eventIds)
-    records.push(await stage("ingest.record", () => recordToIndex(writes, eventId)));
+    records.push(await stage("ingest.record", () => revisionToIndex(writes, eventId)));
   const present = records.flatMap((r) => (r ? [r] : []));
   const done = await writePassages(
     writes,
@@ -64,7 +67,7 @@ async function indexBatch(writes: Writes, eventIds: readonly string[]): Promise<
 /** The contexts a write did not carry: none planned, or a write cut short. */
 async function contextsOf(
   writes: Writes,
-  record: IndexedRecord | null,
+  record: IndexedRevision | null,
   written: number,
 ): Promise<void> {
   if (!record) return;
@@ -79,7 +82,7 @@ async function contextsOf(
 /** What its keyword entry is written from; a record with nothing to index leaves its document none (above). */
 async function keywordInput(
   writes: Writes,
-  { ctx, header }: IndexedRecord,
+  { ctx, header }: IndexedRevision,
 ): Promise<KeywordRecord> {
   return { ctx, text: header.text, header: await keywordHeader(writes, ctx.orgId, header) };
 }

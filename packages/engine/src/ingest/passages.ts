@@ -4,9 +4,9 @@
  * that fences the record it was cut from: adding retrieval surface never adds an access path.
  */
 import { chunk } from "./cut.js";
-import { embedRecords } from "./embed.js";
+import { embedRevisions } from "./embed.js";
 import type { PlannedContext } from "./passage-context-write.js";
-import { indexableEvent, textRows } from "./passage-rules.js";
+import { indexableRevision, textRows } from "./passage-rules.js";
 import { stage } from "./stage.js";
 import { settleVersions, writeSlice } from "./write.js";
 import { inOneTransaction, type Writes, writeHooksOf } from "./writes.js";
@@ -39,7 +39,7 @@ export async function writePassages(
   )) {
     const parts = partsOf(slice.filter(({ i }) => !stopped.has(i)));
     const rows = await stage("ingest.embed", () =>
-      embedRecords(
+      embedRevisions(
         writes,
         parts.map(({ i, pieces }) => ({ missing: pieces, planned: records[i]?.planned ?? null })),
       ),
@@ -127,7 +127,7 @@ async function chunksToWrite(
   if (existing.some((row) => row.seq >= chunks.length))
     await work.transaction(async (trx) => {
       const [event] = await trx`select id from event_log where id = ${ctx.eventId}
-        and org_id = ${ctx.orgId} ${indexableEvent(rules, trx)} for update`;
+        and org_id = ${ctx.orgId} ${indexableRevision(rules, trx)} for update`;
       if (event)
         await trx`delete from passage where event_id = ${ctx.eventId} and org_id = ${ctx.orgId}
           and seq >= ${chunks.length} ${textRows(rules, trx)}`;

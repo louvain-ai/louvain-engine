@@ -9,10 +9,10 @@ import { embedderOf } from "../store/embedder.js";
 import { recordEmbeddingSpace } from "../store/embedding-space.js";
 import { laterVersion } from "../store/version.js";
 import type { SliceRow } from "./embed.js";
-import { indexableEvent } from "./passage-rules.js";
+import { indexableRevision } from "./passage-rules.js";
 import { afterPassagesWritten } from "./passage-writes.js";
 import type { MemoryWriteContext } from "./passages.js";
-import { dropRecordSupersededVectors } from "./superseded-vectors.js";
+import { dropDocumentSupersededVectors } from "./superseded-vectors.js";
 import { type Writes, writeHooksOf } from "./writes.js";
 
 /** One record's part of a slice: its context and its rows. */
@@ -54,7 +54,8 @@ export async function settleVersions(
   const settled = records.filter((r) => r.missing !== null);
   const added = settled.filter((r) => (r.missing?.length ?? 0) > 0).map((r) => r.ctx);
   if (added.length > 0) await flagOlderVersions(writes, added);
-  for (const { ctx } of settled) await dropRecordSupersededVectors(writes, ctx.orgId, ctx.eventId);
+  for (const { ctx } of settled)
+    await dropDocumentSupersededVectors(writes, ctx.orgId, ctx.eventId);
 }
 
 /**
@@ -92,7 +93,7 @@ async function insertRows(
 ): Promise<string[] | null> {
   const { passageRules: rules } = writeHooksOf(writes);
   const [event] = await trx`select id from event_log where id = ${ctx.eventId}
-    and org_id = ${ctx.orgId} ${indexableEvent(rules, trx)} for update`;
+    and org_id = ${ctx.orgId} ${indexableRevision(rules, trx)} for update`;
   if (!event) return null;
   // The context vector's column, in a build that keeps one (`PassageRules.contextVector`).
   const col = rules.contextVector;

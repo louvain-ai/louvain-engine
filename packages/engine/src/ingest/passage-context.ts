@@ -13,7 +13,7 @@ import { chunkPlaces, headingsOf, pathAt } from "./passage-sections.js";
  */
 
 /** What a header may be built from: the passage's OWN record, and only these fields of it. */
-export type HeaderRecord = {
+export type HeaderDocument = {
   /** `event_log.body.text` — the string the passages were cut from. */
   text: string;
   /** `event_log.body.presentation`. Untrusted presentation data; here it only ever becomes search text. */
@@ -25,10 +25,10 @@ export type HeaderRecord = {
    * valid time: the record's own metadata, never another record's. Optional: a record read before it was listed
    * is headed from its presentation alone.
    */
-  meta?: RecordMeta;
+  meta?: DocumentMeta;
 };
 
-export type RecordMeta = {
+export type DocumentMeta = {
   /** `source_revision.kind` — the source's own type (`slack`, `jira`, `gmail`, `confluence`, …). */
   kind?: string | null;
   title?: string | null;
@@ -55,7 +55,7 @@ const PATH_CHARS = 120;
 const HEADER_VERSION = 2;
 
 /** What a record is called by what it states: its document's name, else its key and its listing's title. */
-function titleOf(record: HeaderRecord): string {
+function titleOf(record: HeaderDocument): string {
   const doc = isObject(record.presentation.document) ? record.presentation.document : null;
   const named = doc ? str(doc.filename) || str(doc.title) || str(doc.name) : "";
   const keyed = [keyOf(record), str(record.meta?.title)].filter(Boolean).join(" · ");
@@ -63,14 +63,14 @@ function titleOf(record: HeaderRecord): string {
 }
 
 /** A record's key, where its presentation states one: its field labelled `key` (`ingest/item-event.ts`). */
-function keyOf(record: HeaderRecord): string {
+function keyOf(record: HeaderDocument): string {
   const shown = record.presentation.record;
   const fields = isObject(shown) && Array.isArray(shown.fields) ? shown.fields : [];
   return str(fields.find((f) => isObject(f) && f.label === "key")?.value);
 }
 
 /** The header a record's passages share and its keyword entry carries: its title, or null when it states none. */
-export function recordHeader(record: HeaderRecord): string | null {
+export function documentHeader(record: HeaderDocument): string | null {
   return titleOf(record) || null;
 }
 
@@ -78,7 +78,10 @@ export function recordHeader(record: HeaderRecord): string | null {
  * The header for each chunk, or null; pure: the record's title, then the section path where the chunk's middle falls,
  * at most `MAX_HEADER_CHARS`. A record that states neither gets no header and pays no second embedding.
  */
-export function passageHeaders(record: HeaderRecord, chunks: readonly string[]): (string | null)[] {
+export function passageHeaders(
+  record: HeaderDocument,
+  chunks: readonly string[],
+): (string | null)[] {
   const title = titleOf(record);
   const headings = headingsOf(record);
   const places = chunkPlaces(record.text, chunks);

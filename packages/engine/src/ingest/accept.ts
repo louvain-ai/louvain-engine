@@ -1,10 +1,10 @@
 import { documentKeyOf } from "@louvain/engine-core";
 import type { Sql, TransactionSql } from "postgres";
 import { containerId, sanitizeId } from "../store/ids.js";
-import { insertEventRow, recordLockName } from "./event-row.js";
+import { documentLockName, insertRevisionRow } from "./event-row.js";
 import { readOpenPresentation } from "./presentation.js";
 import type { Revision } from "./revision.js";
-import { sourceEntries, writeSourceRows } from "./source-rows.js";
+import { documentEntries, writeDocumentRows } from "./source-rows.js";
 
 /**
  * The engine's accept: one item's revision (`ingest/item-event.ts`), written as its event row, its source document
@@ -77,10 +77,10 @@ async function writeOne(
     const held = await recordHeldElsewhere(trx, one, one.recordKey);
     if (held) return { id: held, accepted: false };
   }
-  const inserted = await insertEventRow(trx, one);
+  const inserted = await insertRevisionRow(trx, one);
   if (!inserted) return { id: (await heldEvent(trx, one)) ?? one.ev.id, accepted: false };
-  await writeSourceRows(trx, {
-    entries: sourceEntries([one.ev], one.orgId, { presentation: readOpenPresentation }),
+  await writeDocumentRows(trx, {
+    entries: documentEntries([one.ev], one.orgId, { presentation: readOpenPresentation }),
     orgId: one.orgId,
   });
   return { id: one.ev.id, accepted: true };
@@ -96,7 +96,7 @@ async function recordHeldElsewhere(
   recordKey: string,
 ): Promise<string | null> {
   const { orgId, ev, workspace, container } = one;
-  await trx`select pg_advisory_xact_lock(hashtextextended(${recordLockName(orgId, { connector: ev.source.connector, workspace, recordKey })}, 0))`;
+  await trx`select pg_advisory_xact_lock(hashtextextended(${documentLockName(orgId, { connector: ev.source.connector, workspace, recordKey })}, 0))`;
   const held = await heldEvent(trx, one);
   if (held) return held;
   const [elsewhere] = await trx<{ id: string }[]>`

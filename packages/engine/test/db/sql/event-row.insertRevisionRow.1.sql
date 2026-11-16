@@ -1,4 +1,4 @@
--- event-row.insertEventRow, found by its text
+-- event-row.insertRevisionRow, found by its text
 -- parameters: 19
 -- read by: loading the corpus
 -- plan on Postgres 17: ModifyTable on event_log > Result

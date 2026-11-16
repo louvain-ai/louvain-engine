@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import type { HeldEvent } from "./holdings-types.js";
+import type { HeldRevisionRef } from "./holdings-types.js";
 
 /**
  * Path-keyed documents: the `http`/`folder` feed, one for every folder, keyed by path with no record key, so no run
@@ -24,7 +24,7 @@ export async function legacyOf(
   orgId: string,
   key: string,
   hash: string,
-): Promise<HeldEvent[]> {
+): Promise<HeldRevisionRef[]> {
   const rows = await sql<{ id: string }[]>`
     -- fence-ok: the earlier loader's own records, by the key it gave them (the path) and their words, to be replaced
     select e.id from event_log e join source_revision r on r.event_id = e.id

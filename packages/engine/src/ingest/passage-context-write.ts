@@ -12,8 +12,8 @@ import { recordEmbeddingSpace } from "../store/embedding-space.js";
 import type { Queryable } from "../store/sql.js";
 import { contextualText } from "../text/contextual.js";
 import { chunk } from "./cut.js";
-import { composeContext, contextKey, type HeaderRecord } from "./passage-context.js";
-import { contextVectorNull, indexableEvent, type PassageRules } from "./passage-rules.js";
+import { composeContext, contextKey, type HeaderDocument } from "./passage-context.js";
+import { contextVectorNull, indexableRevision, type PassageRules } from "./passage-rules.js";
 import { afterPassagesWritten } from "./passage-writes.js";
 import type { MemoryWriteContext } from "./passages.js";
 import { type Writes, writeHooksOf } from "./writes.js";
@@ -29,7 +29,7 @@ export type PlannedContext = { context: string; key: string; embedText: string }
 export async function plannedContexts(
   writes: Writes,
   orgId: string,
-  record: HeaderRecord,
+  record: HeaderDocument,
 ): Promise<PlannedContext[] | null> {
   if (!writesPassageContext(await passageContextMode(writes.sql, orgId))) return null;
   const rules = writeHooksOf(writes).passageRules;
@@ -51,7 +51,7 @@ export async function plannedContexts(
 export async function indexPassageContexts(
   writes: Writes,
   ctx: Pick<MemoryWriteContext, "eventId" | "orgId">,
-  record: HeaderRecord,
+  record: HeaderDocument,
 ): Promise<number> {
   const { passageRules: rules, passageWrites, work } = writeHooksOf(writes);
   work.check();
@@ -81,7 +81,7 @@ export async function indexPassageContexts(
   return work
     .transaction(async (trx) => {
       const [event] = await trx`select id from event_log where id = ${ctx.eventId}
-      and org_id = ${ctx.orgId} ${indexableEvent(rules, trx)} for update`;
+      and org_id = ${ctx.orgId} ${indexableRevision(rules, trx)} for update`;
       if (!event) return 0;
       const written = await writeContexts(trx, ctx, { write, vectors, contextual, col, rules });
       if (clear.length > 0) await clearContexts(trx, ctx, { rows: clear, rules });

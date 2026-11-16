@@ -21,7 +21,7 @@ export type EventRow = {
  * The advisory lock name of one record of one feed: every accept, withdrawal and relocation of the record takes it
  * (`accept-open.ts`, `withdraw-open.ts` `lockRecords`), so they serialise against each other.
  */
-export function recordLockName(
+export function documentLockName(
   orgId: string,
   k: { connector: string; workspace: string; recordKey: string },
 ): string {
@@ -33,7 +33,7 @@ export function recordLockName(
  * actor and whether the author relays. Deduplication is per org, from the source's own ids. No conflict target: naming
  * one would tie the statement to one index; both constraints that fire mean a duplicate.
  */
-export async function insertEventRow(trx: TransactionSql, row: EventRow): Promise<boolean> {
+export async function insertRevisionRow(trx: TransactionSql, row: EventRow): Promise<boolean> {
   const { ev, orgId, workspace, container } = row;
   const inserted = await trx`
       insert into event_log

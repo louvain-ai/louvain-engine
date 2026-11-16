@@ -1,6 +1,6 @@
 import { documentTextStart, isHeadingAt } from "../text/document.js";
 import { clip } from "../text/words.js";
-import type { HeaderRecord } from "./passage-context.js";
+import type { HeaderDocument } from "./passage-context.js";
 
 /**
  * Where a passage sits in its record, for its header (`passage-context.ts`): the record's headings and the section
@@ -22,7 +22,7 @@ function headingLevel(line: string): number {
 type Heading = { at: number; level: number; title: string };
 
 /** The record's headings in order, with where each starts in its text. */
-export function headingsOf(record: HeaderRecord): Heading[] {
+export function headingsOf(record: HeaderDocument): Heading[] {
   const start = documentTextStart(record);
   const out: Heading[] = [];
   let at = start;
