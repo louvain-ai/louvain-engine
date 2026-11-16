@@ -63,9 +63,9 @@ LOUVAIN_SIDECAR_TOKEN="$(cat .engine/profiles/erb/sidecar-token)" PORT=8098 \
 python services/embed/embed.py   # from the engine's root
 ```
 
-Its Python needs what `apps/nlp/Dockerfile.gpu` installs for it: `services/embed/requirements.txt`'s onnxruntime, torch, and
-`transformers==5.17.0`, the version its card names (it brings its own tokenizers and hub client; a 4.x reader embeds
-this checkpoint wrong without an error).
+Its Python needs `services/embed/requirements.txt`'s onnxruntime, torch, and `transformers==5.17.0`, the version its
+card names (`pip install -r services/embed/requirements.txt torch transformers==5.17.0`; it brings its own tokenizers
+and hub client; a 4.x reader embeds this checkpoint wrong without an error).
 
 Then set `LOUVAIN_EMBEDDINGS_URL=http://localhost:8098` and `LOUVAIN_EMBEDDINGS_BULK_URL=http://localhost:8098` in the
 engine's `.env`. For `erb-louvain` or `erb-oss`, read that profile's own token.

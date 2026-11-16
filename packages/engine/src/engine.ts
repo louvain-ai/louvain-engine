@@ -2,6 +2,7 @@ import type { Embedder } from "@louvain/embeddings";
 import type { Host, PluginRegistry } from "@louvain/engine-core";
 import type { Settings } from "./config/settings.js";
 import type { EngineHooks, Writes } from "./ingest/writes.js";
+import { errorsToLog } from "./observability/errors-to-log.js";
 import { guarded } from "./observability/guarded.js";
 import { type Logger, openLogger } from "./observability/logging.js";
 import type { Telemetry } from "./observability/telemetry.js";
@@ -14,8 +15,8 @@ import type { Store } from "./store/pool.js";
 /**
  * The engine: one value, built by its caller from parts it chose and handed to whatever serves, ingests or searches.
  * Nothing here opens a pool, starts a plugin or reads the environment. A part the caller did not pass is a type
- * error, never a default, so what an engine runs on is whatever its builder wrote; but for telemetry, which reports
- * nowhere unless given, and a logger, its own unless given.
+ * error, never a default, so what an engine runs on is whatever its builder wrote; but for telemetry, whose errors go
+ * to its logger unless given, and a logger, its own unless given.
  */
 export type EngineParts = {
   /** The pool it reads and writes through (`store.ts`). */
@@ -33,7 +34,7 @@ export type EngineParts = {
    * absent hook is the open build's own (`hooksOf`, `writeHooksOf`).
    */
   readonly hooks?: EngineHooks;
-  /** Where its counts, timings and errors go (`telemetry.ts`): nowhere unless given. */
+  /** Where its counts, timings and errors go (`telemetry.ts`): unless given, its errors to its logger, the rest nowhere. */
   readonly telemetry?: Telemetry;
   /** Where its lines go, and what it has said once (`observability/logging.ts`): a logger of its own unless given. */
   readonly logger?: Logger;
@@ -56,8 +57,10 @@ const readHooksOf = ({
 }: EngineHooks): ReadHooks => read;
 
 export function createEngine(parts: EngineParts): Engine {
-  const telemetry = guarded(() => parts.telemetry);
   const logger = parts.logger ?? openLogger();
+  // A deployment's sink, or its errors to this engine's log (`errorsToLog`): never nowhere.
+  const toLog = errorsToLog(logger);
+  const telemetry = guarded(() => parts.telemetry ?? toLog);
   // One keyword index for its reads and its writes, so they share its endpoint: its settings and its group commit.
   const keyword = parts.hooks?.keyword ?? openKeywordIndex();
   return Object.freeze({

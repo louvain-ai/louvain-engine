@@ -25,8 +25,7 @@ repository, and its README lists every known difference; the figure does not rep
 
 - **Its tools:** that build's tool descriptions. The profile offers them verbatim; this repository's tool server serves
   its own.
-- **Its index:** one bare-text vector per passage. This repository's search also ranks by the bare vector; its loader
-  writes a second vector, from each passage's context, that nothing reads.
+- **Its index:** one bare-text vector per passage, as this repository's loader writes and its search ranks by.
 - **Its screening:** that build held 976 documents whose text reads like instructions to a model out of search. None
   is a document any of the 100 questions is answered from. This repository's engine screens nothing; the profile leaves
   those 976 out of its load.
@@ -69,8 +68,8 @@ repository, and its README lists every known difference; the figure does not rep
 - **Reading floor:** an answer offered before 3 distinct searches and 3 documents read is set aside, and the agent is
   told what is still owed. This happens at most twice a question, never on the last two turns.
 - **Guidance:** the system prompt is the harness's base instruction (answer only from the tools, cite every source),
-  plus the guidance text `prec-v3`, sha256 `5902ecacc9add4be…`. The guidance text is not in this repository; its
-  sha256 is given here.
+  plus the guidance text `prec-v3`, which ships with the profile (its `text/guidance/prec-v3.txt`, sha256
+  `5902ecacc9add4be…`).
 - **Dates:** every search and read is made as of 2031-01-01, a date after the whole corpus, so nothing is hidden for
   being in the future.
 

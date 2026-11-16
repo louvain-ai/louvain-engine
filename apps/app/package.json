@@ -11,7 +11,7 @@
   "scripts": {
     "build": "node ../../scripts/clean-dist.mjs && tsc -p tsconfig.web.json",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.web.json --noEmit",
-    "test": "node --import tsx --test test/*.test.ts"
+    "test": "node ../../scripts/run-tests.mjs -- test/*.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",
