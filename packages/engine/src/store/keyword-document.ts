@@ -19,7 +19,7 @@ export type Bm25Doc = {
   /** The record's title as its source lists it, indexed as its title; absent, the text's first line stands for it. */
   title?: string;
   /**
-   * Whether the record states a figure: any digit in its text, the passage legs' `digits` rule (`passages-filter.ts`)
+   * Whether the record states a figure: any digit in its text, the passage legs' `digits` rule (`read/passages/filter.ts`)
    * at the record's grain, since a record states one exactly when one of its passages does. A search for figures
    * narrows to it in the index.
    */

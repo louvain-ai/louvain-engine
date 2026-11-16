@@ -1,5 +1,6 @@
 import { type ExactTier, openExactTier } from "../server/tools/exact-seam.js";
 import { type SourceToolPresentation, unkeyedPresentation } from "../server/tools/presentation.js";
+import { type ContextMode, OPEN_CONTEXT_MODE } from "../store/context-mode.js";
 import type { ReadContext } from "./fence.js";
 import { type KeywordIndex, OPEN_KEYWORD_INDEX } from "./keyword/titled.js";
 import { type DetailHooks, plainDetail } from "./listing/detail-seam.js";
@@ -15,13 +16,13 @@ import type { VectorSpaces } from "./vector-space-types.js";
  * a hook narrows or presents what the fence admitted, and none decides who may read what.
  */
 export type ReadHooks = {
-  /** How a record is read (knowledge, reference or excluded), over an `event_log` alias (`reading-effective.ts`). */
+  /** How a record is read (knowledge, reference or excluded), over an `event_log` alias (`reading.ts`). */
   readonly reading?: ReadingExpression;
   /** What a source's detail needs: a saved file's document, a generated document's byline (`detail-seam.ts`). */
   readonly detail?: DetailHooks;
   /** The predicates a search adds after the fence, and what a page names beside a row (`filter-seam.ts`). */
   readonly filters?: AddedFilters;
-  /** What the source tools' pages name: connections, app links, the cursor key, clients (`presentation-seam.ts`). */
+  /** What the source tools' pages name: connections, app links, the cursor key, clients (`server/tools/presentation.ts`). */
   readonly presentation?: SourceToolPresentation;
   /** What the keyword index answers, holds and asks (`keyword-index.ts`). */
   readonly keyword?: KeywordIndex;
@@ -29,6 +30,8 @@ export type ReadHooks = {
   readonly spaces?: VectorSpaces;
   /** What a second matcher adds to the exact tier: key spelling, title keys, whole tokens (`exact-seam.ts`). */
   readonly exact?: ExactTier;
+  /** A workspace's passage-context mode (`store/context-mode.ts`): the open engine's is `header` everywhere. */
+  readonly contextMode?: ContextMode;
 };
 
 /**
@@ -46,5 +49,6 @@ export function hooksOf(on: Pick<ReadContext, "hooks">): Required<ReadHooks> {
     keyword: hooks?.keyword ?? OPEN_KEYWORD_INDEX,
     spaces: hooks?.spaces ?? ONE_SPACE,
     exact: hooks?.exact ?? openExactTier,
+    contextMode: hooks?.contextMode ?? OPEN_CONTEXT_MODE,
   };
 }

@@ -27,5 +27,5 @@ export async function readableSources(
   const rows = await sourceRows(context, await scope(context, owner), [...new Set(versionIds)]);
   return new Map(rows.map((row) => [row.versionId, row]));
 }
-// One source, whichever of its ids was handed over, lives in `read-resolve.ts`.
+// One source, whichever of its ids was handed over, lives in `resolve.ts`.
 export { resolveSource } from "./resolve.js";

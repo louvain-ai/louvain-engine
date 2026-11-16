@@ -13,9 +13,9 @@ import { plainWork, type WorkHooks } from "./work.js";
 type WriteHooks = {
   /** How a record is cut, headed and kept (`passage-rules.ts`). */
   readonly passageRules?: PassageRules;
-  /** What follows a passage write (`passage-write-seam.ts`). */
+  /** What follows a passage write (`passage-writes.ts`). */
   readonly passageWrites?: PassageWriteHooks;
-  /** Whose work a write is, and the transaction its effects are written in (`work-seam.ts`). */
+  /** Whose work a write is, and the transaction its effects are written in (`work.ts`). */
   readonly work?: WorkHooks;
 };
 

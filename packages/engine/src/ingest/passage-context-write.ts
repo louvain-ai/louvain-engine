@@ -6,7 +6,7 @@
 import { toPgVector } from "@louvain/embeddings";
 import type { PendingQuery, Row, Sql, TransactionSql } from "postgres";
 import { telemetryOf } from "../host/given.js";
-import { passageContextMode, writesPassageContext } from "../store/context-mode.js";
+import { writesPassageContext } from "../store/context-mode.js";
 import { embedderOf } from "../store/embedder.js";
 import { recordEmbeddingSpace } from "../store/embedding-space.js";
 import type { Queryable } from "../store/sql.js";
@@ -31,7 +31,7 @@ export async function plannedContexts(
   orgId: string,
   record: HeaderDocument,
 ): Promise<PlannedContext[] | null> {
-  if (!writesPassageContext(await passageContextMode(writes.sql, orgId))) return null;
+  if (!writesPassageContext(await writeHooksOf(writes).contextMode(orgId))) return null;
   const rules = writeHooksOf(writes).passageRules;
   const chunks = chunk(rules, record.text);
   const headers = rules.passageHeaders(record, chunks);
@@ -53,10 +53,10 @@ export async function indexPassageContexts(
   ctx: Pick<MemoryWriteContext, "eventId" | "orgId">,
   record: HeaderDocument,
 ): Promise<number> {
-  const { passageRules: rules, passageWrites, work } = writeHooksOf(writes);
+  const { passageRules: rules, passageWrites, work, contextMode } = writeHooksOf(writes);
   work.check();
   const { sql } = writes;
-  if (!writesPassageContext(await passageContextMode(sql, ctx.orgId))) return 0;
+  if (!writesPassageContext(await contextMode(ctx.orgId))) return 0;
   const chunks = chunk(rules, record.text);
   if (chunks.length === 0) return 0;
   const headers = rules.passageHeaders(record, chunks);
@@ -89,7 +89,7 @@ export async function indexPassageContexts(
       return written;
     })
     .then(async (written) => {
-      // Whatever the build does after a write (`passage-write-seam.ts`): best effort.
+      // Whatever the build does after a write (`passage-writes.ts`): best effort.
       await afterPassagesWritten(passageWrites, "context", contextual);
       return written;
     });

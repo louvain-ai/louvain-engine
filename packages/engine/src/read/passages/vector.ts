@@ -43,7 +43,7 @@ async function supersededCurrent(
     return rows.length > 0;
   } catch (err) {
     if (!isStatementTimeout(err)) throw err;
-    telemetryOf(context).count("kg.read.superseded_probe_timeout", 1, {});
+    telemetryOf(context).count("read.superseded_probe_timeout", 1, {});
     return true;
   }
 }
@@ -120,23 +120,18 @@ async function nearestPassages(
   } catch {
     // swallowed: an embedding lane that cannot answer costs the vector leg, never the search — the
     // keyword leg still carries it, the caller is told in `degraded`, and it is counted.
-    telemetryOf(context).count("kg.read.embed.unavailable", 1, { leg: "passage" });
+    telemetryOf(context).count("read.embed.unavailable", 1, { leg: "passage" });
     degraded.push("vector:embedding");
     return null;
   }
-  // Timed as `ask.vector` (the embedding above is `ask.embed`).
+  // Timed as `read.vector` (the embedding above is `read.embed`).
   const read: VectorRead = { fence, filters: f, added, columns: space.columns, vector: qv, limit };
-  if (windowed(f) && (await windowPlan(context, { fence, filters: f, added }, space)) === "exact") {
-    return stage(
-      "ask.vector",
-      () => bounded(context, (q) => nearestInWindow(q, read), VECTOR_LEG_SETTINGS),
-      { leg: "passage", window: "exact" },
-    );
-  }
+  const timed = (run: typeof nearest, tags: Record<string, string>) =>
+    stage("read.vector", () => bounded(context, (q) => run(q, read), VECTOR_LEG_SETTINGS), tags);
+  if (windowed(f) && (await windowPlan(context, { fence, filters: f, added }, space)) === "exact")
+    return timed(nearestInWindow, { leg: "passage", window: "exact" });
   if (windowed(f)) window.scanned = true;
-  return stage("ask.vector", () => bounded(context, (q) => nearest(q, read), VECTOR_LEG_SETTINGS), {
-    leg: "passage",
-  });
+  return timed(nearest, { leg: "passage" });
 }
 
 /**
@@ -178,7 +173,7 @@ async function windowPlan(
   } catch (err) {
     if (!isStatementTimeout(err)) throw err;
     // A count the read timeout cut is a range too large to read exactly, so it is scanned.
-    telemetryOf(context).count("kg.read.vector.window_plan_cut", 1, { leg: "passage" });
+    telemetryOf(context).count("read.vector.window_plan_cut", 1, { leg: "passage" });
     return "scan";
   }
 }

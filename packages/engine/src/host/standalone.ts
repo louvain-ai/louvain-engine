@@ -5,7 +5,7 @@ import { sanitizeId } from "../store/ids.js";
 /**
  * The open build's readable-set resolver over a pool: the containers `readable_container` holds for this principal in
  * this org, and nothing else. No room fence, no extra restrictions and no permission service: a principal with no rows
- * reads nothing. The rows are written directly by the projection writer (`projection-rows.ts`).
+ * reads nothing. The rows are written directly by whoever keeps the projection.
  */
 export const openReadableSet = (sql: Sql): ReadableSetResolver => ({
   async readableSet(principal, orgId) {

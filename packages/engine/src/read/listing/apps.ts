@@ -6,7 +6,7 @@ import type { ShownApp } from "./filter-seam.js";
 
 /**
  * The app a source shows as, by the build's expression (`AddedFilters.app`, handed by the read); else the service its
- * presentation names, else the ONE app its connector declares (`connector-apps.ts`), else the connector itself. Read
+ * presentation names, else the ONE app its connector declares, else the connector itself. Read
  * at query time, so a connector's variant is filed under its app in a listing and an app filter, stored records too.
  */
 const ownApp = (sql: Queryable) => sql`coalesce(r.presentation->>'service',

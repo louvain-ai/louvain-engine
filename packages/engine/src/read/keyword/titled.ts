@@ -72,7 +72,7 @@ export type WordsTest = {
  *                open build has none, its index holding a title as the document's header.
  *   `words`      the words test (`WordsTest`): the open build's is the index's tiers' (`tier-words.ts`); a build that
  *                keeps a second matcher hands its own.
- *   `endpoint`   the index's endpoint (`bm25.ts` `Bm25Endpoint`): its settings, read on its first call, and its group
+ *   `endpoint`   the index's endpoint (`store/keyword-index.ts` `Bm25Endpoint`): its settings, read on its first call, and its group
  *                commit. The open build makes one per engine (`openKeywordIndex`); a build that keeps one index for
  *                its process hands the door's (`bm25`).
  */

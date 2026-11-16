@@ -4,7 +4,7 @@
  * reads by a path next to its own (`createRequire(import.meta.url)` of a file beside it) exists under `src` and never under
  * `dist`, and a built process silently runs without it. A package names such files in its `package.json`
  * `runtimeAssets` (paths under `src/`); its build runs this after `tsc` to copy each to the same place under `dist/`.
- * `check-runtime-assets.mjs` fails when a module loads a sibling file the list lacks.
+ * A check fails when a module loads a sibling file the list lacks.
  *
  *   node scripts/copy-runtime-assets.mjs [--out <dist dir>]     (from the package's directory)
  */

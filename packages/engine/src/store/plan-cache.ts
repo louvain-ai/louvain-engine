@@ -1,6 +1,6 @@
 import { mayBePooled } from "./pooler.js";
 
-/** The plan cache mode for the pool (`db-settings.ts`): a setting, a scope, and the policy decided from them and the URL. */
+/** The plan cache mode for the pool (`config/engine.ts`): a setting, a scope, and the policy decided from them and the URL. */
 const PLAN_CACHE_MODES = ["auto", "force_custom_plan", "force_generic_plan"] as const;
 export type PlanCacheMode = (typeof PLAN_CACHE_MODES)[number];
 export const DEFAULT_PLAN_CACHE_MODE: PlanCacheMode = "force_custom_plan";

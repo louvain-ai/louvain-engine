@@ -6,7 +6,7 @@ import { settingsOf } from "../src/config/settings.js";
 const DEFAULTS = settingsOf(undefined);
 
 /**
- * An argument the open tool does not declare is refused by name, never dropped (`tool-input.ts` `toolArgs`): dropped,
+ * An argument the open tool does not declare is refused by name, never dropped (`server/tools/input.ts` `toolArgs`): dropped,
  * a filter would return an unfiltered page that looked like a match. No database: the check reads only the schema
  * the server serves.
  */

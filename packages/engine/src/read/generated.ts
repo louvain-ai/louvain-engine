@@ -22,7 +22,7 @@ export async function agentWritten(
         and body #>> '{presentation,document,via}' = any(${[...GENERATED_VIAS]}::text[])`;
     return new Set(rows.map((r) => r.id));
   } catch (err) {
-    telemetry.error("kg.read.generated", err, {});
+    telemetry.error("read.generated", err, {});
     return new Set(ids);
   }
 }
@@ -47,7 +47,7 @@ export async function referenceRead(
         and coalesce(${reading(sql, "e")}, 'reference') <> 'knowledge'`;
     return new Set(rows.map((r) => r.id));
   } catch (err) {
-    telemetry.error("kg.read.reading", err, {});
+    telemetry.error("read.reading", err, {});
     return new Set(ids);
   }
 }
@@ -78,7 +78,7 @@ export async function instructionLikeRevisions(
         and not exists (select 1 from injection_flag x where x.event_id = e.id)`;
     return new Map(rows.map((r) => [r.id, r.marker]));
   } catch (err) {
-    telemetry.error("kg.read.instruction-like", err, {});
+    telemetry.error("read.instruction-like", err, {});
     return new Map(ids.map((id) => [id, "unknown"]));
   }
 }

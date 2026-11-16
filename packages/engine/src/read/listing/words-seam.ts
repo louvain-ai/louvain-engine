@@ -11,7 +11,7 @@ type Fragment = PendingQuery<Row[]>;
  * current revision) holds the words (`matches`, true where there are none), the row's excerpt for them (`excerpt`, a
  * column named `excerpt`), the column and the rank a page by relevance orders by (`column`, `rank`), and the whole
  * listing with words (`listing`: words and meaning). The open build has none: its keyword index answers a listing's
- * words (`read-index-listing.ts`), and a listing without words names none.
+ * words (`index-listing.ts`), and a listing without words names none.
  */
 export type ListingWords = {
   matches(s: { orgId: string; containers: string[] }, q: string): Fragment;

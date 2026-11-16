@@ -37,7 +37,7 @@ export async function keywordLeg(
 }
 
 /**
- * The keyword index's rows, or null when it did not answer. Timed as `ask.bm25` {up}: the sidecar being down is
+ * The keyword index's rows, or null when it did not answer. Timed as `read.keyword` {up}: the sidecar being down is
  * reported, not thrown, so the stage encloses the catch and settles with `up: "no"`.
  */
 async function indexRows(
@@ -47,7 +47,7 @@ async function indexRows(
 ): Promise<Row[] | null> {
   const tags: Tags = { up: "yes" };
   return stage(
-    "ask.bm25",
+    "read.keyword",
     async (): Promise<Row[] | null> => {
       try {
         return await bm25Rows(context, {
@@ -61,7 +61,7 @@ async function indexRows(
       } catch {
         // swallowed: the sidecar being down or late costs this leg its ranking — the build's passes answer under
         // the same fence, or none do — and the leg names it in what it returns (`keyword:bm25`).
-        telemetryOf(context).count("kg.read.passages.bm25_fallback", 1, {});
+        telemetryOf(context).count("read.keyword.fallback", 1, {});
         tags.up = "no";
         return null;
       }

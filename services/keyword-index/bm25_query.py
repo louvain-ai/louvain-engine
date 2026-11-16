@@ -163,6 +163,7 @@ def search(
     narrow: dict | None = None,
     exact_boost: float | None = None,
     order: str = "relevance",
+    titles_need: int | None = None,
 ) -> tuple[list[dict], int]:
     """The fenced matches, ranked by BM25, or with `order: "newest"` SORTED by when the record was said
     (`occurred_at`, newest first; a record entry's date, as `modified` is a document entry's): a sort, not a ranking, so
@@ -174,7 +175,9 @@ def search(
         # it is nothing to search — the same rule every other retrieval leg
         # of the engine applies.
         return [], 0
-    text_query = _text_query(ix, query, boost, exact_boost)
+    text_query = (
+        _text_query(ix, query, boost, exact_boost) if titles_need is None else _title_query(ix, query, titles_need)
+    )
     if text_query is None:
         return [], 0
     limit = max(1, min(limit, MAX_LIMIT))
@@ -242,6 +245,28 @@ def _text_query(
     if ix.has["exact"] and exact > 0:
         text_should = [*text_should, *_exact_should(ix, query, exact)]
     return tantivy.Query.boolean_query(text_should, minimum_number_should_match=1)
+
+# The search's words without English's stop words, before they are stemmed as the title is: "letter of support" shares
+# one word with "Letter of intent", not two.
+_STOPLESS = (
+    tantivy.TextAnalyzerBuilder(tantivy.Tokenizer.simple())
+    .filter(tantivy.Filter.lowercase())
+    .filter(tantivy.Filter.stopword("english"))
+    .build()
+)
+
+
+def _title_query(ix: Store, query: str, need: int) -> tantivy.Query | None:
+    """The search's words asked of the title alone, a title holding at least `need` of them (all of them when the
+    search has fewer), stop words left out. BM25 ranks a rare word above a common one, so titles sharing only common
+    words fall below the page, and the top-k bounds the read whatever the workspace holds."""
+    words = _STOPLESS.analyze(query or "")
+    tokens = list(dict.fromkeys(t for w in words for t in ix.query.analyze(w)))
+    if not tokens:
+        return None
+    should = [(tantivy.Occur.Should, tantivy.Query.term_query(ix.schema, "title", tok)) for tok in tokens]
+    return tantivy.Query.boolean_query(should, minimum_number_should_match=min(need, len(tokens)))
+
 
 def _asked(
     ix: Store, field: str, query: str, tokens: list[str], boost: float | None, analyzer: bool

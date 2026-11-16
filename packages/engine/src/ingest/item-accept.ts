@@ -1,5 +1,5 @@
 /**
- * The accept stage: an item's new revision through the engine's one accept path (`load-core.ts` `acceptInto`). A
+ * The accept stage: an item's new revision through the engine's one accept path (`load.ts` `acceptInto`). A
  * revision moved to another folder is withdrawn from the old one and accepted in the new in ONE transaction, since a
  * record lives in one place. A refusal writes nothing and is said as a skip.
  */
@@ -43,7 +43,7 @@ async function accept(
 
 /**
  * The old placement withdrawn and the new revision accepted together; its container projected once that commits. The
- * documents the withdrawal moved off their current revision are refreshed once the new one is indexed (`retire.ts`).
+ * documents the withdrawal moved off their current revision are refreshed once the new one is indexed (`item-retire.ts`).
  */
 async function relocate(run: Run, change: Updated): Promise<Taken> {
   const old = everyRevision(change.held);

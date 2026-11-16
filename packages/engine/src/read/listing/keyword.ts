@@ -54,7 +54,7 @@ function relevancePage(listing: Worded) {
 /** The total, counted along the same walk and stopped one row past the cap (`bounds.ts`). */
 export function listingCount(listing: Listing, limit = COUNT_LIMIT) {
   const { sql, input } = listing;
-  // `limit`: the page's total stops past `SOURCE_COUNT_CAP`; Search's typed chips (`search-chips.ts`) stop sooner.
+  // `limit`: the page's total stops past `SOURCE_COUNT_CAP`; a caller's typed chips may stop sooner.
   return sql`select count(*)::int as count from (
     select 1 ${listingJoin(sql)} where ${listingFilter(listing)} and ${appFilter(listing)}
       ${andLeadsItsSeries(listing, true)}

@@ -12,8 +12,8 @@ import { listedTools } from "./schema.js";
 import { searchOrList } from "./search-apps.js";
 
 /**
- * The tools a request names, run as the engine's one reader (`org.ts`) on the engine's read context, each on its
- * arguments parsed once by the schema `tools/list` serves (`tool-input.ts`): an undeclared or wrong argument is refused
+ * The tools a request names, run as the engine's one reader on the engine's read context, each on its
+ * arguments parsed once by the schema `tools/list` serves (`input.ts`): an undeclared or wrong argument is refused
  * with a sentence, never dropped.
  */
 type ReaderId = { orgId: string; principal: string };

@@ -1,6 +1,6 @@
 import { mayBePooled } from "./pooler.js";
 
-/** JIT for the pool: off for the process unless asked (`db-settings.ts`), sent at connect where no pooler can refuse it. */
+/** JIT for the pool: off for the process unless asked (`config/engine.ts`), sent at connect where no pooler can refuse it. */
 const JIT_SETTINGS = ["off", "server"] as const;
 export type JitSetting = (typeof JIT_SETTINGS)[number];
 

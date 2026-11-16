@@ -8,7 +8,7 @@ import { documentEntries, writeDocumentRows } from "./source-rows.js";
 
 /**
  * The engine's accept: one item's revision (`ingest/item-event.ts`), written as its event row, its source document
- * and its revision, the row waiting for the indexer (`index-open.ts`). An
+ * and its revision, the row waiting for the indexer (`indexer.ts`). An
  * item carries content only, so there is nothing else to refuse but a record already held in another collection
  * (`relocation`), which is refused rather than left readable in two places. Idempotent: a revision already held is
  * `duplicate`.

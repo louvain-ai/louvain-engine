@@ -34,7 +34,7 @@ export function callSignal(ceilingMs: number): AbortSignal {
  */
 export function stage<T>(name: string, fn: () => Promise<T>, tags: Tags = {}): Promise<T> {
   const ctx = askContext();
-  const key = name.replace(/^ask\./, "");
+  const key = name.replace(/^(ask|read|search)\./, "");
   return timedStage(name, fn, {
     tags,
     done: (ms) => {

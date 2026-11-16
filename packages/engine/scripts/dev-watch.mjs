@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * The engine, built as it is edited: `tsc --watch`, and after each compile with no errors the runtime assets are copied
- * and the source hash recorded, so a process reading `dist` runs what `src` holds and `check-engine-dist.mjs` agrees.
+ * and the source hash recorded, so a process reading `dist` runs what `src` holds.
  */
 import { spawn, spawnSync } from "node:child_process";
 

@@ -26,7 +26,7 @@ export type Telemetry = {
 };
 
 /**
- * The door's sink, for the call sites with no engine in reach (`check-engine-state.mjs` lists them, and the list only
+ * The door's sink, for the call sites with no engine in reach (the engine-state check lists them, and the list only
  * shrinks); an engine's own is the part it was given (`EngineParts.telemetry`, `given.ts` `telemetryOf`).
  */
 let sink: Telemetry | undefined;

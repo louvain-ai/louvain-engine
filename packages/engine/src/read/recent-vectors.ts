@@ -49,7 +49,7 @@ export function forgetRecentQueryVectors(loader: object): void {
 }
 
 /**
- * An embedder's query embedding, as a pgvector literal: its interactive lane, timed as `ask.embed`. One function per
+ * An embedder's query embedding, as a pgvector literal: its interactive lane, timed as `read.embed`. One function per
  * embedder, so every memo keyed by its loader (`recent-vectors.ts`, `queryVectorWith`) is keyed by the embedder and a
  * vector from one never stands in for another's.
  */

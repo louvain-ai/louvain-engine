@@ -23,7 +23,7 @@ export type Pooled = { evidence: WithIds; score: number; legs: string[] };
 /**
  * Where the rows come from: the query's legs (and the question's, when there is one), fused into one ranking under the
  * reader's fence. The open build reads its retriever plugins (`pool.ts`); another build may pass its own.
- * The reranker that orders what it found travels with it, `null` for none; left out, the bound one (`rerank-seam.ts`).
+ * The reranker that orders what it found travels with it, `null` for none; left out, the one the engine was made with.
  */
 export type SearchPool = ((
   context: ReadContext,

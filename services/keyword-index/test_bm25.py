@@ -4,7 +4,7 @@ Self-contained: stdlib only (subprocess, urllib, socket, tempfile), so it
 runs with the same interpreter as `bm25.py` itself and needs nothing
 installed beyond what `requirements.txt` already pins. Starts a real
 server on a free port against a temporary index directory, drives it over
-HTTP exactly as the engine's BM25 client (`kg/read/bm25.ts`) would, and tears it
+HTTP exactly as the engine's keyword-index client (`store/keyword-index.ts`) would, and tears it
 down whatever happens.
 
     services/keyword-index/.venv/bin/python services/keyword-index/test_bm25.py

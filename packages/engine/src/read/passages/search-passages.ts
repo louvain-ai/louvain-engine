@@ -1,5 +1,5 @@
 import { decayed, fuse, type Viewer } from "@louvain/engine-core";
-import { passageContextMode, readsPassageContext } from "../../store/context-mode.js";
+import { readsPassageContext } from "../../store/context-mode.js";
 import { locateQuote } from "../../text/words.js";
 import { fence, type ReadContext } from "../fence.js";
 import { agentWritten, instructionLikeRevisions, labelOf, referenceRead } from "../generated.js";
@@ -129,8 +129,8 @@ async function legsRead(context: ReadContext, ask: LegsAsk) {
  * moves rank, never which rows are read or what is quoted.
  */
 async function legRead(context: ReadContext, { reader, query, opts, shared }: LegsAsk) {
-  const contextual = readsPassageContext(await passageContextMode(context.sql, reader.orgId));
-  const { filters: added } = hooksOf(context);
+  const { filters: added, contextMode } = hooksOf(context);
+  const contextual = readsPassageContext(await contextMode(reader.orgId));
   const filters = opts.filters ?? {};
   return { fence: reader, query, filters, added, contextual, degraded: shared.degraded };
 }

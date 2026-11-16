@@ -1,4 +1,4 @@
-/** Whether a database URL is, or may be, a pooler's: a pooler may refuse a startup parameter (`db-settings.ts`). */
+/** Whether a database URL is, or may be, a pooler's: a pooler may refuse a startup parameter. */
 
 /**
  * Does this connection string point at a transaction pooler? The managed providers' shapes, plus an explicit

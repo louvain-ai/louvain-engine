@@ -36,7 +36,7 @@ export type SearchRequest = {
  *   (unshown)     documents the caller already showed left out, the page read further down the same order
  *   conversation  the messages beside a chat hit
  *
- * No stage builds a WHERE clause: every read is a fenced primitive in `kg/read`. What an agent writes is a query, not a
+ * No stage builds a WHERE clause: every read is a fenced primitive in `read/`. What an agent writes is a query, not a
  * question, so there is no plan: no entities, no recency cue, no model call.
  */
 export async function search(request: SearchRequest, using: SearchWith): Promise<DocumentSearch> {

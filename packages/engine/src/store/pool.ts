@@ -66,7 +66,7 @@ type StoreSettings = {
 };
 
 /**
- * Open a store on a database: its pool, its prepared statements planned as the settings decide (`db-settings.ts`: a
+ * Open a store on a database: its pool, its prepared statements planned as the settings decide (`plan-cache.ts`: a
  * `set local` in every bounded read wherever prepared statements are on, a startup parameter as well only where the
  * address cannot be a pooler), JIT off at connect where no pooler can refuse it, and the read bounds every bounded read
  * keeps. Nothing connects until the first statement; the caller ends it (`Store.end`, or the engine's `close`).

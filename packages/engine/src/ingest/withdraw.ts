@@ -3,7 +3,6 @@ import { documentEntryId } from "../read/listing/keyword-documents.js";
 import { documentLockName } from "./event-row.js";
 import { indexOpen } from "./indexer.js";
 import { dropRevisionless, repointDocuments } from "./repair.js";
-import { forgetVectorsOf } from "./withdrawn-vectors.js";
 import { type Writes, writeHooksOf } from "./writes.js";
 
 /**
@@ -81,7 +80,6 @@ async function withdrawRows(
   orgId: string,
   ids: readonly string[],
 ): Promise<Withdrawal> {
-  await forgetVectorsOf(trx, orgId, ids);
   const documents = (
     await trx<{ source_id: string }[]>`
       select distinct source_id from source_revision where event_id = any(${[...ids]}::text[])`

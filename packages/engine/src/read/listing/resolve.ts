@@ -4,7 +4,7 @@ import { type Owner, type Scope, scope } from "./core.js";
 import { documentFence, sourceJoin } from "./join.js";
 
 /*
- * Moved here from `read-detail.ts`, verbatim: resolving an id needs no statement read, and the source tools resolve
+ * Resolving an id needs no statement read, and the source tools resolve
  * every id they are handed, so they load this without the detail read's statements.
  */
 

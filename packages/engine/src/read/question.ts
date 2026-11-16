@@ -50,6 +50,6 @@ export function reportPhase(phase: AskPhase): void {
   try {
     listener.onPhase(phase);
   } catch (err) {
-    telemetry.error("ask.progress", err);
+    telemetry.error("read.progress", err);
   }
 }
