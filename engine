@@ -223,7 +223,7 @@ cmd_profile() {
 # The commands, as the help page lists them.
 cmd_help() {
   cat <<'HELP'
-Louvain Engine: open-source retrieval for agents and RAG.
+Louvain Engine: permission-aware retrieval for enterprise AI.
 
 Usage: ./engine <command>
 
