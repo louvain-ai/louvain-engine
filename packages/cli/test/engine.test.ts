@@ -125,6 +125,8 @@ test("a configuration naming two rerankers is refused", async () => {
 });
 
 const READ = "r".repeat(40);
+/** The readers a door's token is checked against: one, holding `token`. */
+const readerOf = (token: string) => ({ of: (t: string) => (t === token ? "engine-reader" : null) });
 /** The shipped file with its sources' lines uncommented, as its comment tells a person to. */
 const withDoor = shipped
   .replace(/^\/\/ (import \{ (?:folder, records|http) \})/gm, "$1")
@@ -147,7 +149,11 @@ test("the shipped configuration runs the folder and records sources and opens no
     engine.plugins.list("source").map((s) => s.name),
     ["folder", "records"],
   );
-  assert.equal(ingestDoor(engine, READ), null, "a token in the environment opens nothing");
+  assert.equal(
+    ingestDoor(engine, readerOf(READ)),
+    null,
+    "a token in the environment opens nothing",
+  );
 });
 
 test("its sources line, uncommented, opens the door with its own token", async () => {
@@ -156,9 +162,9 @@ test("its sources line, uncommented, opens the door with its own token", async (
     opened.plugins.list("source").map((s) => s.name),
     ["folder", "records", "http"],
   );
-  assert.equal(ingestDoor(opened, READ)?.token, "w".repeat(40));
+  assert.equal(ingestDoor(opened, readerOf(READ))?.token, "w".repeat(40));
   assert.throws(
-    () => ingestDoor(opened, "w".repeat(40)),
+    () => ingestDoor(opened, readerOf("w".repeat(40))),
     IngestDoorRefused,
     "never the read token",
   );

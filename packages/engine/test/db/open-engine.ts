@@ -1,16 +1,19 @@
 import { Duplex } from "node:stream";
+import type { Host } from "@louvain/engine-core";
 import postgres from "postgres";
 import type { Engine } from "../../src/engine.js";
 import { openStore, type Store, storeOf } from "../../src/store/pool.js";
 
 /**
  * The open build's engine as a test builds it, as an open entry does (`packages/cli/src/engine.ts`): over a store it
- * opens on the test's database (`openStore`), on the open host, with no plugins and the default settings, and the
- * embedder made for that host, which its reads and writes ask (`embedderOf`). Made once per process, on first use, after the test has set
- * the environment the pool and the embedder read; a case that searches through plugins hands its own beside it
- * (`{ ...engine, plugins }`). A database these tests did not make is refused: every query on it fails naming it and
- * connects nowhere, while a case that never queries (a unit test building the open engine to see what it binds) is
- * untouched.
+ * opens on the test's database (`openStore`), with no plugins and the default settings, and the embedder made for its
+ * host. The host reads each reader's set from its projection rows (`openReadableSet`), the default reader's that the
+ * loader writes and a partial reader's that a test writes itself; a reader by grant is read through the real
+ * server (`two-readers.test.ts`). Its reads and writes ask that embedder (`embedderOf`). Made once per process, on first
+ * use, after the test has set the environment the pool and the embedder read; a case that searches through plugins
+ * hands its own beside it (`{ ...engine, plugins }`). A database these tests did not make is refused: every query on it
+ * fails naming it and connects nowhere, while a case that never queries (a unit test building the open engine to see
+ * what it binds) is untouched.
  */
 let made: Promise<Engine> | undefined;
 
@@ -29,8 +32,8 @@ async function build(): Promise<Engine> {
   const { createEngine } = await import("../../src/engine.js");
   const { embedderFor } = await import("../../src/host/embedder.js");
   const { settingsOf } = await import("../../src/config/settings.js");
-  const { openHost } = await import("../../src/host/standalone.js");
-  const host = openHost(store.sql);
+  const { openReadableSet } = await import("../../src/host/standalone.js");
+  const host: Host = { readableSet: openReadableSet(store.sql) };
   const engine = createEngine({
     store,
     embedder: embedderFor(host),

@@ -25,8 +25,8 @@ whether it is correct and complete. [How it was measured](https://louvain.ai/ben
 **Retrieval that scores.** Keywords and meaning search together, so the right document comes first however the
 question is worded. Add a reranker in one line when you want more.
 
-**Permissions built in.** Every query passes a permission fence first, so a reader only ever sees documents they may
-read. Bring your own access rules, or let Louvain Brain manage them for your company (coming soon).
+**Permissions built in.** Every query passes a permission check first. Add readers and grant each the collections it
+may read, in config; Louvain syncs real permissions from your tools.
 
 **Fits your stack.** MCP tools for your agents, plugins as plain functions, and Postgres underneath. Open source,
 under Apache-2.0.
@@ -204,8 +204,9 @@ The engine starts with the two readers, the `folder` and `records` sources, the 
 
 - **The fence comes first in every read.** Each read resolves the reader's readable collections once and applies them
   inside every statement it sends, so no row outside them is ranked, counted or returned. A retriever gets a reading
-  already narrowed to that set, and every row it returns is checked against the set again. This build binds one
-  reader, who reads everything loaded.
+  already narrowed to that set, and every row it returns is checked against the set again. The engine's own token
+  reads everything loaded; every other reader, made with `./engine reader add`, reads the collections
+  `engine.config.ts` grants it and nothing else ([Permissions](docs/permissions.md)).
 - **Your documents stay on your machine.** Postgres and the sidecars listen on `127.0.0.1`. After the first
   `./engine up` downloads packages, images and the embedding model, nothing goes out unless you choose it: a remote
   reranker receives each search and the texts it reranks, and the app's Ask, given a model key, sends each question and
@@ -220,7 +221,8 @@ The engine starts with the two readers, the `folder` and `records` sources, the 
 
 ## What it is not
 
-- **Not multi-user.** One reader, one read token: whoever holds the token reads every document loaded.
+- **No accounts.** A reader is a name and a token: no sign-up, no passwords, no single sign-on. A grant is a whole
+  collection, never a single document, and the engine's own token reads everything.
 - **Not an answer engine.** Its tools return documents and passages with their sources; your agent writes the answer.
   The app's Ask writes one only with a model key you give it.
 - **No connectors, no knowledge graph.** Ingest reads files and records, cuts them into passages and embeds them; no

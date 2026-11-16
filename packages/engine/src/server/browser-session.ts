@@ -1,11 +1,12 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 /**
- * A browser signs in once, with the server's own token: posted once, compared in constant time, exchanged for an
- * httpOnly, SameSite=Strict cookie named for this server (a browser sends a loopback cookie to every port). A sign-in
- * lives only while the server holds it (sign-out revokes it; a restart signs every browser out). Only the hosts the
- * server is reached at are answered (DNS rebinding), and no `X-Forwarded-*` is trusted: `Secure` follows the
- * configured public origin, never a request.
+ * A browser signs in once, with a reader's token: posted once, matched in constant time (`readers.ts`), exchanged for
+ * an httpOnly, SameSite=Strict cookie named for this server (a browser sends a loopback cookie to every port). The
+ * server keeps which reader each sign-in reads as; the cookie carries a random id and never the reader. A sign-in lives
+ * only while the server holds it (sign-out revokes it; a restart signs every browser out). Only the hosts the server is
+ * reached at are answered (DNS rebinding), and no `X-Forwarded-*` is trusted: `Secure` follows the configured public
+ * origin, never a request.
  */
 
 const LIFETIME_S = 7 * 24 * 60 * 60;
@@ -15,12 +16,6 @@ export type Door = { port: number; publicOrigin?: string | undefined };
 
 const sign = (key: Buffer, body: string): string =>
   createHmac("sha256", key).update(body).digest("base64url");
-
-/** Whether the token a person typed is the server's, compared in constant time over equal-length digests. */
-export function tokenMatches(given: string, token: string): boolean {
-  const digest = (s: string) => createHash("sha256").update(s).digest();
-  return timingSafeEqual(digest(given.trim()), digest(token));
-}
 
 /** This server's cookie and where it is reached: a key from the token, a name from the key and the port. */
 function doorOf(token: string, door: Door) {
@@ -41,7 +36,7 @@ function doorOf(token: string, door: Door) {
 type Doors = ReturnType<typeof doorOf>;
 
 /** The live sign-in a request carries: its signature holds, it has not expired, and it was not signed out. */
-function liveSignIn(d: Doors, live: ReadonlySet<string>, headers: Headers): string | null {
+function liveSignIn(d: Doors, live: ReadonlyMap<string, string>, headers: Headers): string | null {
   const cookie = headers
     .get("cookie")
     ?.split(";")
@@ -61,7 +56,8 @@ export type BrowserSessions = ReturnType<typeof browserSessions>;
 
 export function browserSessions(token: string, door: Door) {
   const d = doorOf(token, door);
-  const live = new Set<string>();
+  // Each live sign-in's id, and the reader it reads as.
+  const live = new Map<string, string>();
   const of = (headers: Headers) => liveSignIn(d, live, headers);
   const nameOf = (id: string) =>
     `browser ${createHash("sha256").update(id).digest("base64url").slice(0, 16)}`;
@@ -71,20 +67,23 @@ export function browserSessions(token: string, door: Door) {
     /** A change must come from a page this server served: same-origin, or an Origin of this server's. */
     sameOrigin: (headers: Headers) =>
       headers.get("sec-fetch-site") === "same-origin" || d.origins.has(headers.get("origin") ?? ""),
-    /** Who a live sign-in reads as: a name derived from it, never the cookie, or null for none. */
-    reader(headers: Headers): string | null {
+    /** Who a live sign-in reads as: a name derived from it, never the cookie, and its reader; or null for none. */
+    reader(headers: Headers): { name: string; principal: string } | null {
       const id = of(headers);
-      return id && nameOf(id);
+      if (id === null) return null;
+      const principal = live.get(id);
+      return principal === undefined ? null : { name: nameOf(id), principal };
     },
-    signIn(now = Date.now()): string {
+    /** A new sign-in, reading as `principal`: the cookie that carries it. */
+    signIn(principal: string, now = Date.now()): string {
       const id = randomBytes(16).toString("base64url");
-      live.add(id);
+      live.set(id, principal);
       const body = `${Math.floor(now / 1000)}.${id}`;
       return `${d.name}=${body}.${sign(d.key, body)}; Max-Age=${LIFETIME_S}; ${d.attributes}`;
     },
     /** Ends the sign-in this reader name was derived from (`reader`), and clears the cookie. */
     signOut(reader: string): string {
-      for (const id of live) if (nameOf(id) === reader) live.delete(id);
+      for (const id of live.keys()) if (nameOf(id) === reader) live.delete(id);
       return `${d.name}=; Max-Age=0; ${d.attributes}`;
     },
   };

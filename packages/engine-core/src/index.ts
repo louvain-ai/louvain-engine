@@ -7,6 +7,7 @@
 export * from "./caller.js";
 export * from "./civil-time.js";
 export * from "./deadline.js";
+export * from "./grants.js";
 export * from "./host.js";
 export * from "./ingest/content-kinds.js";
 export * from "./ingest/item.js";

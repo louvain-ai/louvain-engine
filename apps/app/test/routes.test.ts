@@ -2,8 +2,13 @@ import assert from "node:assert/strict";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, it } from "node:test";
-import { serve as listen } from "@louvain/engine";
-import { createPluginRegistry, defineEngine, type Plugin } from "@louvain/engine-core";
+import { serve as listen, readerTable } from "@louvain/engine";
+import {
+  createPluginRegistry,
+  DEFAULT_READER,
+  defineEngine,
+  type Plugin,
+} from "@louvain/engine-core";
 import { agent, anthropic, scripted } from "../src/ask/plugins.js";
 import { app } from "../src/index.js";
 
@@ -27,7 +32,7 @@ const tools = {
           title: "lease-renewal",
           text: "The lease renews in September. The landlord offered four per cent.",
         },
-  counts: async () => ({ documents: 1, collections: [{ name: ".", documents: 1 }] }),
+  counts: async () => ({ documents: 1, collections: [{ name: "handbook", documents: 1 }] }),
 };
 
 /** The server with the app its one surface; `answerer` is what `engine.config.ts` names, started, or null for none. */
@@ -37,10 +42,11 @@ async function serve(
 ): Promise<{ server: Server; base: string }> {
   Object.assign(process.env, env);
   const started = (await createPluginRegistry(defineEngine({ answerer }))).one("answerer");
+  const readers = readerTable([{ principal: DEFAULT_READER, token: TOKEN }]);
   const server = await listen(
-    { port: 0, toolDeadlineMs: 60_000, token: TOKEN, door: null },
+    { port: 0, toolDeadlineMs: 60_000, token: TOKEN, readers, door: null },
     [{ name: "app", plugin: await app().create() }],
-    { ...tools, answerer: started },
+    () => ({ ...tools, answerer: started }),
   );
   return { server, base: `http://127.0.0.1:${(server.address() as AddressInfo).port}` };
 }

@@ -2,35 +2,43 @@
  * One request to the server's routes, as the server answers it once the path is canonical and the body read. Who it
  * reads or writes as is decided once, before the body (`admit`), and carried here; then the route, a 404, or a 405
  * naming the methods the path takes. A route is handed the request without its credentials, a read route the engine's
- * reading for that reader, and a write route who writes. The server's own routes (the sign-in, the ingest door) are
- * rows of the same table.
+ * reading bound to that reader, and a write route who writes. The server's own routes (the sign-in, the ingest door)
+ * are rows of the same table.
  */
-import type { Reading, Route } from "@louvain/engine-core";
-import { type BrowserSessions, tokenMatches } from "./browser-session.js";
+import type { Route } from "@louvain/engine-core";
+import type { BrowserSessions } from "./browser-session.js";
+import { authorized, type Readers } from "./readers.js";
+import type { ReadingFor } from "./reading.js";
 import type { RouteTable } from "./routes.js";
-import { authorized } from "./token.js";
 
-/** What answering needs: the read and write tokens, the browser sign-ins, the route table, and the engine's reading. */
+/** What answering needs: the readers' and the write token, the browser sign-ins, the route table, the engine's reading. */
 export type Answering = {
-  token: string;
+  /** Which reader a read token reads as. */
+  readers: Readers;
   /** The write token, which only a write route takes; null when no route writes. */
   writeToken: string | null;
   sessions: BrowserSessions;
   routes: RouteTable;
-  read: Omit<Reading, "reader">;
+  reading: ReadingFor;
 };
 
-/** Who a request reads as (null: anyone, for an open route), who writes, or the answer that refuses it. */
-export type Admission = { reader: string | null } | { writer: string } | { refused: Response };
+/**
+ * Who a request reads as (null: anyone, for an open route): the name a route is handed and the reader whose fence its
+ * reads keep. Or who writes, or the answer that refuses it.
+ */
+export type Admission =
+  | { reader: { name: string; principal: string } | null }
+  | { writer: string }
+  | { refused: Response };
 
-/** The one name every holder of the read token reads as, and every holder of the write token writes as. */
+/** The one name every holder of the write token writes as. */
 const TOKEN_HOLDER = "token";
 
 /**
  * Who a request reads or writes as, decided before its body is read. A write route takes the write token and nothing
- * else. The read token reads everywhere else. Without it, only a browser's paths answer (an open route, the sign-in
- * among them, and a route that takes the sign-in), and only at a host this server is reached at, a change only from a
- * page it served. Anything else is the same 401, on every path.
+ * else. A reader's token reads everywhere else, as that reader. Without one, only a browser's paths answer (an open
+ * route, the sign-in among them, and a route that takes the sign-in), and only at a host this server is reached at, a
+ * change only from a page it served. Anything else is the same 401, on every path.
  */
 export function admit(
   answering: Answering,
@@ -38,7 +46,7 @@ export function admit(
   path: string,
   headers: Headers,
 ): Admission {
-  const { token, writeToken, sessions, routes } = answering;
+  const { readers, writeToken, sessions, routes } = answering;
   const found = routes.match(asRouted(method), path);
   const route = found !== null && "needs" in found ? found : null;
   const given = headers.get("authorization") ?? undefined;
@@ -46,7 +54,8 @@ export function admit(
     return writeToken !== null && authorized(given, writeToken)
       ? { writer: TOKEN_HOLDER }
       : { refused: unauthorized() };
-  if (authorized(given, token)) return { reader: TOKEN_HOLDER };
+  const principal = readers.fromHeader(given);
+  if (principal !== null) return { reader: { name: `token ${principal}`, principal } };
   const open = route?.needs === "none";
   if (!open && !(route?.needs === "read" && route.signIn === "cookie"))
     return { refused: unauthorized() };
@@ -77,15 +86,16 @@ export async function respond(
       ? found.handle(bare, { writer: admission.writer })
       : unauthorized();
   const reader = "reader" in admission ? admission.reader : null;
-  return reader === null ? unauthorized() : found.handle(bare, { ...answering.read, reader });
+  if (reader === null) return unauthorized();
+  return found.handle(bare, { ...answering.reading(reader.principal), reader: reader.name });
 }
 
 /**
- * The browser's sign-in as the server's own routes: `POST /session`, open, exchanges the read token for the cookie, and
- * `DELETE /session`, which takes the sign-in it ends, ends it here and in the browser. A browser reaches either only at
- * a host this server is reached at, and only from a page it served (`admit`).
+ * The browser's sign-in as the server's own routes: `POST /session`, open, exchanges a reader's token for a cookie that
+ * reads as that reader, and `DELETE /session`, which takes the sign-in it ends, ends it here and in the browser. A
+ * browser reaches either only at a host this server is reached at, and only from a page it served (`admit`).
  */
-export function signInRoutes(token: string, sessions: BrowserSessions): Route[] {
+export function signInRoutes(readers: Readers, sessions: BrowserSessions): Route[] {
   return [
     {
       method: "POST",
@@ -93,9 +103,10 @@ export function signInRoutes(token: string, sessions: BrowserSessions): Route[] 
       needs: "none",
       handle: async (request) => {
         const given = await tokenIn(request);
-        if (typeof given !== "string" || !tokenMatches(given, token))
-          return json(401, { error: "wrong_token" });
-        return new Response(null, { status: 204, headers: { "set-cookie": sessions.signIn() } });
+        const principal = typeof given === "string" ? readers.of(given.trim()) : null;
+        if (principal === null) return json(401, { error: "wrong_token" });
+        const cookie = sessions.signIn(principal);
+        return new Response(null, { status: 204, headers: { "set-cookie": cookie } });
       },
     },
     {

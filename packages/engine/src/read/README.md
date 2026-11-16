@@ -22,8 +22,9 @@ Everything the engine reads goes through this directory, and every read is fence
   it orders, limits or folds, so nothing outside the fence can be ranked, counted or shown.
 
 Whose set a fence reads is the resolver the read's context was made with: the engine's host's (`createEngine`). The
-engine's own is `../host/standalone.ts` over its pool (`openHost(sql)`): the collections the `readable_container` table
-holds for that reader in that org, written by `../store/readable-rows.ts` when a folder is loaded. A reader with no rows reads
+engine's own is `../host/standalone.ts` over its pool and the configuration's grants (`openHost(sql, grants)`): the
+default reader reads the collections the `readable_container` table holds for it, which the loader writes as it loads
+(`../store/readable-rows.ts`); a named reader reads those of the collections its grant names; anyone else reads
 nothing. Nothing binds it: each entry builds its engine with the host, and every read is handed the engine's context.
 
 ## Search

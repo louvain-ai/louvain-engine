@@ -1,10 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createPluginRegistry, defineEngine, definePlugin, source } from "@louvain/engine-core";
+import {
+  createPluginRegistry,
+  DEFAULT_READER,
+  defineEngine,
+  definePlugin,
+  source,
+} from "@louvain/engine-core";
 import { z } from "zod";
 import { IngestSourceRefused, openSource } from "../src/ingest/sources/index.js";
 import type { Writes } from "../src/ingest/writes.js";
 import { ingestDoor } from "../src/server/ingest-route.js";
+import { readerTable } from "../src/server/readers.js";
 
 /**
  * The sources a configuration names, as the engine opens them: two doors are refused, since the server has one; a
@@ -12,7 +19,7 @@ import { ingestDoor } from "../src/server/ingest-route.js";
  * fetch, which refuses an address inside the network. The shipped file's sources are the CLI's to load
  * (`packages/cli/test/engine.test.ts`).
  */
-const READ = "r".repeat(40);
+const READERS = readerTable([{ principal: DEFAULT_READER, token: "r".repeat(40) }]);
 
 test("two doors are refused: the server has one", async () => {
   const door = (name: string, token: string) =>
@@ -34,12 +41,12 @@ test("two doors are refused: the server has one", async () => {
   );
   // The door carries the engine's writes to the ingest it runs; none runs here.
   const writes = { sql: {} as Writes["sql"], hooks: {} };
-  assert.ok(ingestDoor({ plugins: registry, writes }, READ));
+  assert.ok(ingestDoor({ plugins: registry, writes }, READERS));
   const two = await createPluginRegistry(
     defineEngine({ sources: [door("http", "a".repeat(32))(), door("webhook", "b".repeat(32))()] }),
   );
   assert.throws(
-    () => ingestDoor({ plugins: two, writes }, READ),
+    () => ingestDoor({ plugins: two, writes }, READERS),
     /opens 2 ingest doors \(http, webhook\)/,
   );
 });

@@ -41,7 +41,8 @@ To move a bound, set its setting in `.env` and run `./engine down`, then `./engi
 
 ## Limits of this build
 
-- **One reader.** Whoever holds the read token reads every document loaded ([Permissions](permissions.md)).
+- **Grants are whole collections.** A reader reads the collections `engine.config.ts` grants it, never a single
+  document of one, and the engine's own token reads everything ([Permissions](permissions.md)).
 - **A reader that blocks cannot be stopped.** The bounds run in the engine's process; a reader that loops without
   yielding holds it.
 - **The match floor is known for one embedder.** A document matches by meaning only above a floor measured for

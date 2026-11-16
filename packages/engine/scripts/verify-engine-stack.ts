@@ -19,6 +19,7 @@
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
+import { DEFAULT_READER } from "@louvain/engine-core";
 
 let grammarCalls = 0;
 const grammar = createServer((_req, res) => {
@@ -38,7 +39,7 @@ const { embedderFor } = await import("../src/host/embedder.js");
 const { settingsOf } = await import("../src/config/settings.js");
 const { openHost } = await import("../src/host/standalone.js");
 // The open build's engine over the process pool, as an open entry builds it; its embedder is the one the writes ask.
-const host = openHost(store.sql);
+const host = openHost(store.sql, {});
 const engine = createEngine({
   store,
   embedder: embedderFor(host),
@@ -75,7 +76,7 @@ try {
   const [org] = await sql<{ id: string }[]>`select id::text as id from org where slug = 'default'`;
   if (!org) throw new Error("no 'default' workspace: load db/baseline.sql into the database first");
   const orgId = org.id;
-  const principal = "engine-reader";
+  const principal = DEFAULT_READER;
   const id = ulid();
   const text = `The Halden launch moved to March (run ${id}). Priya owns the rollout plan.`;
   const ev = {

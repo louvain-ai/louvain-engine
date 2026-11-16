@@ -1,3 +1,4 @@
+import { type Grants, grantsOf } from "../grants.js";
 import type { Host } from "../host.js";
 import { KINDS } from "./kinds.js";
 import { type Contracts, type Plugin, refuse } from "./plugin.js";
@@ -5,8 +6,8 @@ import { type Contracts, type Plugin, refuse } from "./plugin.js";
 /**
  * What a deployment runs, said once, in code: `engine.config.ts` exports `defineEngine({ … })`. Each kind is a list,
  * run in the order written, so no import order decides it. The environment never names a plugin; it carries
- * addresses, keys and ports, which a plugin's factory reads. Nothing here binds who may read what or how a call is
- * metered: those are the host's, bound in code.
+ * addresses, keys and ports, which a plugin's factory reads. How who may read what is resolved, and how a call is
+ * metered, are the host's, bound in code; `grants` is data the engine's own host reads, never a resolver.
  */
 export type EngineConfig = {
   readonly readers?: readonly Plugin<"fileReader">[];
@@ -20,6 +21,11 @@ export type EngineConfig = {
   readonly answerer?: Plugin<"answerer"> | null;
   /** The engine's own settings, each left out at its default; the engine that runs declares and validates them. */
   readonly settings?: EngineSettings;
+  /**
+   * The collections each named reader may read (`./engine reader add <name>` makes a reader's token). The engine's own
+   * token reads every collection; a reader no grant names reads nothing.
+   */
+  readonly grants?: Grants;
 };
 
 /** Empty here: the engine adds its settings to it (`declare module`), so a configuration is typed by what it runs. */
@@ -32,6 +38,7 @@ const DEFINED = Symbol.for("defineEngine");
 /** Each kind the configuration names, with its plugins in order. Only `defineEngine` makes one. */
 export type Plugins = { readonly [K in keyof Contracts]?: readonly Plugin<K>[] } & {
   readonly settings?: EngineSettings;
+  readonly grants?: Grants;
   readonly [DEFINED]: true;
 };
 
@@ -54,13 +61,17 @@ const FIELDS = {
   surfaces: "surface",
   answerer: "answerer",
 } as const satisfies {
-  [F in Exclude<keyof EngineConfig, "settings">]-?: keyof Contracts;
+  [F in Exclude<keyof EngineConfig, DataField>]-?: keyof Contracts;
 };
+
+/** The fields that hold data rather than plugins: the engine's settings, and who may read which collections. */
+type DataField = "settings" | "grants";
+const DATA_FIELDS: readonly string[] = ["settings", "grants"] satisfies DataField[];
 
 export function defineEngine(config: EngineConfig): Plugins {
   const plugins: { [K in keyof Contracts]?: readonly Plugin<keyof Contracts>[] } = {};
   for (const [field, value] of Object.entries(config)) {
-    if (value === undefined || field === "settings") continue;
+    if (value === undefined || DATA_FIELDS.includes(field)) continue;
     const kind = kindOf(field);
     plugins[kind] = checked(
       field,
@@ -69,8 +80,13 @@ export function defineEngine(config: EngineConfig): Plugins {
     );
   }
   // `checked` proved every plugin's kind is its key, which TypeScript cannot follow through `Object.entries`.
-  const { settings } = config;
-  return { ...plugins, ...(settings && { settings }), [DEFINED]: true } as Plugins;
+  const { settings, grants } = config;
+  return {
+    ...plugins,
+    ...(settings && { settings }),
+    ...(grants && { grants: grantsOf(grants) }),
+    [DEFINED]: true,
+  } as Plugins;
 }
 
 function kindOf(field: string): keyof Contracts {
@@ -80,7 +96,7 @@ function kindOf(field: string): keyof Contracts {
       `"${field}" is a host binding, not a plugin: it is bound in code, never in a configuration`,
     );
   return refuse(
-    `a configuration has no "${field}"; it names ${[...Object.keys(FIELDS), "settings"].join(", ")}`,
+    `a configuration has no "${field}"; it names ${[...Object.keys(FIELDS), ...DATA_FIELDS].join(", ")}`,
   );
 }
 

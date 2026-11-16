@@ -136,7 +136,7 @@ async function load(
 /** The entry points the cases call, each as any reader. */
 async function surface({ engine, sql, readContext, orgId, ids }: Awaited<ReturnType<typeof load>>) {
   const { containerId } = await import("../../src/store/ids.js");
-  const { OPEN_PRINCIPAL } = await import("../../src/store/tenant.js");
+  const { DEFAULT_READER } = await import("@louvain/engine-core");
   const { openTools } = await import("../../src/server/tools/run.js");
   const { shippedPlugins } = await import("../shipped-plugins.js");
   const { retrieverPool } = await import("../../src/search/pool.js");
@@ -147,7 +147,7 @@ async function surface({ engine, sql, readContext, orgId, ids }: Awaited<ReturnT
   const { lookupSource } = await import("../../src/server/tools/lookup.js");
   // The open build's plugins, as its entries start them: the search reads their retrievers.
   const plugins = await shippedPlugins();
-  const runOpenTool = openTools({ ...engine, plugins });
+  const runOpenTool = openTools({ ...engine, plugins })(DEFAULT_READER);
   // The same tools with the stand-in reranker configured, as engine.config.ts would name one, its cut-offs measured.
   const rerankingTool = openTools({
     ...engine,
@@ -158,13 +158,13 @@ async function surface({ engine, sql, readContext, orgId, ids }: Awaited<ReturnT
           ? [{ name: "stand-in", plugin: { ...standInReranker, cutoffs: STAND_IN_CUTOFFS } }]
           : plugins.list(kind)) as typeof plugins.list,
     },
-  });
+  })(DEFAULT_READER);
   const { settings } = engine;
   const pool = { pool: retrieverPool(plugins.list("retriever")), settings };
   const reranking = { pool: retrieverPool(plugins.list("retriever"), standInReranker), settings };
   const owner = (reader: Reader) => ({
     orgId,
-    principal: reader === "everyone" ? OPEN_PRINCIPAL : reader,
+    principal: reader === "everyone" ? DEFAULT_READER : reader,
   });
   /** Collections a call names, as the containers the engine knows them by; none named is every one readable. */
   const containers = (within?: readonly Collection[]) =>

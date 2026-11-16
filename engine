@@ -15,6 +15,7 @@ cd "$ROOT"
 #   up        cmd_up        install and build on the first run, start the services, the reranker and the tool server
 #   ingest    cmd_ingest    load a folder, a JSON Lines file of records, or a configured source (the loader entry)
 #   search    cmd_search    one search, printed (the search entry)
+#   reader    cmd_reader    a reader's token, made, removed or listed with its grant (the reader entry)
 #   reindex   cmd_reindex   rebuild the keyword index (the reindex entry), after a shipped schema upgrade if any
 #   status    cmd_status    what runs, on which ports, how many documents are loaded
 #   app       cmd_app       open the app in a browser, or print its address
@@ -43,11 +44,13 @@ BUILD_STAMP="$ENGINE_PACKAGE/dist/.source-hash"        # written last by a build
 SERVER_ENTRY="packages/cli/src/serve.ts"     # the tool server: /mcp on LOUVAIN_ENGINE_PORT, bearer from the token file
 LOADER_ENTRY="packages/cli/src/ingest.ts"    # ingest: <source> and its request's fields as flags
 SEARCH_ENTRY="packages/cli/src/search.ts"    # one louvain_search_sources call, printed
+READER_ENTRY="packages/cli/src/reader.ts"    # a reader's token: reader add <name>, remove <name>, list
 REINDEX_ENTRY="packages/cli/src/reindex.ts"  # the keyword index rebuilt from the records loaded
 UPGRADES="db/upgrades"                                 # what reindex applies to a database the release before made
 RERANK_ENTRY="packages/cli/src/reranker.ts"  # which reranker engine.config.ts runs: <plugin> <model>, or none
 RERANK_SERVICE="rerank"                      # the local reranker's service (Compose profile "rerank"), started when configured
 TOKEN_FILE="$STATE/token"                    # written by the server at first start; printed as a path, never read out
+READERS_DIR="$STATE/readers"                 # each named reader's token, made by `reader add`; a path, never read out
 DB_PASSWORD_FILE="$STATE/db-password"        # this install's Postgres password, made by the first `up`, never printed
 SIDECAR_TOKEN_FILE="$STATE/sidecar-token"    # this install's sidecar token, made by the first `up`, never printed
 PASSWORD_APPLIED_FILE="$STATE/db-password.applied"     # touched once the database holds the password above
@@ -104,6 +107,17 @@ cmd_search() {
   need "$SEARCH_ENTRY"
   ready_for_entry
   run_ts "$SEARCH_ENTRY" "$@"
+}
+
+# A reader: a token of its own beside the engine's, reading what engine.config.ts grants it. The server reads its
+# readers when it starts, so one that is running is started again after a reader is added or removed.
+cmd_reader() {
+  [ "$#" -ge 1 ] || die "usage: ./engine reader add <name> | remove <name> | list"
+  need "$READER_ENTRY"
+  need_ready
+  state_dir
+  run_ts "$READER_ENTRY" "$@"
+  [ "$1" = list ] || restart_for_readers
 }
 
 # The upgrade and the keyword index: a database the release before made is upgraded in place, then the keyword index is
@@ -227,6 +241,11 @@ Usage: ./engine <command>
   search "<words>"         Print the matching documents, best first (--full-ids prints whole ids;
                            --question "<question>" also searches the question the words were chosen for).
                            ./engine search "When does the lease renew?"
+  reader add <name>        Make a reader its own token, in .engine/readers/<name>; it reads the collections
+  reader remove <name>     engine.config.ts grants it (grants: { <name>: ["<collection>"] }) and nothing else.
+  reader list              remove deletes the token; list shows each reader, its token file and what it reads. A
+                           running tool server is started again to take the change.
+                           ./engine reader add alice
   reindex                  Rebuild the keyword index from the documents loaded, keeping them; when a release ships a
                            schema upgrade, apply it in place first. Run once after an upgrade that asks for it.
                            ./engine reindex
@@ -1082,13 +1101,14 @@ server_up() {
   server_pid >/dev/null && curl -s -o /dev/null --max-time 2 "$SERVER_URL" 2>/dev/null
 }
 
-# A running server holds from its start the install's secrets, the build and the settings, so one of them newer than
-# its pid file means it runs old code or old values. (.env is compared by its time alone, never read here.)
+# A running server holds from its start the install's secrets, the build, the settings and the readers' tokens, so one
+# of them newer than its pid file means it runs old code or old values. (.env is compared by its time alone, never read
+# here, and so is the readers' directory, which a reader added or removed makes newer.)
 server_stale() {
   local held pid
   pid="$(server_pid)" || return 1
   runs_this_release "$pid" || return 0
-  for held in "$DB_PASSWORD_FILE" "$SIDECAR_TOKEN_FILE" "$BUILD_STAMP" "$ENV_FILE" engine.config.ts "$CONFIG" "$RERANK_STATE"; do
+  for held in "$DB_PASSWORD_FILE" "$SIDECAR_TOKEN_FILE" "$BUILD_STAMP" "$ENV_FILE" engine.config.ts "$CONFIG" "$RERANK_STATE" "$READERS_DIR"; do
     [ ! -e "$held" ] || [ ! "$held" -nt "$PID_FILE" ] || return 0
   done
   return 1
@@ -1117,6 +1137,15 @@ restart_if_stale() {
   server_up && server_stale || return 0
   stop_server >/dev/null
   say "Tool server: started again; it was running from before the build, settings or secrets changed."
+}
+
+# A server started before a reader was added or removed reads the old readers: it is started again, on the database
+# and secrets `up` gives it, and one that is not running is left so.
+restart_for_readers() {
+  server_up || return 0
+  ready_for_database
+  restart_if_stale
+  server_up || launch_server
 }
 
 # Start the tool server in the background and wait up to a minute for it to answer; it serves the app unless
@@ -1273,6 +1302,7 @@ case "${1:-help}" in
   up) shift; cmd_up "$@" ;;
   ingest) shift; cmd_ingest "$@" ;;
   search) shift; cmd_search "$@" ;;
+  reader) shift; cmd_reader "$@" ;;
   reindex) shift; cmd_reindex "$@" ;;
   status) shift; cmd_status "$@" ;;
   app) shift; cmd_app "$@" ;;

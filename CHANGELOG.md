@@ -16,7 +16,8 @@ tools an AI agent calls over MCP.
 
 - **Install and run.** `./engine up` builds the workspace, makes this install's secrets (never printed), starts
   Postgres with pgvector and the embedding and keyword sidecars with Docker Compose, loads the schema and starts the
-  tool server. `ingest`, `search`, `reindex`, `status`, `app`, `logs` and `down` cover the rest of an install's life.
+  tool server. `ingest`, `search`, `reader`, `reindex`, `status`, `app`, `logs` and `down` cover the rest of an
+  install's life.
 - **Ingest.** Folders, structured records and an HTTP ingest endpoint (off unless configured). Files are read by
   `reader-documents` (PDF, Word, Excel, PowerPoint, OpenDocument, EPUB, RTF, HTML, CSV, mail) and `reader-text`
   (plain text, Markdown), cut into passages, embedded and indexed for keywords. Running it again on a folder adds
@@ -25,8 +26,10 @@ tools an AI agent calls over MCP.
   sidecar (`BAAI/bge-reranker-v2-m3`) or Cohere's Rerank API. A search with no matching document says so
   (`matched: false`) rather than returning the nearest noise.
 - **A permission fence on every read.** Each read resolves the reader's readable collections first and applies them
-  inside every statement it sends, so no document outside them is ranked, counted or returned. This release binds one
-  reader, who reads everything loaded: it is not multi-user.
+  inside every statement it sends, so no document outside them is ranked, counted or returned.
+- **Readers and grants.** `./engine reader add <name>` gives a person or an agent a token of its own, and
+  `engine.config.ts` grants each reader collections (`grants: { alice: ["handbook"] }`). A reader reads its granted
+  collections and nothing else, over MCP and in the app; the engine's own token reads everything loaded.
 - **Agent tools over MCP**, at `/mcp` behind a bearer token: `louvain_search_sources` (rank documents),
   `louvain_lookup_source` (open the document an identifier names) and `louvain_read_source` (read one document whole,
   in pages).

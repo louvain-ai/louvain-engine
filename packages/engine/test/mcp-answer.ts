@@ -1,8 +1,9 @@
-import type { Reading } from "@louvain/engine-core";
+import { DEFAULT_READER, type Reading } from "@louvain/engine-core";
 import { settingsOf } from "../src/config/settings.js";
 import { mcp } from "../src/plugins/surface-mcp/index.js";
 import { browserSessions } from "../src/server/browser-session.js";
 import type { ToolRun } from "../src/server/protocol.js";
+import { readerTable } from "../src/server/readers.js";
 import { admit, respond } from "../src/server/respond.js";
 import { routeTable } from "../src/server/routes.js";
 import { listedTools } from "../src/server/tools/schema.js";
@@ -42,7 +43,8 @@ export async function askServer(
     ...(carries ? { body: asked.body } : {}),
   });
   const sessions = browserSessions(token, { port: 0 });
-  const answering = { token, writeToken: null, sessions, routes, read };
+  const readers = readerTable([{ principal: DEFAULT_READER, token }]);
+  const answering = { readers, writeToken: null, sessions, routes, reading: () => read };
   // Admitted once, before the body, as the server does.
   const admission = admit(answering, asked.method, asked.path.split("?")[0] ?? "/", headers);
   const response = await respond(request, answering, admission);

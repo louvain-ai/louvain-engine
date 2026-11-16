@@ -171,7 +171,7 @@ describe("a newcomer's first errors, each one exact sentence", () => {
     assert.throws(
       () => defineEngine({ translator: [] } as EngineConfig),
       refusal(
-        `a configuration has no "translator"; it names readers, reranker, sources, surfaces, answerer, settings`,
+        `a configuration has no "translator"; it names readers, reranker, sources, surfaces, answerer, settings, grants`,
       ),
     );
     assert.throws(
