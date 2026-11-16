@@ -3,8 +3,9 @@
 `ts_rank` scores every row matching any term before it sorts, so its cost grows with the matches; Tantivy keeps postings
 sorted for top-k and answers in milliseconds. The fence is inside the query (`bm25_query._fence`), never a post-filter,
 and the engine re-reads every hit under its own fence. The index stores the ids and each record's text, so a hit carries
-a snippet of it; what a citation quotes is still Postgres's. One writer behind a lock; searches read the last reloaded
-snapshot concurrently. It never logs a document's text or a query.
+a snippet of it; what a citation quotes is still Postgres's. Each workspace has an index of its own (`bm25_orgs.py`),
+with one writer behind its lock; searches read the last reloaded snapshot concurrently. It never logs a document's text
+or a query.
 
 The server is this file, and the one place a setting is read: the index's shape is `bm25_schema.py`, the index on disk
 and its writer `bm25_store.py`, the query and the fence `bm25_query.py`, the tiers of `strategy: "last"` `bm25_last.py`
@@ -22,8 +23,8 @@ import sidecar_auth
 from bm25_last import search_last
 from bm25_listing import ListingUnsupported, listing
 from bm25_query import DEFAULT_LIMIT, MAX_LIMIT, FilterUnsupported, search
-from bm25_schema import DOCUMENT
-from bm25_store import Knobs, _instant, delete_docs, delete_org, index_docs, num_docs, open_store
+from bm25_orgs import Orgs
+from bm25_store import Knobs, _instant
 
 
 class DualStackServer(ThreadingHTTPServer):
@@ -60,7 +61,7 @@ BM25_DIR = setting("BM25_DIR", "./.bm25-index")
 BM25_HEAP_MB = int(setting("BM25_HEAP_MB", "512"))
 # The shared bearer (`sidecar_auth.py`). Empty is open, for a local run.
 SIDECAR_TOKEN = setting("SIDECAR_TOKEN", "")
-STORE = open_store(
+ORGS = Orgs(
     BM25_DIR,
     BM25_HEAP_MB,
     Knobs(
@@ -71,6 +72,11 @@ STORE = open_store(
         exact_boost=float(setting("BM25_EXACT_BOOST", "0")),
     ),
 )
+
+
+# What an org with no index answers: what `search_last` and `listing` answer a reader who can read nothing.
+NOTHING_LAST = {"hits": [], "asked": 0, "completed": [], "corrected": [], "dropped": []}
+NOTHING_LISTED = {"ids": [], "snippets": [], "total": 0, "facets": [], "facetsBounded": False}
 
 
 def _finite(v: object) -> bool:
@@ -95,8 +101,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/healthz":
             self._send(
                 200,
-                {"ok": True, "role": "bm25", "docs": num_docs(STORE), "dir": os.path.abspath(BM25_DIR),
-                 "rebuild": STORE.rebuild, "unreadable": STORE.unreadable},
+                {"ok": True, "role": "bm25", "dir": os.path.abspath(BM25_DIR), **ORGS.health()},
             )
         elif self._authorized():
             self._send(404, {"error": "not found"})
@@ -113,9 +118,6 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802 - stdlib's casing
         if not self._authorized():
             return
-        if STORE.unreadable:
-            self._send(409, {"error": "index_unreadable", "rebuild": True})
-            return
         try:
             if self.path == "/index":
                 req = self._body()
@@ -129,27 +131,28 @@ class Handler(BaseHTTPRequestHandler):
                     ):
                         self._send(400, {"error": "each doc needs id, org, container, occurredAt, text"})
                         return
-                if not STORE.has["listing"] and any(doc.get("kind") == DOCUMENT for doc in docs):
-                    # Never stored as a passage: the engine says once to reindex.
-                    self._send(409, {"error": "listing_unsupported"})
+                refused = ORGS.refusal(docs)
+                if refused:
+                    # The engine says once to reindex: a document entry is never stored as a passage instead.
+                    self._send(409, {"error": refused, **({"rebuild": True} if refused == "index_unreadable" else {})})
                     return
                 commit = req.get("commit", True) is not False
-                n = index_docs(STORE, docs, commit)
-                self._send(200, {"indexed": n, "committed": commit, "boot": STORE.boot})
+                n = ORGS.index(docs, commit)
+                self._send(200, {"indexed": n, "committed": commit, "boot": ORGS.boot})
             elif self.path == "/delete":
                 req = self._body()
                 ids = req.get("ids")
                 if not isinstance(ids, list) or not all(isinstance(i, str) and i for i in ids):
                     self._send(400, {"error": "ids must be a list of non-empty strings"})
                     return
-                self._send(200, {"deleted": delete_docs(STORE, ids)})
+                self._send(200, {"deleted": ORGS.delete(ids)})
             elif self.path == "/delete_org":
                 req = self._body()
                 org = req.get("org")
                 if not isinstance(org, str) or not org:
                     self._send(400, {"error": "org is required"})
                     return
-                delete_org(STORE, org)
+                ORGS.delete_org(org)
                 self._send(200, {"deleted": True})
             elif self.path == "/list":
                 self._list(self._body())
@@ -198,14 +201,22 @@ class Handler(BaseHTTPRequestHandler):
                 if "figures" in narrow and not isinstance(narrow["figures"], bool):
                     self._send(400, {"error": "figures must be true or false"})
                     return
+                store = ORGS.reading(org)
+                if store is not None and store.unreadable:
+                    self._send(409, {"error": "index_unreadable", "rebuild": True})
+                    return
+                last = req.get("strategy") == "last"
+                if store is None:
+                    # An org with no index holds nothing: the empty answer, and a read never makes an index.
+                    self._send(200, NOTHING_LAST if last else {"hits": [], "tookMs": 0})
+                    return
+                boxes, query = [str(c) for c in containers], str(req.get("query") or "")
                 try:
-                    if req.get("strategy") == "last":
-                        self._send(200, search_last(STORE, org, [str(c) for c in containers], str(req.get("query") or ""),
-                                                    limit, as_of, narrow))
+                    if last:
+                        self._send(200, search_last(store, org, boxes, query, limit, as_of, narrow))
                         return
                     hits, took_ms = search(
-                        STORE,                        org, [str(c) for c in containers], str(req.get("query") or ""), limit, as_of, title_boost,
-                        narrow, exact_boost, order,
+                        store, org, boxes, query, limit, as_of, title_boost, narrow, exact_boost, order
                     )
                 except FilterUnsupported as err:
                     self._send(409, {"error": "filter_unsupported", "field": str(err)})
@@ -239,8 +250,15 @@ class Handler(BaseHTTPRequestHandler):
             if req.get(key) is not None and (not isinstance(req.get(key), int) or isinstance(req.get(key), bool)):
                 self._send(400, {"error": f"{key} must be an integer"})
                 return
+        store = ORGS.reading(org)
+        if store is not None and store.unreadable:
+            self._send(409, {"error": "index_unreadable", "rebuild": True})
+            return
+        if store is None:
+            self._send(200, NOTHING_LISTED)
+            return
         try:
-            self._send(200, listing(STORE, org, [str(c) for c in containers], req))
+            self._send(200, listing(store, org, [str(c) for c in containers], req))
         except ListingUnsupported:
             self._send(409, {"error": "listing_unsupported"})
 
@@ -251,7 +269,7 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     print(
         f"louvain bm25 sidecar on :{PORT} (dir {os.path.abspath(BM25_DIR)}, "
-        f"heap {BM25_HEAP_MB}MB, {num_docs(STORE)} docs, {sidecar_auth.describe(SIDECAR_TOKEN)})",
+        f"heap {BM25_HEAP_MB}MB, {ORGS.health()['docs']} docs, {sidecar_auth.describe(SIDECAR_TOKEN)})",
         flush=True,
     )
     serve(Handler, PORT)

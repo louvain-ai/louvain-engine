@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
-import { fuse } from "../src/fuse.js";
+import { fuse } from "../src/search/fuse.js";
 
 const key = (row: string) => row;
 

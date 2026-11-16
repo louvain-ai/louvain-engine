@@ -192,7 +192,7 @@ file an item names. Items carry only content: no caller can send a permission, a
 
 ## Write a source of your own
 
-1. Implement **`IngestSource`** from `packages/engine-core/src/ingest-sources/contract.ts`: a collection, an origin,
+1. Implement **`IngestSource`** from `packages/engine-core/src/ingest/source.ts`: a collection, an origin,
    whether it lists everything (`"all"`) or only what it sends (`"some"`), and an async iterable of items.
 2. Run it as a script that prints JSON Lines, and pipe it into **`./engine ingest records --records -`**.
 

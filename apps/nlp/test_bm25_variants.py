@@ -20,7 +20,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from test_bm25 import HOST, check, free_port, request, stop, wait_healthy  # noqa: E402
+from test_bm25 import HOST, check, free_port, org_dir, request, stop, wait_healthy  # noqa: E402
 
 AT = "2025-06-01T00:00:00Z"
 DOCS = [
@@ -61,7 +61,7 @@ def start(tmpdir: str, variants: bool, old_schema: str = "") -> tuple[subprocess
         sb.add_text_field("title", stored=False, tokenizer_name="en_stem", index_option="position")
         if old_schema == "header":
             sb.add_text_field("header", stored=False, tokenizer_name="en_stem", index_option="position")
-        tantivy.Index(sb.build(), path=tmpdir, reuse=True)
+        tantivy.Index(sb.build(), path=org_dir(tmpdir), reuse=True)
     proc = subprocess.Popen(
         [sys.executable, str(Path(__file__).parent / "bm25.py")],
         env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,

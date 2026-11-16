@@ -3,10 +3,10 @@
  * `plugins.test.ts`: an `@ts-expect-error` that stops being an error fails that compile too, so each line below holds.
  */
 import { z } from "zod";
-import type { FileReader } from "../src/file-readers/contract.js";
 import { defineEngine } from "../src/plugins/config.js";
 import { definePlugin } from "../src/plugins/plugin.js";
 import { createPluginRegistry } from "../src/plugins/registry.js";
+import type { FileReader } from "../src/readers/contract.js";
 
 const registry = await createPluginRegistry(defineEngine({}));
 

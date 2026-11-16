@@ -31,8 +31,10 @@ pooling and width, and the engine's embedding client reports a sidecar whose spa
 
 One entry per document, with its title and text. The fence is inside the query: a search names the containers the
 caller may read, and the index never returns a document outside them. The index lives in the `bm25index` volume;
-`/index` adds or replaces a document and `/search` returns ranked document ids. `bm25.py` is the server and reads
-the settings; the index's fields are `bm25_schema.py`, the index on disk `bm25_store.py`, the fence and `/search`
+`/index` adds or replaces a document and `/search` returns ranked document ids. Each workspace has an index of its
+own (`bm25_orgs.py`), so another workspace's documents never move a search's ranking or snippets; an index from
+before this layout asks for a rebuild, which `./engine up` makes. `bm25.py` is the server and reads the settings;
+the index's fields are `bm25_schema.py`, one workspace's index on disk `bm25_store.py`, the fence and `/search`
 `bm25_query.py`, `strategy: "last"` `bm25_last.py` and `/list` `bm25_listing.py`.
 
 ## Tests

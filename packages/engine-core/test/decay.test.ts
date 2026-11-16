@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { decayed } from "../src/decay.js";
+import { decayed } from "../src/search/decay.js";
 
 const DAY = 86_400_000;
 const now = Date.parse("2026-01-15T12:00:00Z");

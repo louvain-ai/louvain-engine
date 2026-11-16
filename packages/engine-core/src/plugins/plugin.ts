@@ -1,7 +1,7 @@
 import { prettifyError, type z } from "zod";
 import type { Answerer } from "../ask/answerer.js";
-import type { FileReader } from "../file-readers/contract.js";
-import type { Source } from "../ingest-sources/contract.js";
+import type { Source } from "../ingest/source.js";
+import type { FileReader } from "../readers/contract.js";
 import type { Reranker } from "../search/reranker.js";
 import type { Retriever } from "../search/retriever.js";
 import type { NotReady } from "./kinds.js";

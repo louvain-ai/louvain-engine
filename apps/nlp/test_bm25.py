@@ -27,7 +27,17 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from bm25_orgs import dir_of  # noqa: E402
+
 HOST = "127.0.0.1"
+
+
+def org_dir(root: str, org: str = "o1") -> str:
+    """Where the sidecar keeps one org's index under `root` (`bm25_orgs.py`), made, for a test that builds one first."""
+    path = Path(root) / "orgs" / dir_of(org)
+    path.mkdir(parents=True, exist_ok=True)
+    return str(path)
 
 
 def free_port() -> int:

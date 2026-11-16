@@ -2,7 +2,7 @@
  * The fusion guarantees that are types, compiled and never run by `fuse.test.ts`: an `@ts-expect-error` that stops
  * being an error fails that compile, so each line below holds.
  */
-import { fuse } from "../src/fuse.js";
+import { fuse } from "../src/search/fuse.js";
 
 const lists = [{ leg: "vector", rows: [{ id: "a", score: 0.9 }] }];
 const key = (row: { id: string }) => row.id;

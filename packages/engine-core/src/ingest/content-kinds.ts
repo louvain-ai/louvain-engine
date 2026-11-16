@@ -1,4 +1,4 @@
-import { keyOfRecord, type RecordRef } from "./plain.js";
+import { keyOfRecord, type RecordRef } from "../plain.js";
 
 /**
  * The kinds that carry CONTENT: text a person wrote, which the engine reads, cuts into passages and cites.

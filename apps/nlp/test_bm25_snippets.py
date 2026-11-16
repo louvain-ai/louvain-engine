@@ -20,7 +20,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from test_bm25 import check, request, stop  # noqa: E402
+from test_bm25 import check, org_dir, request, stop  # noqa: E402
 from test_bm25_upgrade import server  # noqa: E402
 
 AT = "2026-03-01T10:00:00Z"
@@ -68,7 +68,7 @@ def main() -> None:
         Path(older).mkdir()
         here = str(Path(__file__).parent)
         make = (f"import os, sys; os.environ['LOUVAIN_BM25_DIR'] = {older + '-scratch'!r}; sys.path.insert(0, {here!r}); "
-                f"import bm25_schema, tantivy; tantivy.Index(bm25_schema._schema(stored_text=False), path={older!r})")
+                f"import bm25_schema, tantivy; tantivy.Index(bm25_schema._schema(stored_text=False), path={org_dir(older)!r})")
         subprocess.run([sys.executable, "-c", make], check=True, capture_output=True)
         proc, base = server(older)
         try:

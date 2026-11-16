@@ -18,7 +18,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 
 sys.path.insert(0, str(Path(__file__).parent))
-from test_bm25 import HOST, check, free_port, request, stop, wait_healthy  # noqa: E402
+from test_bm25 import HOST, check, free_port, org_dir, request, stop, wait_healthy  # noqa: E402
 
 
 def doc(i: str, at: str, apps: list[str], org: str = "o1", container: str = "c1") -> dict:
@@ -52,7 +52,7 @@ def start(tmpdir: str, without_app: bool = False) -> tuple[subprocess.Popen, str
         sb.add_text_field("title", stored=False, tokenizer_name="en_stem", index_option="position")
         sb.add_text_field("header", stored=False, tokenizer_name="en_stem", index_option="position")
         sb.add_text_field("variants", stored=False, tokenizer_name="en_stem", index_option="basic")
-        tantivy.Index(sb.build(), path=tmpdir, reuse=True)
+        tantivy.Index(sb.build(), path=org_dir(tmpdir), reuse=True)
     proc = subprocess.Popen(
         [sys.executable, str(Path(__file__).parent / "bm25.py")],
         env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,

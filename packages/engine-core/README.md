@@ -13,9 +13,9 @@ The contracts the engine reads (the ingest event and its kinds, a source's row, 
 and an application built on the engine re-exports them rather than defining its own, so one definition serves both. The
 text helpers (HTML stripping, decoding character references) are the file readers' own: `@louvain/doctext/text`.
 
-`ingest-sources/contract.ts` and `item.ts` are the contract every way into the engine is written against: an ingest
+`ingest/source.ts` and `ingest/item.ts` are the contract every way into the engine is written against: an ingest
 source names a collection and yields items, each with a key and either text or a file to read. What the engine then
-accepts of an item is the engine's (`packages/engine/src/open/ingest/check-item.ts`). `file-readers/contract.ts` is the
+accepts of an item is the engine's (`packages/engine/src/open/ingest/check-item.ts`). `readers/contract.ts` is the
 contract a file reader is written against.
 
 `host.ts` is the one type a deployment binds: every seam (who may read what, how a record is shown, how a paid call is

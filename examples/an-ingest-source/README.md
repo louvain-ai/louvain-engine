@@ -2,7 +2,7 @@
 
 `changelog.ts` is a whole ingest source: every release in a Markdown changelog becomes one item, keyed by its version
 and dated by its heading. It is written against the engine's public contract (`IngestSource` in
-`packages/engine-core/src/ingest-sources/contract.ts`) and touches nothing else in the engine. Registered as a plugin
+`packages/engine-core/src/ingest/source.ts`) and touches nothing else in the engine. Registered as a plugin
 (`IngestSourcePlugin`), the same source also has a name and a schema for its settings, which is how the engine's own
 three are written.
 

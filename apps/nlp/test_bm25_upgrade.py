@@ -5,8 +5,8 @@ Self-contained, like `test_bm25.py`, whose helpers it uses: a real server on a f
     apps/nlp/.venv/bin/python apps/nlp/test_bm25_upgrade.py
 
 - The sidecar STARTS on it, never exits: the keyword index is derived, and `./engine up` rebuilds it from the records.
-- `/healthz` says `rebuild: true` and `unreadable: true`; every other route answers 409 `index_unreadable`, which a
-  client reads as the index being down, so nothing reads or writes the old files.
+- `/healthz` says `rebuild: true` and `unreadable: true`; every route asked for that org's index answers 409
+  `index_unreadable`, which a client reads as the index being down, so nothing reads or writes the old files.
 - The files are left as they were: the rebuild empties the directory, not the sidecar.
 - Emptied, the directory opens with this release's schema and asks for nothing.
 """
@@ -19,7 +19,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 
 sys.path.insert(0, str(Path(__file__).parent))
-from test_bm25 import HOST, check, free_port, request, stop, wait_healthy  # noqa: E402
+from test_bm25 import HOST, check, free_port, org_dir, request, stop, wait_healthy  # noqa: E402
 
 
 def server(index_dir: str) -> tuple[subprocess.Popen, str]:
@@ -42,9 +42,9 @@ def main() -> None:
         make = ("import tantivy; sb = tantivy.SchemaBuilder(); "
                 "sb.add_text_field('id', stored=True, tokenizer_name='raw'); "
                 "sb.add_text_field('completion', stored=False); "
-                f"tantivy.Index(sb.build(), path={made!r})")
+                f"tantivy.Index(sb.build(), path={org_dir(made)!r})")
         subprocess.run([sys.executable, "-c", make], check=True, capture_output=True)
-        before = sorted(p.name for p in Path(made).iterdir())
+        before = sorted(p.name for p in Path(org_dir(made)).iterdir())
 
         proc, base = server(made)
         try:
@@ -52,7 +52,9 @@ def main() -> None:
             check("it starts on an index it cannot open", proc.poll() is None)
             check("and asks for the rebuild", health["rebuild"] is True and health["unreadable"] is True, str(health))
             for path, body in (("/search", {"org": "o1", "containers": ["c1"], "query": "x"}),
-                               ("/index", {"docs": []}), ("/list", {"org": "o1", "containers": ["c1"]})):
+                               ("/index", {"docs": [{"id": "e1", "org": "o1", "container": "c1",
+                                                     "occurredAt": "2026-01-01T00:00:00Z", "text": "x"}]}),
+                               ("/list", {"org": "o1", "containers": ["c1"]})):
                 try:
                     request(base, "POST", path, body)
                     check(f"{path} is refused", False)
@@ -62,7 +64,7 @@ def main() -> None:
             stop(proc)
             boot = proc.stdout.read().decode() if proc.stdout else ""
         check("it says so at boot", "an earlier release built it" in boot, boot[-300:])
-        check("and leaves the files as they were", sorted(p.name for p in Path(made).iterdir()) == before)
+        check("and leaves the files as they were", sorted(p.name for p in Path(org_dir(made)).iterdir()) == before)
 
         # What `./engine up`'s rebuild does: the directory emptied, then the sidecar started again.
         shutil.rmtree(made)

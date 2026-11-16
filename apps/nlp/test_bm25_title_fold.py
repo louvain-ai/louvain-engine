@@ -20,7 +20,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from test_bm25 import HOST, check, free_port, request, stop, wait_healthy  # noqa: E402
+from test_bm25 import HOST, check, free_port, org_dir, request, stop, wait_healthy  # noqa: E402
 
 AT = "2025-06-01T00:00:00Z"
 DOCS = [
@@ -88,8 +88,8 @@ def older() -> None:
         made = str(Path(tmpdir) / "unfolded")
         here = str(Path(__file__).parent)
         make = (f"import os, sys; os.environ['LOUVAIN_BM25_DIR'] = {made + '-scratch'!r}; sys.path.insert(0, {here!r}); "
-                f"import bm25_schema, tantivy; tantivy.Index(bm25_schema._schema(folded=False, stored_text=False), path={made!r})")
-        Path(made).mkdir()
+                f"import bm25_schema, tantivy; tantivy.Index(bm25_schema._schema(folded=False, stored_text=False), path={org_dir(made)!r})")
+        Path(made).mkdir(exist_ok=True)
         subprocess.run([sys.executable, "-c", make], check=True, capture_output=True)
         proc, base = start(made, False)
         try:

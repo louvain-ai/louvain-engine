@@ -1,4 +1,5 @@
-"""The keyword index on disk (`bm25.py`): opened with the newest schema it was built with, and its one writer.
+"""One workspace's keyword index on disk (`bm25_orgs.py`): opened with the newest schema it was built with, and its
+one writer while a write is pending.
 
 `open_store` returns every fact a read or a write depends on as one value, a `Store`: the schema and fields the index
 holds, the query analyzers that match it and the settings the server read (`Knobs`). Nothing here reads the
@@ -6,7 +7,6 @@ environment; `bm25.py` does, once."""
 
 import os
 import threading
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -55,13 +55,11 @@ class Store:
     # query-language parser.
     exact: tantivy.TextAnalyzer
     query: tantivy.TextAnalyzer
-    writer: tantivy.IndexWriter
     heap: int
+    # Open only while a write is pending, from its first add to its commit: an idle writer holds its heap and a file,
+    # about 4 MB an index against a quarter of one for the reader alone (200 indexes: 908 MB against 69 MB).
+    writer: tantivy.IndexWriter | None = None
     lock: threading.Lock = field(default_factory=threading.Lock)
-    # Which process the writer is. An add sent with `commit: false` waits in this process's writer and dies with it; a
-    # client that adds, then commits in a separate request, compares the boot id of the two answers, so a restart
-    # between them is a retry and never a document marked indexed that the index lost.
-    boot: str = field(default_factory=lambda: uuid.uuid4().hex)
 
     @property
     def rebuild(self) -> bool:
@@ -154,7 +152,7 @@ def open_store(path: str, heap_mb: int, knobs: Knobs) -> Store:
     return Store(
         schema=schema, index=index, has=has, kind=kind, folded=folded, snippets=snippets, unreadable=unreadable,
         knobs=knobs, exact=exact, query=_analyzer(stem=True, fold=folded, cap=False),
-        writer=_writer(index, heap_mb * 1024 * 1024), heap=heap_mb * 1024 * 1024,
+        heap=heap_mb * 1024 * 1024,
     )
 
 
@@ -166,17 +164,22 @@ def open_store(path: str, heap_mb: int, knobs: Knobs) -> Store:
 # ended when the next search ran. So the writer indexes on ONE thread, which puts a batch in one segment, in order, and
 # measured faster here (2,000 documents in batches of 50: 8 s against 45 s on the automatic count, whose every commit
 # flushes a segment per thread); and every commit waits for the merges it started.
-def _writer(index: tantivy.Index, heap: int) -> tantivy.IndexWriter:
-    return index.writer(heap_size=heap, num_threads=1)
+def _writing(ix: Store) -> tantivy.IndexWriter:
+    """The index's writer, opened for the write at hand. Called under `ix.lock`."""
+    if ix.writer is None:
+        ix.writer = ix.index.writer(heap_size=ix.heap, num_threads=1)
+    return ix.writer
 
 
 def _commit(ix: Store) -> None:
-    """Commit, let every merge the commit started finish, and reload. tantivy's Python binding waits for its merging
-    threads only by dropping the writer, so a new one is opened in its place. Called under `ix.lock`, with nothing
-    uncommitted in the writer."""
+    """Commit what the writer holds, let every merge the commit started finish, and reload; the writer is dropped,
+    since tantivy's Python binding waits for its merging threads only by dropping it, and the next write opens one.
+    Called under `ix.lock`. No writer: nothing pending, nothing to do."""
+    if ix.writer is None:
+        return
     ix.writer.commit()
     ix.writer.wait_merging_threads()
-    ix.writer = _writer(ix.index, ix.heap)
+    ix.writer = None
     # Reads use the snapshot of the last reload, not the writer's view: reloaded here, a committed batch is visible to
     # `/search` and to `/healthz`'s count at once.
     ix.index.reload()
@@ -204,6 +207,12 @@ def num_docs(ix: Store) -> int:
     return ix.index.searcher().num_docs
 
 
+def commit(ix: Store) -> None:
+    """Commit the index's pending adds, if it has any (`bm25_orgs.py`, a group commit)."""
+    with ix.lock:
+        _commit(ix)
+
+
 def index_docs(ix: Store, docs: list[dict], commit: bool) -> int:
     """Upsert semantics: delete whatever already carries this id, then add.
 
@@ -214,10 +223,11 @@ def index_docs(ix: Store, docs: list[dict], commit: bool) -> int:
     batch's delete-then-add of the same id into an unpredictable order.
     """
     with ix.lock:
+        writer = _writing(ix)
         for doc in docs:
             doc_id = str(doc["id"])
             document = ix.has["listing"] and doc.get("kind") == DOCUMENT
-            ix.writer.delete_documents_by_term("id", doc_id)
+            writer.delete_documents_by_term("id", doc_id)
             d = tantivy.Document()
             d.add_text("id", doc_id)
             d.add_text("org", str(doc["org"]))
@@ -254,7 +264,7 @@ def index_docs(ix: Store, docs: list[dict], commit: bool) -> int:
                 d.add_integer("modified", _to_unix_seconds(str(doc.get("modified") or doc["occurredAt"])))
                 d.add_text("facet_app", str(doc.get("app") or ""))
                 d.add_text("facet_container", str(doc["container"]))
-            ix.writer.add_document(d)
+            writer.add_document(d)
         if commit:
             _commit(ix)
     return len(docs)
@@ -267,18 +277,16 @@ def delete_docs(ix: Store, ids: list[str]) -> int:
     re-read under the fence anyway, so a missed delete costs a miss, never a leak; this keeps the index a mirror.
     """
     with ix.lock:
+        writer = _writing(ix)
         for doc_id in ids:
-            ix.writer.delete_documents_by_term("id", str(doc_id))
+            writer.delete_documents_by_term("id", str(doc_id))
         _commit(ix)
     return len(ids)
 
 
-def delete_org(ix: Store, org: str) -> None:
-    """Withdraw every document of one org with one exact term delete on `org`'s raw field.
-
-    Bounded whatever the org's size, and it needs no ids, which Postgres no longer holds once the org is deleted.
-    Committed and reloaded at once, like every other write.
-    """
+def close(ix: Store) -> None:
+    """Drop the index's writer, if one is open, once its merges end, so its directory can go (`bm25_orgs.py`)."""
     with ix.lock:
-        ix.writer.delete_documents_by_term("org", org)
-        _commit(ix)
+        if ix.writer is not None:
+            ix.writer.wait_merging_threads()
+            ix.writer = None
