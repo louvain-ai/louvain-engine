@@ -3,12 +3,12 @@
 #
 # torch is required here: the default model has no ONNX export worth trusting. On macOS arm64, `pip install torch`
 # installs the Metal build directly.
-torch==2.14.1
+torch==2.15.0
 # The transformers that SAVED a custom Qwen3-Reranker checkpoint (5.22.2): 4.57.6 cannot read its
 # tokenizer_config (it asks for protobuf, then fails on the saved special-token list), and 5.22.2 loads it with no
 # protobuf. bge-reranker-v2-m3 scores identically on 4.57.6 and 5.22.2, so the newer one serves both kinds.
 transformers==5.22.2
 # `BAAI/bge-reranker-v2-m3` tokenizes with an XLM-RoBERTa vocabulary, which
 # needs sentencepiece; none of the other sidecars load a model that does.
-sentencepiece==0.2.2
+sentencepiece==0.2.3
 numpy==2.5.4
