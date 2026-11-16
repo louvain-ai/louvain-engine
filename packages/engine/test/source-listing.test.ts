@@ -1,13 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { SOURCE_COUNT_CAP } from "@louvain/engine-core";
-import {
-  boundedFacets,
-  boundedTotal,
-  COUNT_LIMIT,
-  WALK_LIMIT,
-} from "../src/read/listing/bounds.js";
+import { boundedFacets, boundedTotal } from "../src/read/listing/bounds.js";
 import { emptySearch } from "../src/read/listing/empty.js";
+import { COUNT_LIMIT, WALK_LIMIT } from "../src/read/listing/limits.js";
 import { sourceSort } from "../src/read/listing/order.js";
 
 test("a total past the cap is reported as the cap, flagged, never as the number seen", () => {

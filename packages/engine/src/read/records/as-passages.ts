@@ -1,9 +1,10 @@
 import type { Viewer } from "@louvain/engine-core";
-import { instantOf } from "../context.js";
+import { bounded } from "../bounded.js";
 import { firstChunkRows } from "../documents/rows.js";
-import { bounded, fence, type ReadContext } from "../fence.js";
+import { fence, type ReadContext } from "../fence.js";
 import type { DocumentFilters } from "../filters.js";
 import { hooksOf } from "../hooks.js";
+import { instantOf } from "../instant.js";
 import { revisionsInNarrowing } from "../keyword/records-in-narrowing.sql.js";
 import { passagesById } from "../passages/by-id.js";
 import { stillCurrent } from "../passages/filter.js";
@@ -32,7 +33,7 @@ export async function revisionsAsPassages(
   const reader = await fence(context, viewer, containers);
   const ids = [...new Set(ask.recordIds)];
   if (!reader || ids.length === 0) return new Map();
-  const current = await stillCurrent(context, reader, ids, ask.asOf);
+  const current = await stillCurrent(context, { fence: reader, ids: ids, asOf: ask.asOf });
   const kept = await bounded(context, (q) =>
     revisionsInNarrowing(q, reader.orgId, {
       ids: ids.filter((id) => current.has(id)),

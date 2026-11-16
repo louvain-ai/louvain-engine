@@ -1,6 +1,7 @@
 import type { Viewer } from "@louvain/engine-core";
+import { bounded } from "../bounded.js";
 import type { AsOf } from "../context.js";
-import { bounded, fence, type ReadContext } from "../fence.js";
+import { fence, type ReadContext } from "../fence.js";
 import { hooksOf } from "../hooks.js";
 import { documentPassages } from "./document-passages.sql.js";
 
@@ -19,8 +20,7 @@ const DOCUMENT_MAX_CHARS = 64_000;
 export async function passagesAsDocuments(
   context: ReadContext,
   viewer: Viewer,
-  recordIds: readonly string[],
-  opts: { asOf?: AsOf; maxChars: number },
+  { ids: recordIds, ...opts }: { ids: readonly string[]; asOf?: AsOf; maxChars: number },
 ): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   const ids = [...new Set(recordIds)].slice(0, DOCUMENT_MAX_RECORDS);

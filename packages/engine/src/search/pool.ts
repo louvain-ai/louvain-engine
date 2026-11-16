@@ -14,9 +14,10 @@ import { passages } from "../read/passages/index.js";
 import { readableRevisions } from "../read/readable-records.js";
 import { revisionsAsPassages } from "../read/records/as-passages.js";
 import { attempt } from "./degraded.js";
-import type { SearchOptions, SearchPool } from "./document.js";
+import type { SearchOptions } from "./document.js";
 import type { WithIds } from "./evidence.js";
 import { fused } from "./fused.js";
+import type { SearchPool } from "./pool-types.js";
 import { stage } from "./stage.js";
 import { withQuestion } from "./with-question.js";
 
@@ -35,7 +36,7 @@ export function retrieverPool(
     throw new Error(
       "No retriever is configured, so nothing can be searched: list at least one in engine.config.ts.",
     );
-  const pool: SearchPool = async (context, viewer, query, question, depth, opts) => {
+  const pool: SearchPool = async (context, viewer, { query, question, depth, opts }) => {
     const reading = await fencedReading(context, viewer, opts);
     const read = async (q: string) => {
       const mode = opts.mode ?? "hybrid";
@@ -86,7 +87,8 @@ async function fencedReading(context: ReadContext, viewer: Viewer, opts: SearchO
     scope: await scopeOf(context, viewer, opts),
     passages: async (q, how) => {
       const page = await passagesRead(how.digits ? "digits" : how.mode, () =>
-        passages.search(context, viewer, q, {
+        passages.search(context, viewer, {
+          query: q,
           mode: how.mode,
           filters: how.digits ? { ...filters, digits: true } : filters,
           limit: how.limit,

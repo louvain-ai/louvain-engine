@@ -6,7 +6,7 @@
 
 import type { Sql } from "postgres";
 import { telemetry } from "../observability/telemetry.js";
-import { displayApp } from "../read/listing/core.js";
+import { displayApp } from "../read/listing/apps.js";
 import { documentOfEntry } from "../read/listing/keyword-documents.js";
 import { passageContextMode, writesPassageContext } from "../store/context-mode.js";
 import { appsOf, type Bm25Doc, keywordDoc } from "../store/keyword-document.js";

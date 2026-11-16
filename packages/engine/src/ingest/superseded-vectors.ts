@@ -1,6 +1,6 @@
 import type { PendingQuery, Row, Sql } from "postgres";
 import { telemetryOf } from "../host/given.js";
-import { declaringVersions, newerVersionHeld, newerVersions } from "../read/passages/filter.js";
+import { declaringVersions, newerVersionHeld, newerVersions } from "../read/passages/versions.js";
 import type { Queryable } from "../store/sql.js";
 import { contextVectorNull } from "./passage-rules.js";
 import { type Writes, writeHooksOf } from "./writes.js";
@@ -31,7 +31,7 @@ const sameContainer =
 export function superseded(q: Queryable, whole: readonly string[], e = q`e`): PendingQuery<Row[]> {
   return q`(${e}.kind = 'record.change' and ${e}.record_key is not null and ${e}.connection_id is not null
     and p.container = ${e}.container
-    and ${newerVersionHeld(q, sameContainer(q, e), { validAt: q`now()`, knownAt: null, whole }, e)})`;
+    and ${newerVersionHeld(q, { here: sameContainer(q, e), at: { validAt: q`now()`, knownAt: null, whole }, e })})`;
 }
 
 /**
@@ -43,10 +43,10 @@ export function superseded(q: Queryable, whole: readonly string[], e = q`e`): Pe
  */
 export const witness = (q: Queryable, whole: readonly string[]) => q`
   select w.occurred_at as valid_from, greatest(w.observed_at, d.known) as known_from
-    from (${newerVersions(q, sameContainer(q, q`e`), { validAt: q`now()`, knownAt: null, whole }, q`e`, q`r2.occurred_at, r2.observed_at, r2.id`)}
+    from (${newerVersions(q, { here: sameContainer(q, q`e`), at: { validAt: q`now()`, knownAt: null, whole }, columns: q`r2.occurred_at, r2.observed_at, r2.id` })}
           order by r2.occurred_at, r2.id limit 1) w
    cross join (select min(m.observed_at) as known
-                 from (${declaringVersions(q, sameContainer(q, q`e`), { knownAt: null, whole }, q`e`, q`m.observed_at`)}) m) d`;
+                 from (${declaringVersions(q, { here: sameContainer(q, q`e`), at: { knownAt: null, whole }, columns: q`m.observed_at` })}) m) d`;
 
 /**
  * Null the vectors of up to `limit` superseded passages: of one record's versions (`record`, the writer's case) or of

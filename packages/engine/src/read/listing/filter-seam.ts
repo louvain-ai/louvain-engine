@@ -1,7 +1,7 @@
 import type { SourceSummary } from "@louvain/engine-core";
 import type { PendingQuery, Row } from "postgres";
 import type { Queryable } from "../../store/sql.js";
-import type { ContainerSetShape } from "../fence.js";
+import type { ContainerSetShape } from "../fenced.js";
 import type { Scope, SourceRow } from "./core.js";
 import type { SearchInput } from "./input.js";
 import type { Narrow } from "./narrow.js";
@@ -98,37 +98,6 @@ export class FilterUnsupported extends Error {
     super(`this build has no ${filter} filter: nothing it loads records what that filter reads`);
     this.name = "FilterUnsupported";
   }
-}
-
-/** The build's predicate for what `principal` marked; refused where the build has none. */
-export function markedBy(added: AddedFilters, s: Reader, principal: string): Fragment {
-  const by = added.markedBy;
-  if (by === null) throw new FilterUnsupported("`starredBy`");
-  return by(s, principal);
-}
-
-/** The build's arrivals predicate over the listing's `e` and `r`; refused where the build has none. */
-export function arrived(
-  added: AddedFilters,
-  sql: Queryable,
-  alias: string,
-  revision: string,
-): Fragment {
-  const counted = added.arrived;
-  if (counted === null) throw new FilterUnsupported("`news`");
-  return counted(sql, alias, revision);
-}
-
-/** The build's predicate for these genres; refused where the build has none. */
-export function genreIn(
-  added: AddedFilters,
-  sql: Queryable,
-  orgId: string,
-  genres: string[],
-): Fragment {
-  const labelled = added.genreIn;
-  if (labelled === null) throw new FilterUnsupported("`genre`");
-  return labelled(sql, orgId, genres);
 }
 
 /**

@@ -74,16 +74,19 @@ function walk(listing: Listing, q: string, from: number) {
   const { context, owner, asked, page } = listing;
   return fillFromListing(
     async (offset) => {
-      const got = await searchSources(context, owner, {
-        q,
-        mode: asked.mode,
-        sort: "newest",
-        app: asked.app,
-        after: asked.after,
-        before: asked.before,
-        offset,
-        ...(page.containers ? { containers: page.containers } : {}),
-        ...clientListing(page.client),
+      const got = await searchSources(context, {
+        owner,
+        input: {
+          q,
+          mode: asked.mode,
+          sort: "newest",
+          app: asked.app,
+          after: asked.after,
+          before: asked.before,
+          offset,
+          ...(page.containers ? { containers: page.containers } : {}),
+          ...clientListing(page.client),
+        },
       });
       listing.total = got.total;
       listing.totalIsLowerBound = got.totalBounded ?? false;

@@ -5,11 +5,10 @@
  * from the resolver the read's context carries (`ReadContext`); `bounded` runs a read under its store's bounds.
  */
 import type { ReadableSetResolver, Viewer } from "@louvain/engine-core";
-import type { PendingQuery, Row, TransactionSql } from "postgres";
 import type { Logged, Told } from "../host/given.js";
 import type { Embedded } from "../store/embedder.js";
 import { sanitizeId } from "../store/ids.js";
-import { readPreamble, type Store } from "../store/pool.js";
+import type { Store } from "../store/pool.js";
 import { type Queryable, UUID } from "../store/sql.js";
 import type { ReadHooks } from "./hooks.js";
 
@@ -98,55 +97,3 @@ export const readsNothing = (orgId: string): Reader =>
 
 /** The one cast that brands a `Reader`, so every reader is made in this module. */
 const made = (r: Omit<Reader, typeof madeByFence>): Reader => r as Reader;
-
-/**
- * Two spellings of one set, admitting the same rows. `any` lets the planner estimate each element, which costs planning
- * time on a large set; `unnest` hides the elements behind a set hashed once, which plans faster where something else
- * bounds the rows and worse where the set's selectivity should choose the plan. A query takes `unnest` only with a plan
- * measurement behind it.
- */
-export type ContainerSetShape = "any" | "unnest";
-
-/**
- * The one predicate: `column` is one of the reader's containers, or, given its `record` column, the record is one the
- * host admitted. `unnest` (the default) is the set the planner hashes once, `any` the one it estimates element by
- * element. Never a join on the projection: the resolved set may be narrower than the projection's rows.
- */
-export function fenced(
-  sql: Queryable,
-  reader: Reader,
-  column: PendingQuery<Row[]>,
-  opts: { record?: PendingQuery<Row[]>; shape?: ContainerSetShape } = {},
-) {
-  const inSet =
-    opts.shape === "any"
-      ? sql`${column} = any(${reader.containers}::text[])`
-      : sql`${column} in (select unnest(${reader.containers}::text[]))`;
-  if (opts.record === undefined || reader.admitted.length === 0) return inSet;
-  return sql`(${inSet} or ${opts.record} = any(${reader.admitted}::text[]))`;
-}
-
-type Trx = TransactionSql;
-
-/**
- * A bounded read on the context's handle, the caller's settings last. On the store's pool it is the store's own
- * (`Store.boundedRead`: its read timeout and plan settings, and its wait for a connection timed). Inside a transaction
- * the read runs in it as is: a `set local` there would outlive this read and change the caller's own queries. On any
- * other pool, its own transaction under the store's bounds.
- */
-export async function bounded<T>(
-  context: ReadContext,
-  fn: (q: Queryable) => Promise<T>,
-  settings: readonly string[] = [],
-): Promise<T> {
-  const { store, sql } = context;
-  if (sql === store.sql) return store.boundedRead(fn, settings);
-  if (isTransaction(sql)) return fn(sql);
-  return (await sql.begin(async (trx: Trx) => {
-    await trx.unsafe(readPreamble(store.bounds, settings));
-    return fn(trx);
-  })) as T;
-}
-
-const isTransaction = (q: Queryable): q is Trx =>
-  typeof (q as { savepoint?: unknown }).savepoint === "function";

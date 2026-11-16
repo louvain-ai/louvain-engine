@@ -1,7 +1,7 @@
 import type { SourceSummary, Viewer } from "@louvain/engine-core";
-import { knownAtScope } from "../../read/context.js";
 import { narrow, type ReadContext, readsNothing } from "../../read/fence.js";
 import { hooksOf } from "../../read/hooks.js";
+import { knownAtScope } from "../../read/instant.js";
 import { type Scope, scope, summary } from "../../read/listing/core.js";
 import { searchSources } from "../../read/listing/search.js";
 import type { ClientNarrow } from "./arguments.js";
@@ -19,7 +19,7 @@ import { exactCandidates } from "./lookup-reads.js";
  * unchanged.
  *
  * What a search names: the whole query, and each key in it ("SUP-1042", "web#14"), a key typed joined ("sup1042") also
- * as its hyphenated spelling, as the cut-off's literals already compare them (`relevance.ts` `literalsOf`). Each tier
+ * as its hyphenated spelling, as the cut-off's literals already compare them (`words.ts` `literalsOf`). Each tier
  * passes the search's own narrowing (app, dates, collection, client, already shown) after the fence; as Louvain knew
  * it on a day, nothing is put in, as the listing does not fill.
  */
@@ -172,14 +172,17 @@ async function mentionsOf(
   narrowing: Narrowing,
 ): Promise<{ mentions: Listed[]; all: Listed[] }> {
   const { spelled, holding: holds } = hooksOf(context).exact;
-  const got = await searchSources(context, owner, {
-    q: keysSpelled(query, spelled),
-    mode: "keyword",
-    sort: "relevance",
-    offset: 0,
-    facets: "skip",
-    count: "skip",
-    ...(narrowing.containers ? { containers: narrowing.containers } : {}),
+  const got = await searchSources(context, {
+    owner,
+    input: {
+      q: keysSpelled(query, spelled),
+      mode: "keyword",
+      sort: "relevance",
+      offset: 0,
+      facets: "skip",
+      count: "skip",
+      ...(narrowing.containers ? { containers: narrowing.containers } : {}),
+    },
   });
   const all = got.sources
     .slice(0, MENTIONS_READ)

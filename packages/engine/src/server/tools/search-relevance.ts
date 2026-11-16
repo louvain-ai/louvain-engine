@@ -2,8 +2,9 @@ import type { RelevanceCutoffs, Viewer } from "@louvain/engine-core";
 import { searchRelevanceSetting } from "../../config/switches.js";
 import type { ReadContext } from "../../read/fence.js";
 import { hooksOf } from "../../read/hooks.js";
-import { heldWords, literalsOf, relevanceOf, wordsOf } from "../../read/relevance.js";
+import { relevanceOf } from "../../read/relevance.js";
 import { spanTexts } from "../../read/span-texts.js";
+import { heldWords, literalsOf, wordsOf } from "../../read/words.js";
 import { excerptOf } from "../../search/excerpt.js";
 import { embedderOf } from "../../store/embedder.js";
 import { exactFirst, type Narrowing, type Placed } from "./search-exact.js";
@@ -111,13 +112,11 @@ async function matchesOf(
   docs: readonly { recordId: string }[],
   meaning: string | null,
 ): Promise<Map<string, Matched>> {
-  const found = await relevanceOf(
-    context,
-    owner,
+  const found = await relevanceOf(context, owner, {
     query,
-    docs.map((d) => d.recordId),
-    { meaning },
-  );
+    ids: docs.map((d) => d.recordId),
+    meaning,
+  });
   return new Map(docs.map((d) => [d.recordId, found.get(d.recordId) ?? NO_MATCH]));
 }
 

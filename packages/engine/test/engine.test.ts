@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createEngine, type EngineParts } from "../src/engine.js";
 import { logOf, telemetryOf } from "../src/host/given.js";
-import { bounded } from "../src/read/fence.js";
+import { bounded } from "../src/read/bounded.js";
 import { readPreamble, storeOf } from "../src/store/pool.js";
 
 /** Parts that record what was closed, in order; `fail` makes the plugins' close reject. */

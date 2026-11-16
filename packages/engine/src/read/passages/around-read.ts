@@ -6,8 +6,8 @@
  */
 
 import type { Queryable } from "../../store/sql.js";
-import { instantOf } from "../context.js";
 import type { Reader } from "../fence.js";
+import { instantOf } from "../instant.js";
 import type { AddedFilters } from "../listing/filter-seam.js";
 import { newerVersionRead } from "./filter.js";
 import type { PassageFilters } from "./types.js";

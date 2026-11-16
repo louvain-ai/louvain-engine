@@ -1,9 +1,9 @@
 import type { Viewer } from "@louvain/engine-core";
-import { knownAtScope } from "../../read/context.js";
 import type { ReadContext } from "../../read/fence.js";
 import { hooksOf } from "../../read/hooks.js";
+import { knownAtScope } from "../../read/instant.js";
 import { searchHeadDepth } from "../../search/depth.js";
-import type { SearchWith } from "../../search/document.js";
+import type { SearchWith } from "../../search/pool-types.js";
 import { asOf, clamp, str, ToolInputError } from "./arguments.js";
 import { withContainers } from "./collections.js";
 import { listSources, searchAsAnswers } from "./search.js";

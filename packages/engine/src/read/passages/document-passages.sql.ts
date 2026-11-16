@@ -27,6 +27,6 @@ export const documentPassages = (q: Queryable, r: DocumentRead) => q<
                coalesce(sum(length(p.text) + 1) over (partition by p.event_id order by p.seq
                  rows between unbounded preceding and 1 preceding), 0) as taken
           from passage p
-         where ${passageFilter(q, r.fence, { recordIds: r.ids, ...(r.asOf ? { asOf: r.asOf } : {}) }, r.added)}
+         where ${passageFilter(q, { ...r, filters: { recordIds: r.ids, ...(r.asOf ? { asOf: r.asOf } : {}) } })}
       ) read where taken < ${r.cap}
       order by event_id, seq`;

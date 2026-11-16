@@ -5,8 +5,8 @@
 import type { Reranker } from "@louvain/engine-core";
 import { envSetting } from "../config/env-setting.js";
 import type { Settings as EngineSettings } from "../config/settings.js";
+import type { AskSettings } from "../read/ask-settings.js";
 import { rankDocuments } from "../read/documents/page-row.js";
-import type { AskSettings } from "../read/question.js";
 import type { AskRow } from "./evidence.js";
 import { type DocumentFeed, rerankedDocuments } from "./rerank-documents.js";
 

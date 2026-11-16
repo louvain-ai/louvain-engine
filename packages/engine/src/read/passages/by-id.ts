@@ -2,7 +2,8 @@ import type { Viewer } from "@louvain/engine-core";
 import { telemetry } from "../../observability/telemetry.js";
 import type { Queryable } from "../../store/sql.js";
 import { locateQuote } from "../../text/words.js";
-import { bounded, fence, type ReadContext, type Reader } from "../fence.js";
+import { bounded } from "../bounded.js";
+import { fence, type ReadContext, type Reader } from "../fence.js";
 import { agentWritten, instructionLikeRevisions, labelOf, referenceRead } from "../generated.js";
 import { hooksOf } from "../hooks.js";
 import { originsFor } from "../originals/reads.js";
@@ -10,7 +11,7 @@ import { precisionField, precisionsOf } from "../precision.js";
 import { passagesWithIds } from "./by-id.sql.js";
 import { readOffRows } from "./read-off-pages.sql.js";
 import { revisionTextRows } from "./record-texts.sql.js";
-import type { PassageFilters, PassageRead } from "./types.js";
+import type { PassageRead } from "./types.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** A receipt panel shows a page of citations; past this the caller is walking, which is `search`'s job. */
@@ -90,7 +91,7 @@ async function decorate(context: ReadContext, fence: Reader, rows: ByIdRow[]) {
         return new Map<string, string>();
       }),
       agentWritten(sql, fence.orgId, events),
-      referenceRead(sql, hooksOf(context).reading, fence.orgId, events),
+      referenceRead(sql, hooksOf(context).reading, { orgId: fence.orgId, ids: events }),
       instructionLikeRevisions(sql, fence.orgId, events),
       precisionsOf(sql, fence.orgId, events),
       readOffPages(

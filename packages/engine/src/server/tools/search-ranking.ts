@@ -1,7 +1,7 @@
 import type { Viewer } from "@louvain/engine-core";
 import type { ReadContext } from "../../read/fence.js";
-import type { SearchPool, SearchWith } from "../../search/document.js";
 import { askSettings } from "../../search/modes.js";
+import type { SearchPool, SearchWith } from "../../search/pool-types.js";
 import { str } from "./arguments.js";
 import type { SearchCursor } from "./search-paging.js";
 import { measured } from "./search-relevance.js";

@@ -1,16 +1,8 @@
 import type { SourceSummary } from "@louvain/engine-core";
 import type { ReadContext } from "../fence.js";
 import { hooksOf } from "../hooks.js";
-import {
-  documentFence,
-  type Owner,
-  type Scope,
-  type SourceRow,
-  scope,
-  sourceJoin,
-  summary,
-  summaryColumns,
-} from "./core.js";
+import { type Owner, type Scope, type SourceRow, scope, summary } from "./core.js";
+import { documentFence, sourceJoin, summaryColumns } from "./join.js";
 
 /** A read by id: readable versions, fenced exactly as a listing is, and one source whichever id names it. */
 export async function sourceRows(

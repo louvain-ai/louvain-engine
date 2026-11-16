@@ -123,7 +123,8 @@ try {
 
   console.log("\nsearch and read, under the open resolver");
   const viewer = { orgId, principal };
-  const found = await searchPassages(readContext, viewer as never, `Halden launch ${id}`, {
+  const found = await searchPassages(readContext, viewer as never, {
+    query: `Halden launch ${id}`,
     mode: "hybrid",
     limit: 5,
   });
@@ -135,7 +136,8 @@ try {
   const nobody = { orgId, principal: "nobody" };
   check(
     (
-      await searchPassages(readContext, nobody as never, "Halden launch", {
+      await searchPassages(readContext, nobody as never, {
+        query: "Halden launch",
         mode: "hybrid",
         limit: 5,
       })

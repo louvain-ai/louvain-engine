@@ -103,6 +103,16 @@ function oneCopyEach(matches: Match[]): Match[] {
   });
 }
 
+/** One page of the newest documents that hold `text` as a phrase, from `offset`: no count, no facets. */
+const phraseAt = (text: string, offset: number) => ({
+  q: `"${text.replace(/"/g, " ")}"`,
+  mode: "keyword" as const,
+  sort: "newest" as const,
+  offset,
+  facets: "skip" as const,
+  count: "skip" as const,
+});
+
 /**
  * Mentions: keyword phrase matches holding the identifier, as a whole token where the build tests one, never the record
  * or a copy of it.
@@ -118,14 +128,7 @@ async function mentionsOf(
   let offset = 0;
   let more = false;
   for (let page = 0; page < MENTION_PAGES && rows.length <= limit; page += 1) {
-    const got = await searchSources(context, owner, {
-      q: `"${i.text.replace(/"/g, " ")}"`,
-      mode: "keyword",
-      sort: "newest",
-      offset,
-      facets: "skip",
-      count: "skip",
-    });
+    const got = await searchSources(context, { owner, input: phraseAt(i.text, offset) });
     const candidates = got.sources.filter((src) => !isIt(src));
     // A second matcher's whole-token test narrows its phrase matches (`exact-seam.ts`); the open build's index
     // already matches a key as one token, so its phrase matches are the mentions.

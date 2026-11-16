@@ -2,11 +2,12 @@ import type { Viewer } from "@louvain/engine-core";
 import { telemetryOf } from "../../host/given.js";
 import type { Queryable } from "../../store/sql.js";
 import { documentShape } from "../../text/record-shape.js";
-import { bounded, fence, type ReadContext } from "../fence.js";
+import { stage } from "../ask-deadline.js";
+import { bounded } from "../bounded.js";
+import { fence, type ReadContext } from "../fence.js";
 import { agentWritten, instructionLikeRevisions, labelOf } from "../generated.js";
 import { hooksOf } from "../hooks.js";
 import { isStatementTimeout } from "../legs.js";
-import { stage } from "../question.js";
 import { hitAnchors } from "./around-anchors.sql.js";
 import { linkedBefore } from "./around-linked.sql.js";
 import { type Near, walkFrom } from "./around-walk.sql.js";
@@ -31,6 +32,18 @@ export type Neighbour = {
   linked?: true;
 };
 
+/** What `passagesAround` is asked: the hits, how far either side, the budget, and the search's own narrowing. */
+type AroundAsk = {
+  ids: readonly string[];
+  k: number;
+  maxChars: number;
+  filters?: PassageFilters;
+  /** Per hit, the earlier messages it is linked back to, nearest first; read under the fence. */
+  ancestry?: ReadonlyMap<string, readonly string[]>;
+  /** Who each message's author is to this reader; none, every author as written. */
+  names?: SpeakerNamer;
+};
+
 /** One neighbour's words at most: a chat message rarely runs past it, and a long one is context, not the answer. */
 const NEIGHBOUR_CHARS = 600;
 
@@ -44,16 +57,7 @@ const NEIGHBOUR_CHARS = 600;
 export async function passagesAround(
   context: ReadContext,
   viewer: Viewer,
-  recordIds: readonly string[],
-  opts: {
-    k: number;
-    maxChars: number;
-    filters?: PassageFilters;
-    /** Per hit, the earlier messages it is linked back to, nearest first; read under the fence. */
-    ancestry?: ReadonlyMap<string, readonly string[]>;
-    /** Who each message's author is to this reader; none, every author as written. */
-    names?: SpeakerNamer;
-  },
+  { ids: recordIds, ...opts }: AroundAsk,
 ): Promise<{ around: Map<string, Neighbour[]>; degraded: string[] }> {
   const around = new Map<string, Neighbour[]>();
   // The caller's `recordIds` names the hits, not the neighbours: a neighbour is by definition another record. Every
@@ -67,20 +71,62 @@ export async function passagesAround(
   }
   // A hit admitted by id from outside the fence gets no neighbour there: only rows the fence itself admits are read.
   const read = { fence: reader, filters, added: hooksOf(context).filters };
-  let near: Near[];
+  const near = await nearOf(context, { read, ids, k, ancestry: opts.ancestry });
+  if (near === null) return { around, degraded: ["around:cut"] };
+  const neighbourIds = near.map((n) => n.event_id);
+  const [generated, instructionLike, named] = await Promise.all([
+    agentWritten(context.sql, reader.orgId, neighbourIds),
+    instructionLikeRevisions(context.sql, reader.orgId, neighbourIds),
+    // The caller's namer says who each author is to this reader; without one, authors read as written.
+    opts.names?.(context.sql, viewer, near.map(asSpeaker)) ?? new Map<string, NamedSpeaker>(),
+  ]);
+  const neighbour = (n: Near, text: string): Neighbour => ({
+    recordId: n.event_id,
+    offset: n.dir * n.rn,
+    author: named.get(speakerKey(asSpeaker(n)))?.label ?? n.author,
+    occurredAt: new Date(n.occurred_at).toISOString(),
+    text,
+    ...(generated.has(n.event_id) ? { generated: true as const } : {}),
+    ...labelOf(instructionLike, n.event_id),
+    ...(n.linked ? { linked: true as const } : {}),
+  });
+  return { around: withinBudget(near, { ids, maxChars: opts.maxChars, neighbour }), degraded: [] };
+}
+
+/** A neighbour as a namer is handed it. */
+const asSpeaker = (n: Near) => ({
+  recordId: n.event_id,
+  container: n.container,
+  speaker: { entityId: null, label: null, author: n.author },
+});
+
+/**
+ * Every chat hit's window either side and its linked messages, under one bounded read; null when the walk was cut by
+ * its statement timeout, which costs the context beside hits the caller already has, never the page. Anything else is a
+ * fault and is thrown.
+ */
+async function nearOf(
+  context: ReadContext,
+  ask: {
+    read: Parameters<typeof hitAnchors>[1];
+    ids: string[];
+    k: number;
+    ancestry: ReadonlyMap<string, readonly string[]> | undefined;
+  },
+): Promise<Near[] | null> {
+  const { read, ids, k, ancestry } = ask;
   try {
-    near = await stage("ask.around", () =>
+    return await stage("ask.around", () =>
       bounded(context, async (q) => {
-        const anchors = await hitAnchors(q, read, ids);
-        const chats = chatAnchorsInRank(anchors, ids);
+        const chats = chatAnchorsInRank(await hitAnchors(q, read, ids), ids);
         const walks = await Promise.all(
-          chats.flatMap((a) => [-1, 1].map((dir) => walkFrom(q, { ...read, k }, a, dir))),
+          chats.flatMap((a) => [-1, 1].map((dir) => walkFrom(q, { ...read, k }, { a, dir }))),
         );
         const linked = await Promise.all(
           chats.map(async (a) => {
-            const back = [...new Set(opts.ancestry?.get(a.event_id) ?? [])].slice(0, AROUND_MAX_K);
+            const back = [...new Set(ancestry?.get(a.event_id) ?? [])].slice(0, AROUND_MAX_K);
             if (back.length === 0) return [];
-            const rows = await linkedBefore(q, read, a, back);
+            const rows = await linkedBefore(q, read, { a, back });
             // Nearest along the links first, as the caller listed them.
             return rows
               .map((r) => ({ ...r, rn: back.indexOf(r.event_id) + 1 }))
@@ -91,29 +137,25 @@ export async function passagesAround(
       }),
     );
   } catch (err) {
-    // A walk cut by its statement timeout costs the context beside hits the caller already has, never the page, and
-    // says so; anything else is a fault and is thrown.
     if (!isStatementTimeout(err)) throw err;
     telemetryOf(context).count("kg.read.around.cut", 1, {});
-    return { around, degraded: ["around:cut"] };
+    return null;
   }
-  const neighbourIds = near.map((n) => n.event_id);
-  // The caller's namer (`opts.names`) says who each author is to this reader; without one, authors read as written.
-  const asSpeaker = (n: Near) => ({
-    recordId: n.event_id,
-    container: n.container,
-    speaker: { entityId: null, label: null, author: n.author },
-  });
-  const [generated, instructionLike, named] = await Promise.all([
-    agentWritten(context.sql, reader.orgId, neighbourIds),
-    instructionLikeRevisions(context.sql, reader.orgId, neighbourIds),
-    opts.names?.(context.sql, viewer, near.map(asSpeaker)) ?? new Map<string, NamedSpeaker>(),
-  ]);
-  // The budget, spent where the reader looks: the best-ranked hit first, and each hit's nearest messages first.
-  let left = opts.maxChars;
-  for (const id of ids) {
-    // The window first, then the linked messages into what is left, so the links never spend the window's budget. A
-    // message both linked and beside the hit is shown once, as linked.
+}
+
+/**
+ * The budget, spent where the reader looks: the best-ranked hit first, and each hit's nearest messages first. The window
+ * first, then the linked messages into what is left, so the links never spend the window's budget; a message both
+ * linked and beside the hit is shown once, as linked. Each hit's neighbours in reading order: the linked messages oldest
+ * first, then the window around the hit.
+ */
+function withinBudget(
+  near: Near[],
+  ask: { ids: string[]; maxChars: number; neighbour: (n: Near, text: string) => Neighbour },
+): Map<string, Neighbour[]> {
+  const around = new Map<string, Neighbour[]>();
+  let left = ask.maxChars;
+  for (const id of ask.ids) {
     const all = near.filter((n) => n.anchor === id);
     const linkedIds = new Set(all.filter((n) => n.linked).map((n) => n.event_id));
     const byRank = (a: Near, b: Near) => a.rn - b.rn || a.dir - b.dir;
@@ -127,18 +169,8 @@ export async function passagesAround(
         n.text.length > NEIGHBOUR_CHARS ? `${n.text.slice(0, NEIGHBOUR_CHARS)}…` : n.text;
       if (text.length > left) break;
       left -= text.length;
-      kept.push({
-        recordId: n.event_id,
-        offset: n.dir * n.rn,
-        author: named.get(speakerKey(asSpeaker(n)))?.label ?? n.author,
-        occurredAt: new Date(n.occurred_at).toISOString(),
-        text,
-        ...(generated.has(n.event_id) ? { generated: true as const } : {}),
-        ...labelOf(instructionLike, n.event_id),
-        ...(n.linked ? { linked: true as const } : {}),
-      });
+      kept.push(ask.neighbour(n, text));
     }
-    // Shown in reading order: the linked messages oldest first, then the window around the hit.
     if (kept.length > 0)
       around.set(id, [
         ...kept.filter((n) => n.linked).sort((a, b) => a.offset - b.offset),
@@ -146,7 +178,7 @@ export async function passagesAround(
       ]);
     if (left <= 0) break;
   }
-  return { around, degraded: [] };
+  return around;
 }
 
 /**

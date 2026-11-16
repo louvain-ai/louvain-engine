@@ -1,14 +1,18 @@
 import { telemetryOf } from "../../host/given.js";
-import { asPgVector, instantOf } from "../context.js";
-import { bounded, type ReadContext, type Reader } from "../fence.js";
+import { stage } from "../ask-deadline.js";
+import { bounded } from "../bounded.js";
+import { asPgVector } from "../embedding.js";
+import type { ReadContext, Reader } from "../fence.js";
 import { hooksOf } from "../hooks.js";
+import { instantOf } from "../instant.js";
 import { isStatementTimeout, VECTOR_LEG_SETTINGS } from "../legs.js";
-import { stage } from "../question.js";
-import { queryIn, type VectorSpace } from "../vector-space.js";
+import { queryIn } from "../vector-space.js";
+import type { VectorSpace } from "../vector-space-types.js";
 import { droppedCurrent } from "./dropped-current.sql.js";
+import type { PassageLegRead, Row, WindowRead } from "./leg-types.js";
 import { nearest } from "./nearest.sql.js";
 import { nearestInWindow } from "./nearest-in-window.sql.js";
-import type { PassageFilters, PassageLegRead, Row, WindowRead } from "./types.js";
+import type { PassageFilters } from "./types.js";
 import type { VectorRead } from "./vector-legs.js";
 import { windowSize } from "./window-size.sql.js";
 

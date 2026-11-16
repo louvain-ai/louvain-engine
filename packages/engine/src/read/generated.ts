@@ -36,8 +36,7 @@ export async function agentWritten(
 export async function referenceRead(
   sql: Queryable,
   reading: ReadingExpression,
-  orgId: string,
-  recordIds: readonly string[],
+  { orgId, ids: recordIds }: { orgId: string; ids: readonly string[] },
 ): Promise<Set<string>> {
   const ids = [...new Set(recordIds)];
   if (ids.length === 0) return new Set();

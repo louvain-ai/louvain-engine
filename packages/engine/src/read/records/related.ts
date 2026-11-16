@@ -7,7 +7,9 @@
 
 import type { Viewer } from "@louvain/engine-core";
 import type { Queryable } from "../../store/sql.js";
-import { bounded, fence, fenced, type ReadContext, type Reader } from "../fence.js";
+import { bounded } from "../bounded.js";
+import { fence, type ReadContext, type Reader } from "../fence.js";
+import { fenced } from "../fenced.js";
 import { notQuarantined } from "../listing/quarantine.js";
 import { conversationKeySql } from "./conversation.js";
 
@@ -80,8 +82,8 @@ function threadRows(
           and s.id <> e.id and ${siblingKey} = ${key}
         left join source_revision r on r.event_id = s.id
         where e.org_id = ${fence.orgId} and e.id = ${recordId} and e.kind = 'message' and ${key} is not null
-          and ${fenced(q, fence, q`e.container`, { record: q`e.id` })} and ${notQuarantined(q, "e")}
-          and ${fenced(q, fence, q`s.container`, { record: q`s.id` })} and ${notQuarantined(q, "s")}
+          and ${fenced(q, fence, { column: q`e.container`, record: q`e.id` })} and ${notQuarantined(q, "e")}
+          and ${fenced(q, fence, { column: q`s.container`, record: q`s.id` })} and ${notQuarantined(q, "s")}
         order by s.occurred_at, s.id
         limit ${RELATED_MAX + 1}`;
 }
@@ -97,7 +99,7 @@ function versionRows(q: Queryable, { fence, recordId }: { fence: Reader; recordI
           join source_revision r on r.event_id = e.id
           join source_document d on d.id = r.source_id and d.org_id = e.org_id
           where e.org_id = ${fence.orgId} and e.id = ${recordId}
-            and ${fenced(q, fence, q`e.container`, { record: q`e.id` })} and ${notQuarantined(q, "e")}
+            and ${fenced(q, fence, { column: q`e.container`, record: q`e.id` })} and ${notQuarantined(q, "e")}
         )
         select v.event_id as id, v.title, v.modified_at as date,
                v.source_id = own.document_id as same_document, v.event_id = ${recordId} as is_self
@@ -106,7 +108,7 @@ function versionRows(q: Queryable, { fence, recordId }: { fence: Reader; recordI
           and (d.id = own.document_id or (own.origin_key is not null and d.origin_key = own.origin_key))
         join source_revision v on v.source_id = d.id
         join event_log ve on ve.id = v.event_id and ve.org_id = ${fence.orgId}
-        where ${fenced(q, fence, q`ve.container`, { record: q`ve.id` })} and ${notQuarantined(q, "ve")}
+        where ${fenced(q, fence, { column: q`ve.container`, record: q`ve.id` })} and ${notQuarantined(q, "ve")}
         order by v.modified_at desc, v.event_id desc
         limit ${RELATED_MAX + 2}`;
 }

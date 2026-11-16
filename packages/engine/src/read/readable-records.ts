@@ -1,5 +1,6 @@
 import type { Viewer } from "@louvain/engine-core";
-import { fence, fenced, type ReadContext } from "./fence.js";
+import { fence, type ReadContext } from "./fence.js";
+import { fenced } from "./fenced.js";
 
 /** The records to check, and the search's collections to narrow the fence to. */
 export type ReadableRevisionsAsk = {
@@ -24,6 +25,6 @@ export async function readableRevisions(
   const rows = await sql<{ id: string }[]>`
     select id from event_log
      where org_id = ${reader.orgId} and id = any(${ids}::text[])
-       and ${fenced(sql, reader, sql`container`, { record: sql`id` })}`;
+       and ${fenced(sql, reader, { column: sql`container`, record: sql`id` })}`;
   return new Set(rows.map((r) => r.id));
 }

@@ -7,12 +7,15 @@
 
 import { CONTENT_EVENT_KINDS, type Viewer } from "@louvain/engine-core";
 import type { Queryable } from "../../store/sql.js";
+import { bounded } from "../bounded.js";
 import type { Evidence } from "../context.js";
-import { bounded, fence, fenced, type ReadContext, type Reader } from "../fence.js";
+import { fence, type ReadContext, type Reader } from "../fence.js";
+import { fenced } from "../fenced.js";
 import { type DocumentFilters, documentPredicates } from "../filters.js";
 import { agentWritten, instructionLikeRevisions, labelOf, referenceRead } from "../generated.js";
 import { hooksOf } from "../hooks.js";
-import { boundedTotal, COUNT_LIMIT } from "../listing/bounds.js";
+import { boundedTotal } from "../listing/bounds.js";
+import { COUNT_LIMIT } from "../listing/limits.js";
 import { notQuarantined } from "../listing/quarantine.js";
 import { originsFor } from "../originals/reads.js";
 import type { KnownPrecision } from "../precision.js";
@@ -96,7 +99,7 @@ function windowReads(context: ReadContext, { scope, filters, limit, chars }: Win
   const where = (q: Queryable) => q`
     e.org_id = ${scope.orgId} and ${fenced(q, scope, q`e.container`)}
     and e.kind = any(${kinds}::text[]) and ${notQuarantined(q, "e")}
-    ${documentPredicates(q, hooksOf(context).filters, scope.orgId, filters)}`;
+    ${documentPredicates(q, { added: hooksOf(context).filters, orgId: scope.orgId, filters })}`;
   return Promise.all([
     bounded(
       context,
@@ -143,7 +146,7 @@ async function windowHits(
       return new Map<string, string>();
     }),
     agentWritten(sql, fence.orgId, ids),
-    referenceRead(sql, hooksOf(context).reading, fence.orgId, ids),
+    referenceRead(sql, hooksOf(context).reading, { orgId: fence.orgId, ids }),
     instructionLikeRevisions(sql, fence.orgId, ids),
   ]);
   return rows.map((r): RevisionHit => {

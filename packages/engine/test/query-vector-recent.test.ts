@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { test } from "node:test";
-import { queryVectorFor, queryVectorWith, withQueryVectorMemo } from "../src/read/question.js";
+import { queryVectorFor, queryVectorWith, withQueryVectorMemo } from "../src/read/query-vector.js";
 import { forgetRecentQueryVectors } from "../src/read/recent-vectors.js";
 import { openTestEngine } from "./db/open-engine.js";
 

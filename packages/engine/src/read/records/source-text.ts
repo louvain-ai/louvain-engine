@@ -5,7 +5,8 @@
  * a caller pins. Each is a bounded read on the caller's context (`bounded`).
  */
 
-import { bounded, type ReadContext } from "../fence.js";
+import { bounded } from "../bounded.js";
+import type { ReadContext } from "../fence.js";
 import { notQuarantined } from "../listing/quarantine.js";
 
 /** How long a source's own text is, whether it was cut at import, and the format its reader named (`xlsx`…). */

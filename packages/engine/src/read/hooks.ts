@@ -5,7 +5,8 @@ import { type KeywordIndex, OPEN_KEYWORD_INDEX } from "./keyword/titled.js";
 import { type DetailHooks, plainDetail } from "./listing/detail-seam.js";
 import { type AddedFilters, noAddedFilters } from "./listing/filter-seam.js";
 import { plainReading, type ReadingExpression } from "./reading.js";
-import { ONE_SPACE, type VectorSpaces } from "./vector-space.js";
+import { ONE_SPACE } from "./vector-space.js";
+import type { VectorSpaces } from "./vector-space-types.js";
 
 /**
  * What a build adds to the open reads, carried by the read's context (`ReadContext.hooks`) and asked through `hooksOf`
