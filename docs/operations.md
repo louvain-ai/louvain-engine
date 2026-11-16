@@ -212,13 +212,14 @@ Ready.
    loaded, and says so in one line (`Keyword index: an earlier release built it; rebuilding it from the records
    loaded...`). Until then the sidecar runs, reports the rebuild it needs and refuses to read the old files.
 
-3. If `up` says the database holds another schema, it changed nothing. Run **`./engine reindex`**, then
-   **`./engine up`** (below).
+3. If `up` says the database holds another schema, it changed nothing. This release ships no schema upgrade, so
+   such a database starts again: **`./engine down --volumes`** (it deletes this install's database), **`./engine up`**,
+   then load your documents again with **`./engine ingest`**.
 
 ```text
 $ ./engine up
 Starting the engine's services (the first run builds their images)...
-engine: the database holds a schema other than the one this release was built for (or one that could not be compared with it). Nothing was changed or deleted. If it was made by the release before this one, run ./engine reindex: it upgrades the schema in place, keeping your documents, and rebuilds the keyword index. Otherwise run ./engine down --volumes (it deletes this install's database), then ./engine up, and load your documents again with ./engine ingest.
+engine: the database holds a schema other than the one this release was built for (or one that could not be compared with it), and this release ships no upgrade for it. Nothing was changed or deleted. To go on, run ./engine down --volumes (it deletes this install's database), then ./engine up, and load your documents again with ./engine ingest.
 ```
 
 `up`, `ingest` and `search` all refuse a database built for another release this way. A tool server already running
@@ -236,26 +237,15 @@ Keyword index: emptying and rebuilding it from the records loaded...
 Keyword index: 9 records indexed again.
 ```
 
-`reindex` upgrades a database made by the release before this one in place, keeping its documents, then rebuilds the
-keyword index from the records loaded: an entry for each record, and one for each document from its current revision.
-Nothing is embedded again. It applies `db/upgrades/` in name order in one
-transaction and commits only if the result has this release's schema; otherwise it rolls back whole and says so.
-Running it again changes nothing but the keyword index.
+`reindex` rebuilds the keyword index from the records loaded: an entry for each record, and one for each document from
+its current revision. Nothing is embedded again, and the documents stay. Running it again changes nothing but the
+keyword index.
 
-The upgrades in this release:
+A release that changes the schema ships its upgrades in `db/upgrades/`, and `reindex` applies them first, in name
+order, in one transaction that commits only if the result has that release's schema; otherwise it rolls back whole and
+says so. This release ships none.
 
-| File | What it does |
-| --- | --- |
-| `1-search-terms.sql`, `2-search-terms-numbers.sql` | Add the analyzer documents and searches both pass through, and fill it |
-| `3-drop-closed-tables.sql` | Drop the tables, functions and triggers the engine does not read, and the org row's settings columns |
-| `4-search-terms-shingles.sql` | Index every run of a key's parts joined, and refill the terms |
-| `5-drop-filter-tables.sql` | Drop the tables only an application's own filters read (stars, record labels, identifier sources) |
-| `6-drop-application-columns.sql` | Drop the columns no open code reads or writes: an application's queue and extraction bookkeeping on the event log, and a document's copy key, subject key, calendar start and app columns with the functions that filled them |
-| `7-one-matcher-schema.sql` | Drop the database's own analyzer (the terms column, its triggers and functions): the keyword index is the one matcher. Then drop what no open code reads or writes: an application's event-log indexes, columns and outcome values, the series function, the next embedding space and the context vector |
-| `8-no-database-words.sql` | Drop the database's English words: the generated `search` columns on passages and revisions, the context's `search_ctx`, their indexes and the title-words index. No open read or write names them; the keyword index is the one matcher |
-
-No upgrade deletes a document, passage or revision. A database from an older release, or one `reindex` cannot upgrade,
-starts again:
+An upgrade never deletes a document, passage or revision. A database `reindex` cannot upgrade starts again:
 
 ```sh
 ./engine down --volumes

@@ -84,7 +84,7 @@ Ask writes with (`agent`, `scripted`).
 local reranker). Each takes the install's sidecar token.
 
 **`db/`**: `baseline.sql`, the schema an empty database is loaded with, and `upgrades/`, what `./engine reindex`
-applies to a database the release before made.
+applies to a database an earlier release made (empty in this, the first release).
 
 **`profiles/`**: configurations of their own, each with its own corpus and index. The one the published figure was
 produced with ships here ([How the figure was produced](benchmark-method.md)).
@@ -98,7 +98,7 @@ produced with ships here ([How the figure was produced](benchmark-method.md)).
 | `./engine up` | `packages/cli/src/serve.ts`: the tool server and the app |
 | `./engine ingest <source> --<field> …` | `packages/cli/src/ingest.ts` |
 | `./engine search "<words>"` | `packages/cli/src/search.ts` |
-| `./engine reindex` | `packages/cli/src/reindex.ts`, after the schema upgrade in place |
+| `./engine reindex` | `packages/cli/src/reindex.ts`, after a shipped schema upgrade, if any |
 | `./engine profile [set <name>]` | `engine` itself, over `packages/cli/src/profile.ts` |
 | `./engine plugin new <kind> <name>` | `engine` itself, from `packages/plugins/templates/<kind>/` |
 

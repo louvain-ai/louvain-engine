@@ -10,8 +10,6 @@ import {
   type HeldRevisionRef,
 } from "./holdings-types.js";
 import type { Taken } from "./item-accept.js";
-import { textHash } from "./item-event.js";
-import { legacyOf } from "./legacy.js";
 import { report, skip } from "./outcome.js";
 import { noteRetired } from "./retired.js";
 import type { Run } from "./run-state.js";
@@ -25,9 +23,6 @@ export async function retireReplaced(run: Run, taken: Taken): Promise<void> {
   if (replaced.length > 0) await stage("ingest.retire", () => retire(run, replaced));
   // After the new revision's own index, so the document's entry ends as its current revision's, whichever that is.
   run.summary.keywordStale += await refreshDocuments(run.state, run.state.orgId, taken.moved);
-  const { change } = taken;
-  if (change.kind === "added" && run.adopting)
-    await adopt(run, { key: change.item.key, hash: textHash(change.version.text) });
 }
 
 /** A removed item: every event of it withdrawn and said, or a skip when the collection never held it. */
@@ -65,12 +60,4 @@ function replacedBy({ change, id }: Extract<Taken, { change: unknown }>): HeldRe
   if (change.kind === "updated" && !change.moved)
     return everyRevision(change.held).filter((e) => e.id !== id);
   return [];
-}
-
-/** The path-keyed copy of this path and these words is withdrawn, now that the collection holds its own. */
-async function adopt(run: Run, same: { key: string; hash: string }): Promise<void> {
-  const earlier = await legacyOf(run.state.sql, run.state.orgId, same.key, same.hash);
-  if (earlier.length === 0) return;
-  await retire(run, earlier);
-  run.summary.adopted += 1;
 }

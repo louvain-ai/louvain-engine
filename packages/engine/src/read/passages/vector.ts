@@ -143,8 +143,16 @@ async function nearestPassages(
  * A date range is read exactly when it is small (`nearestInWindow`): the range is a predicate inside the index scan,
  * which stops at its scan bound with whatever it found. So a windowed read counts its passages first (`windowSize`),
  * and a larger range is scanned, which finds its page quickly, and the search reports `bounded`.
+ *
+ * The exact read costs about four pages a passage, since a vector is stored out of line: a range of 50,000 reads about
+ * 206,000 pages, cheap on a local disk (0.43 s) and past the read timeout on a database that fetches a cold
+ * workspace's pages over the network. So the bound is where the index stops costing recall. Measured on 768-dimension vectors at the deployment's proportions (150,000 passages in 2
+ * collections, and 130,000 in 3,986), 20 queries a range, with `VECTOR_LEG_SETTINGS`: a range of up to about 5,000 is
+ * planned exactly whichever read is asked (recall 1.0); from 10,000 to 100,000 the index's recall within the range
+ * (0.76 to 0.80) is its recall with no range at all (0.763), and it never came back short. Random vectors are the
+ * index's worst case, so these are floors. At 5,000 the exact read reads about 20,000 pages.
  */
-const WINDOW_EXACT_PASSAGES = 50_000;
+const WINDOW_EXACT_PASSAGES = 5_000;
 
 /** `LOUVAIN_PASSAGE_WINDOW_EXACT=off` is the kill switch, read per call: a windowed read is then the HNSW scan alone. */
 function windowed(f: PassageFilters): boolean {

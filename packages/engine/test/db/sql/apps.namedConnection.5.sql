@@ -1,8 +1,8 @@
--- core.namedConnection, found by its text
--- parameters: 20
+-- apps.namedConnection, found by its text
+-- parameters: 23
 -- under: set local statement_timeout = 15000; set local jit = off; set local plan_cache_mode = force_custom_plan
--- read by: an identifier typed joined; lookup: a key a title opens with
--- plan on Postgres 17: Limit > Result (Sort > Nested Loop (Nested Loop (Nested Loop (Hash Join (Seq Scan on source_document, Hash > Unique > Sort > Append (Nested Loop (Seq Scan on source_document, Function Scan), ProjectSet > Result, Hash Join (Seq Scan on source_document, Hash > Seq Scan on source_revision))), Index Scan on source_revision using source_revision_item_idx), Index Scan on event_log using event_log_pkey), Index Scan on event_log using event_log_pkey, Seq Scan on injection_flag), Seq Scan on event_log > Seq Scan on container_parent, Seq Scan on event_log)
+-- read by: lookup: a URL nothing is at
+-- plan on Postgres 17: Limit > Result (Sort > Nested Loop (Nested Loop (Nested Loop (Hash Join (Seq Scan on source_document, Hash > Unique > Sort > Append (Nested Loop (Seq Scan on source_document, Function Scan), Hash Join (Seq Scan on source_document, Hash > Seq Scan on source_revision), Hash Join (Seq Scan on source_document, Hash > Seq Scan on source_revision))), Index Scan on source_revision using source_revision_item_idx), Index Scan on event_log using event_log_pkey), Index Scan on event_log using event_log_pkey, Seq Scan on injection_flag), Seq Scan on event_log > Seq Scan on container_parent, Seq Scan on event_log)
 
 
       select d.id, r.event_id as "versionId", coalesce(r.presentation->>'service',
@@ -31,11 +31,14 @@
     and true and true and r.event_id = d.current_event_id and d.id in (select d.id from source_document d
     join unnest($9::text[], $10::text[]) as feed(connector, workspace)
       on d.connector = feed.connector and d.workspace = feed.workspace
-    where d.org_id = $11 and d.native_id = $12 union select unnest($13::text[]) as id union select d.id from source_revision r join source_document d on d.current_event_id = r.event_id
-    where r.org_id = $14 and d.org_id = $15
+    where d.org_id = $11 and d.native_id = $12 union select d.id from source_revision r join source_document d on d.current_event_id = r.event_id
+    where r.org_id = $13 and d.org_id = $14
       -- sql-shape: source_revision_org_title_key_idx's own expression, read as an index equality
-      and lower(left(r.title, $16)) = any(array[lower(left($17, $18))])
+      and lower(left(r.title, $15)) = any(array[lower(left($16, $17))])
       -- sql-shape: the whole title, re-checked on the rows that indexed key returned
-      and lower(r.title) = any(array[lower($19)]))
+      and lower(r.title) = any(array[lower($18)]) union select d.id from source_revision r join source_document d on d.current_event_id = r.event_id
+    where r.org_id = $19 and d.org_id = $20
+      and r.url is not null and md5(r.url) = any($21::text[])
+      and r.url = any($22::text[]))
       order by d.current_modified_at desc, d.id
-      limit $20
+      limit $23

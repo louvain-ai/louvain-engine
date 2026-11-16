@@ -1,4 +1,4 @@
--- core.namedConnection, found by its text
+-- apps.namedConnection, found by its text
 -- parameters: 27
 -- under: set local statement_timeout = 15000; set local jit = off; set local plan_cache_mode = force_custom_plan
 -- read by: the list view over a range nothing matches; a reader's list view, every page; listing: a collection, every page; listing by staff: a collection, every page; listing by staff: inside a hidden collection

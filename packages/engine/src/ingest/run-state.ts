@@ -25,8 +25,6 @@ export type Run = {
   moves: Moves | null;
   /** Sources that send changes rather than a whole listing: a replay or an older revision is refused, not taken. */
   sendsChanges: boolean;
-  /** A first run over path-keyed documents: each it replaces is withdrawn, never left beside it. */
-  adopting: boolean;
 };
 
 /** A revision of an item, read and ready: its words, its fingerprint, its place, and what read it. */

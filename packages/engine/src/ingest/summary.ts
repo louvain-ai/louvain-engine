@@ -17,8 +17,6 @@ export type IngestSummary = {
   removalsHeld: string | null;
   /** Keyword entries a withdrawal could not delete; never shown, since every hit is read again from the store. */
   keywordStale: number;
-  /** Path-keyed documents (`legacy.ts`), replaced by this run's own. */
-  adopted: number;
 };
 
 export function emptySummary(collection: string): IngestSummary {
@@ -30,6 +28,5 @@ export function emptySummary(collection: string): IngestSummary {
     keyword: { indexed: 0, unconfigured: 0, missed: 0, skipped: 0 },
     removalsHeld: null,
     keywordStale: 0,
-    adopted: 0,
   };
 }
