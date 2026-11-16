@@ -2,14 +2,14 @@
 -- parameters: 11
 -- under: set local statement_timeout = 15000; set local jit = off; set local plan_cache_mode = force_custom_plan; set local hnsw.iterative_scan = relaxed_order; set local hnsw.ef_search = 120
 -- read by: before a date
--- plan on Postgres 17: Limit > Sort > Subquery Scan > Nested Loop (Bitmap Heap Scan on passage (Bitmap Index Scan using passage_occurred_idx, Hash Join (Seq Scan on event_log, Hash > Hash Join (Index Scan on event_log using event_log_record_key_idx > Function Scan, Hash > Seq Scan on passage), Seq Scan on event_log > Function Scan)), Materialize > ProjectSet > Result)
+-- plan on Postgres 17: Sort > Hash Join (Seq Scan on passage, Hash > Subquery Scan > Limit > Sort > Nested Loop (Bitmap Heap Scan on passage (Bitmap Index Scan using passage_occurred_idx, Hash Join (Seq Scan on event_log, Hash > Hash Join (Index Scan on event_log using event_log_record_key_idx > Function Scan, Hash > Seq Scan on passage), Seq Scan on event_log > Function Scan)), Materialize > ProjectSet > Result))
 
 
-      select id, event_id, seq, text, container, author, occurred_at, 1 - distance as score from (
-        select p.id::text as id, p.event_id, p.seq, p.text, p.container, p.author, p.occurred_at,
-               p."embedding" <=> $1::vector as distance
-          from passage p
-         where p.org_id = $2 and p.container in (select unnest($3::text[]))
+      select p.id::text as id, p.event_id, p.seq, p.text, p.container, p.author, p.occurred_at, 1 - w.distance as score from (
+        select id, distance from (
+          select p.id, p."embedding" <=> $1::vector as distance
+            from passage p
+           where p.org_id = $2 and p.container in (select unnest($3::text[]))
     and p.occurred_at <= $4
     and (not p.record_has_newer or not exists (
       select 1 from event_log e
@@ -44,6 +44,8 @@
     
     and p.occurred_at < $10
      and p."embedding" is not null
-        offset 0) w
-       order by distance, id
-       limit $11
+          offset 0) c
+         order by distance, id
+         limit $11) w
+       join passage p on p.id = w.id
+       order by w.distance, w.id

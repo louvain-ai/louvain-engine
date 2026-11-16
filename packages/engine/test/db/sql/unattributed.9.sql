@@ -4,4 +4,4 @@
 -- plan on Postgres 17: LockRows > Seq Scan on event_log
 
 select id from event_log where id = $1
-      and org_id = $2  for update
+    and org_id = $2  for update

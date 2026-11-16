@@ -25,7 +25,7 @@ export function containerName(container: string): string {
   const [connector = container, workspace, ...rest] = container.split("/");
   const unit = rest.join("/");
   const last = rest.at(-1) ?? "";
-  // A folder's own files sit under "." (`item-event.ts`, the `ingest/legacy.ts` feed), stored "_" (`sanitizeId`).
+  // A folder's own files sit under "." (`item-event.ts`, and an `http` feed's folder), stored "_" (`sanitizeId`).
   const loaded = connector === ITEM_FEED || (connector === "http" && workspace === "folder");
   if (unit === "." || (loaded && unit === "_")) return "(top folder)";
   const opaque =

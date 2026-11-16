@@ -7,11 +7,10 @@ import {
 import type { FileReaderLane } from "../readers/index.js";
 import { settleListing } from "./changes.js";
 import { checkItem } from "./check-item.js";
-import { heldCount, heldOf, heldTexts } from "./holdings.js";
+import { heldOf, heldTexts } from "./holdings.js";
 import type { Collection } from "./holdings-types.js";
 import { finish, indexTaken, take } from "./item.js";
 import { removeItem } from "./item-retire.js";
-import { legacyHeld } from "./legacy.js";
 import { type LoadState, openLoadState } from "./load.js";
 import { Moves } from "./moves.js";
 import { skip } from "./outcome.js";
@@ -77,8 +76,6 @@ type Start = {
 
 async function startRun({ state, collection, source, options, hold }: Start): Promise<Run> {
   const whole = source.lists === "all" && options.removals === "sync";
-  // Only a folder's first run replaces path-keyed documents, and only when the store holds any.
-  const first = source.lists === "all" && (await heldCount(state.sql, collection)) === 0;
   return {
     state,
     collection,
@@ -92,7 +89,6 @@ async function startRun({ state, collection, source, options, hold }: Start): Pr
     listed: whole ? new Set() : null,
     moves: whole ? new Moves(await heldTexts(state.sql, collection)) : null,
     sendsChanges: source.lists === "some",
-    adopting: first && (await legacyHeld(state.sql, state.orgId)),
   };
 }
 

@@ -15,7 +15,7 @@ cd "$ROOT"
 #   up        cmd_up        install and build on the first run, start the services, the reranker and the tool server
 #   ingest    cmd_ingest    load a folder, a JSON Lines file of records, or a configured source (the loader entry)
 #   search    cmd_search    one search, printed (the search entry)
-#   reindex   cmd_reindex   upgrade the schema in place, then rebuild the keyword index (the reindex entry)
+#   reindex   cmd_reindex   rebuild the keyword index (the reindex entry), after a shipped schema upgrade if any
 #   status    cmd_status    what runs, on which ports, how many documents are loaded
 #   app       cmd_app       open the app in a browser, or print its address
 #   logs      cmd_logs      recent output of the tool server or one service
@@ -227,8 +227,8 @@ Usage: ./engine <command>
   search "<words>"         Print the matching documents, best first (--full-ids prints whole ids;
                            --question "<question>" also searches the question the words were chosen for).
                            ./engine search "When does the lease renew?"
-  reindex                  Upgrade a database the release before made, in place, keeping the documents, and rebuild
-                           the keyword index from them. Run once after an upgrade that asks for it.
+  reindex                  Rebuild the keyword index from the documents loaded, keeping them; when a release ships a
+                           schema upgrade, apply it in place first. Run once after an upgrade that asks for it.
                            ./engine reindex
   status                   Show what is running, on which ports, how many documents are loaded.
                            ./engine status
@@ -966,6 +966,7 @@ same_structure() {
 check_schema() {
   schema_stamped && return 0
   if same_structure; then stamp_schema; return 0; fi
+  have_upgrades || die "the database holds a schema other than the one this release was built for (or one that could not be compared with it), and this release ships no upgrade for it. Nothing was changed or deleted. To go on, run ./engine down --volumes (it deletes this install's database), then ./engine up, and load your documents again with ./engine ingest."
   die "the database holds a schema other than the one this release was built for (or one that could not be compared with it). Nothing was changed or deleted. If it was made by the release before this one, run ./engine reindex: it upgrades the schema in place, keeping your documents, and rebuilds the keyword index. Otherwise run ./engine down --volumes (it deletes this install's database), then ./engine up, and load your documents again with ./engine ingest."
 }
 
@@ -990,6 +991,9 @@ load_schema() {
 
 # ---- The upgrade in place, and the keyword index rebuilt after it. ----
 
+# Whether this release ships any upgrade (the first release ships none: there is no release before it).
+have_upgrades() { ls "$UPGRADES"/*.sql >/dev/null 2>&1; }
+
 # Every file in db/upgrades (each idempotent), in one transaction that ends with a check of the result against this
 # release's own shape, so it commits only when the database has exactly that shape and otherwise rolls back whole.
 upgrade_schema() {
@@ -997,7 +1001,7 @@ upgrade_schema() {
   expected="$(baseline_structure)" || return 1
   {
     printf 'begin;\n'
-    for upgrade in "$UPGRADES"/*.sql; do cat "$upgrade"; printf '\n'; done
+    for upgrade in "$UPGRADES"/*.sql; do [ -f "$upgrade" ] || continue; cat "$upgrade"; printf '\n'; done
     printf 'do $upgrade$ begin if (%s) is distinct from %s then raise exception %s; end if; end $upgrade$;\n' \
       "$STRUCTURE_SQL" "'$expected'" "'not this release''s schema'"
     printf 'commit;\n'
@@ -1011,6 +1015,7 @@ upgrade_in_place() {
     say "Schema: already this release's."
     return 0
   fi
+  have_upgrades || die "the database holds a schema other than the one this release was built for, and this release ships no upgrade for it. Nothing was changed. To go on, run ./engine down --volumes (it deletes this install's database), then ./engine up, and load your documents again with ./engine ingest."
   say "Schema: upgrading in place (one transaction)..."
   upgrade_schema || die "the upgrade did not give this release's schema, so it was rolled back: nothing was changed. This database was not made by the release before this one. To go on, run ./engine down --volumes (it deletes this install's database), then ./engine up, and load your documents again with ./engine ingest."
   stamp_schema
