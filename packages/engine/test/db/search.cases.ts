@@ -25,7 +25,7 @@ export type Case = {
 
 /**
  * The superseded revision is shown. The open loader's events carry no record, so a file's revisions have no record key
- * and the version rule (`passages-filter.ts`, `record_has_newer`) never retires the earlier one's passages, while the
+ * and the version rule (`read/passages/filter.ts`, `record_has_newer`) never retires the earlier one's passages, while the
  * source groups both revisions as one document. Asked for words only the earlier revision holds, the ranked page
  * shows the document with the earlier date and the earlier text as its excerpt, and nothing says it is not current.
  */

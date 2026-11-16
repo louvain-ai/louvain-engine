@@ -15,7 +15,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
  *
  * Sealed, not encoded: a cursor is text an agent logs, shares or pastes into another agent, and the head's document
  * ids inside it are a list of what the original viewer could see. So it is AES-256-GCM under a key derived for this
- * purpose alone, which the build binds (`presentation-seam.ts` `cursorKey`: the open engine derives it from its bearer
+ * purpose alone, which the build binds (`presentation.ts` `cursorKey`: the open engine derives it from its bearer
  * token, another build from a secret of its own): nobody holding a cursor reads it, and one altered by a byte fails its
  * tag and is refused.
  */
@@ -27,7 +27,7 @@ export type SearchCursor =
    * Past the head: at raw index `j` of the listing, skipping the head's documents `r`, each by its id's first
    * `ID_PREFIX` characters (`idPrefix`): a wide head is up to 100 documents, and 100 whole ids sealed are past the
    * cursor's 8,192 characters. A cursor sealed before carries whole ids, which `idPrefix` cuts the same way. `m`: the
-   * head matched the search, so every page past it says so too (`search-read.ts` `splitHead`).
+   * head matched the search, so every page past it says so too (`search-relevance.ts` `splitHead`).
    */
   | { v: 1; k: string; p: "listing"; j: number; r: string[]; m?: true }
   /**

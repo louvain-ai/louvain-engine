@@ -3,8 +3,7 @@
 Run: python services/embed/test_embed_coalesce.py (the embedding sidecar's requirements, the model in the HF cache).
 
   - A text's vector does not depend on what shares its forward pass: embedded in a coalesced batch of mixed
-    lengths, every text matches itself embedded alone to 1e-6 (masked mean pooling; the same bound
-    `scripts/embedding-parity.ts` holds the TypeScript path to).
+    lengths, every text matches itself embedded alone to 1e-6 (masked mean pooling).
   - Requests queued together are answered with their OWN slices, in order, whatever the batch they joined.
   - A failure inside a batch reaches every request in it, and the worker keeps serving.
   - A batch larger than `MICRO_BATCH` runs shortest-first in groups and still answers every text with its own

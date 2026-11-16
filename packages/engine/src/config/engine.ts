@@ -23,17 +23,17 @@ const databaseSettings = () => ({
   dbPrepare: environment("LOUVAIN_DB_PREPARE"),
   /**
    * How a prepared statement is planned: `force_custom_plan` (default), `auto`, `force_generic_plan`, or `off` to leave
-   * it to the server. Where it applies is `dbPlanCacheScope` (`db-settings.ts`); nowhere without prepared statements.
+   * it to the server. Where it applies is `dbPlanCacheScope` (`store/plan-cache.ts`); nowhere without prepared statements.
    */
   dbPlanCacheMode: environment("LOUVAIN_DB_PLAN_CACHE_MODE"),
   /**
    * `reads` (default): set inside bounded reads only. `connection`: sent at connect as well, on an endpoint that cannot
-   * be a pooler, at the cost of a plan per execution for every statement (`db-settings.ts`).
+   * be a pooler, at the cost of a plan per execution for every statement (`store/plan-cache.ts`).
    */
   dbPlanCacheScope: environment("LOUVAIN_DB_PLAN_CACHE_SCOPE"),
   /**
    * `off` (default): the app's connections never JIT-compile — `jit = off` at connect on a direct endpoint, and on a
-   * pooled one the boot log names the `ALTER ROLE` that does it. `server`: leave it to the server (`db-settings.ts`).
+   * pooled one the boot log names the `ALTER ROLE` that does it. `server`: leave it to the server (`store/jit.ts`).
    */
   dbJit: environment("LOUVAIN_DB_JIT"),
   dbPoolMax: environment("LOUVAIN_DB_POOL_MAX"),
@@ -74,7 +74,7 @@ export const config = engineConfig();
 export const databaseUrl = (): string => environment("DATABASE_URL");
 
 /**
- * The store an engine's own entry opens on `databaseUrl()` (`store.ts` `openStore`): the database settings above and
+ * The store an engine's own entry opens on `databaseUrl()` (`store/pool.ts` `openStore`): the database settings above and
  * every read's statement timeout, read once, at import.
  */
 export const storeSettings: Parameters<typeof openStore>[1] = {

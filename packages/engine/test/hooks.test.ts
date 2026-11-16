@@ -9,6 +9,7 @@ import { plainReading } from "../src/read/reading.js";
 import { ONE_SPACE } from "../src/read/vector-space.js";
 import { openExactTier } from "../src/server/tools/exact-seam.js";
 import { unkeyedPresentation } from "../src/server/tools/presentation.js";
+import { OPEN_CONTEXT_MODE } from "../src/store/context-mode.js";
 
 /**
  * What a build adds to a read travels in its context, and a hook it leaves out is the open build's own (`hooks.ts`).
@@ -41,6 +42,7 @@ const OPEN = {
   filters: noAddedFilters,
   spaces: ONE_SPACE,
   exact: openExactTier,
+  contextMode: OPEN_CONTEXT_MODE,
 } satisfies Omit<Required<ReadHooks>, "presentation" | "keyword">;
 
 test("an engine with no hooks reads each hook as the open build's own constant", () => {

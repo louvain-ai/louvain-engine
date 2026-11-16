@@ -20,7 +20,7 @@ import {
  * drain proof past its CI budget, and the startup parameter is the one thing a
  * transaction pooler can refuse at connect, which would fail every query. These
  * are the rules that keep it off the queue by default and off a pooled endpoint.
- * `plan-cache-db.test.ts` proves what Postgres does with each.
+ * What Postgres does with each is a database test of its own.
  */
 
 const DIRECT = "postgres://engine:engine@localhost:5434/engine";

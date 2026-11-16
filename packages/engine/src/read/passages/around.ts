@@ -116,7 +116,7 @@ async function nearOf(
 ): Promise<Near[] | null> {
   const { read, ids, k, ancestry } = ask;
   try {
-    return await stage("ask.around", () =>
+    return await stage("read.around", () =>
       bounded(context, async (q) => {
         const chats = chatAnchorsInRank(await hitAnchors(q, read, ids), ids);
         const walks = await Promise.all(
@@ -138,7 +138,7 @@ async function nearOf(
     );
   } catch (err) {
     if (!isStatementTimeout(err)) throw err;
-    telemetryOf(context).count("kg.read.around.cut", 1, {});
+    telemetryOf(context).count("read.around.cut", 1, {});
     return null;
   }
 }

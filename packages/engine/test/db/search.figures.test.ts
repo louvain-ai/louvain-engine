@@ -118,7 +118,7 @@ for (const query of ["NOTE5", "note5", "note-5", "note05", "note-05"])
   test(`a key's number is a number: ${query} leads with the document named note-05`, {
     skip: skipWithoutDatabase,
   }, async () => {
-    // The document the search NAMES leads (the exact tier compares the key's normal form, `key-form.ts`), however
+    // The document the search NAMES leads (the exact tier compares the key's normal form), however
     // either is spelled; a longer key that only ends like it follows.
     assert.equal(keysOf(await search(query))[0], "notes/note-05", query);
   });

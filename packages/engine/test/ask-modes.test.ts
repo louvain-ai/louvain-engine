@@ -25,7 +25,7 @@ test("normal is the environment; fast and thorough are derived from it", () => {
     documents: 10,
     neighbours: 0,
     documentChars: 24000,
-    // Whether a reranker runs is the caller's: it hands one in, or none (`whole-documents.ts`).
+    // Whether a reranker runs is the caller's: it hands one in, or none.
     rerank: true,
     recall: "full",
     deadlineMs: 25000,

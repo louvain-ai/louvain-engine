@@ -42,7 +42,7 @@ export async function titledDocuments(search: TitledSearch): Promise<Staged<Rank
     return { value, degraded: [] };
   } catch (err) {
     // swallowed: the titled documents are added to the page, never its only leg; their failure is named, not thrown.
-    telemetryOf(context).error("ask.search.titles", err);
+    telemetryOf(context).error("search.titles", err);
     return { value: [], degraded: ["titles:unavailable"] };
   }
 }
@@ -55,10 +55,15 @@ type TitledSearch = {
   options: Pick<SearchOptions, "asOf" | "narrow">;
 };
 
+/** The default page's full hits: a titled document the legs ranked past them is not on the page an agent reads. */
+const FIRST_PAGE = TITLED_AT + TITLED_PLACES;
+
 /**
- * The ranked order with up to `TITLED_PLACES` titled documents the legs did not already rank into the page placed from
- * `TITLED_AT` (or the page's end, for a shorter one); every ranked document keeps its turn after them, and `added` says
- * how far the head grows. A titled copy of a document already on the page is collapsed after this. Pure.
+ * The ranked order with up to `TITLED_PLACES` titled documents placed from `TITLED_AT` (or the page's end, for a shorter
+ * one): each one the legs did not rank into the head is ADDED, and one they ranked past the first page MOVES there, its
+ * own row kept; one already on the first page stays. Every other ranked document keeps its turn after them, and `added`
+ * says how far the head grows (the moved ones were in it). A titled copy of a document already on the page is collapsed
+ * after this. Pure.
  */
 export function withTitled(
   order: Ranked,
@@ -66,10 +71,14 @@ export function withTitled(
   limit: number,
 ): { order: Ranked; added: number } {
   if (titled.length === 0) return { order, added: 0 };
-  const head = new Set(order.slice(0, limit).map(([recordId]) => recordId));
-  const added = titled.filter(([recordId]) => !head.has(recordId)).slice(0, TITLED_PLACES);
-  const taken = new Set(added.map(([recordId]) => recordId));
+  const head = new Map(order.slice(0, limit).map((entry, i) => [entry[0], { entry, i }]));
+  const placed = titled
+    .filter(([recordId]) => (head.get(recordId)?.i ?? FIRST_PAGE) >= FIRST_PAGE)
+    .slice(0, TITLED_PLACES)
+    .map((entry) => head.get(entry[0])?.entry ?? entry);
+  const taken = new Set(placed.map(([recordId]) => recordId));
+  const added = placed.filter(([recordId]) => !head.has(recordId)).length;
   const rest = order.filter(([recordId]) => !taken.has(recordId));
-  const at = Math.min(rest.length, TITLED_AT, Math.max(0, limit - added.length));
-  return { order: [...rest.slice(0, at), ...added, ...rest.slice(at)], added: added.length };
+  const at = Math.min(rest.length, TITLED_AT, Math.max(0, limit - added));
+  return { order: [...rest.slice(0, at), ...placed, ...rest.slice(at)], added };
 }

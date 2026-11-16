@@ -4,7 +4,7 @@ import { test } from "node:test";
 /**
  * Age lowers a passage's relevance inside each leg, bounded (`@louvain/engine-core` `decayed`), and only for a
  * question not about the past (the caller decides which questions decay). The sole
- * old source against fresh rows, against a real Postgres, is `recency-decay-db.test.ts`.
+ * old source against fresh rows, against a real Postgres, is a database test of its own.
  */
 const DAY = 86_400_000;
 

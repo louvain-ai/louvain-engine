@@ -2,10 +2,10 @@
  * One item through its collection, stage by stage:
  *
  *   read      its words, from its text or its file (`read.ts`)
- *   decide    unchanged, added, updated, moved or skipped, reading nothing (`decide.ts`)
+ *   decide    unchanged, added, updated, moved or skipped, reading nothing (`item-decide.ts`)
  *   accept    its new revision through the one accept path (`accept.ts`)
  *   index     the revision made findable, with the rest of its batch (`ingest/index-record.ts`, stage by stage)
- *   retire    what it replaced, withdrawn (`retire.ts`)
+ *   retire    what it replaced, withdrawn (`item-retire.ts`)
  *   say       its line in the run's summary
  */
 import { indexOpen } from "./indexer.js";

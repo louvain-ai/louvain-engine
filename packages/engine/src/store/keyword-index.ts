@@ -57,19 +57,16 @@ type Bm25SearchArgs = {
   /** These record entries only (Elasticsearch's `ids` query). */
   ids?: readonly string[];
   figures?: true;
+  /** The words asked of the title alone, a title holding at least `need` of them (`bm25_query.py` `_title_query`). */
+  titles?: { need: number };
 };
 
 /**
- * One search against the sidecar. THE FENCE IS INSIDE THE SIDECAR'S QUERY,
- * not applied here — `orgId`, `containers` and `asOf` are MUST clauses of
- * the boolean query `bm25.py` builds, so a document that fails any of them
- * never enters the ranked set this returns.
- *
- * Throws on any non-2xx response or a malformed body, like
- * `remoteEmbed`: the caller (the passage keyword leg, `read/keyword/leg.ts`)
- * lets a failure here cost the BM25 contribution (`keyword:bm25` degraded),
- * never the question — the same "degrade the leg, not the answer" contract
- * every other leg carries.
+ * One search against the sidecar. THE FENCE IS INSIDE THE SIDECAR'S QUERY, not applied here: `orgId`, `containers`
+ * and `asOf` are MUST clauses of the boolean query `bm25.py` builds, so a document that fails any of them never enters
+ * the ranked set this returns. Throws on any non-2xx response or a malformed body: the caller (the passage keyword leg,
+ * `read/keyword/leg.ts`) lets a failure here cost the keyword contribution (`keyword:bm25` degraded), never the
+ * question, the "degrade the leg, not the answer" contract every other leg carries.
  */
 async function search(s: Bm25Settings, args: Bm25SearchArgs): Promise<Bm25Hit[]> {
   const data = await post<{ hits?: unknown }>(s, "search", {
@@ -83,6 +80,7 @@ async function search(s: Bm25Settings, args: Bm25SearchArgs): Promise<Bm25Hit[]>
     ...(args.to ? { to: args.to } : {}),
     ...(args.ids ? { ids: args.ids } : {}),
     ...(args.figures ? { figures: true } : {}),
+    ...(args.titles ? { titles: args.titles } : {}),
   });
   if (!Array.isArray(data.hits)) throw new Error("bm25 search: malformed response");
   return data.hits as Bm25Hit[];
@@ -277,7 +275,7 @@ export function bm25Endpoint(): Bm25Endpoint {
   return endpoint;
 }
 
-/** The door's endpoint, made on its first call: listed in `check-engine-state.mjs`, for call sites with no engine. */
+/** The door's endpoint, made on its first call: listed by the engine-state check, for call sites with no engine. */
 let door: Bm25Endpoint | undefined;
 const doorEndpoint = (): Bm25Endpoint => {
   door ??= bm25Endpoint();

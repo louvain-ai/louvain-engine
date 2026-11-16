@@ -6,8 +6,8 @@ import { askContext } from "./question.js";
 import { queryLoader, recentVector } from "./recent-vectors.js";
 
 /**
- * The `ask.embed` stage, which never reports an error. A failed embedding is a designed degradation: every leg
- * catches it, counts `kg.read.embed.unavailable` and answers from its other leg. So the stage settles normally,
+ * The `read.embed` stage, which never reports an error. A failed embedding is a designed degradation: every leg
+ * catches it, counts `read.embed.unavailable` and answers from its other leg. So the stage settles normally,
  * tagged `up: "no"`, and hands the caller the rejection itself. Timed either way, so a sidecar slow to fail shows
  * as slow.
  */
@@ -16,7 +16,7 @@ type Settled<T> = { ok: true; value: T } | { ok: false; error: unknown };
 function timedEmbed(load: (text: string) => Promise<string>, text: string): Promise<string> {
   const tags: Tags = { up: "yes" };
   return stage(
-    "ask.embed",
+    "read.embed",
     async (): Promise<Settled<string>> => {
       try {
         return { ok: true, value: await load(text) };
@@ -34,7 +34,7 @@ function timedEmbed(load: (text: string) => Promise<string>, text: string): Prom
 /**
  * One embedding per distinct text, whoever holds the map. The context's `vector()` and the standalone memo below
  * share this rule, so they cannot drift. A failed embedding is not cached: the next caller may reach a recovered
- * sidecar, and a memoised rejection would fail every leg. The embedding is the `ask.embed` stage; a memo hit is not
+ * sidecar, and a memoised rejection would fail every leg. The embedding is the `read.embed` stage; a memo hit is not
  * timed as one.
  */
 export function memoisedVector(

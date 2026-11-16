@@ -152,7 +152,7 @@ export function openLogger(): Logger {
 }
 
 /**
- * The door's process group and say-once, for the call sites with no engine in reach (`check-engine-state.mjs` lists
+ * The door's process group and say-once, for the call sites with no engine in reach (the engine-state check lists
  * them, and the list only shrinks); an engine's own logger is its part (`given.ts` `logOf`). Its say-once is `log.sayOnce`.
  */
 let processGroup: string | null | undefined;

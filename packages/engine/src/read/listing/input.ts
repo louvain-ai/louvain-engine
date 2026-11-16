@@ -55,7 +55,7 @@ export type SearchInput = {
 /**
  * One listing: what was asked, the reader's scope, the build's predicates after the fence (`AddedFilters`) and the handle
  * of the read it serves (`sql`), which every fragment of it is written with. A listing's statements and filters take it
- * whole (`read-filter.ts`, `read-listing.ts`).
+ * whole.
  */
 export type Listing = {
   readonly sql: Queryable;

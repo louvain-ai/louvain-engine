@@ -8,7 +8,7 @@ import { type IngestItem, type ItemProblem, itemOf } from "@louvain/engine-core"
 
 /** A lone half of a surrogate pair, or a NUL: text no database stores as sent. */
 const UNSTORABLE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]|\0/;
-/** An app's name, in the pattern a record's presentation takes (`engine-core` `sources.ts`). */
+/** An app's name, in the pattern a record's presentation takes (`@louvain/engine-core`). */
 const APP = /^[a-z0-9][a-z0-9-]{0,59}$/;
 /** Names an item may not claim: the engine's own, which a reader would take it to come from. */
 const RESERVED_APPS: ReadonlySet<string> = new Set([

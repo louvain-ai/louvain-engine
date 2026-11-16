@@ -16,7 +16,7 @@ export const attempt = async <T>(
     return { value: await work(), degraded: [] };
   } catch (err) {
     // A leg that failed costs its rows, never the question: the other legs may hold the answer.
-    telemetry.error("ask.leg", err);
+    telemetry.error("search.leg", err);
     return { value: fallback, degraded: [what] };
   }
 };

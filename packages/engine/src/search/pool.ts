@@ -23,7 +23,7 @@ import { withQuestion } from "./with-question.js";
 
 /**
  * The search's pool: the configuration's retriever plugins, each handed a reading fenced to the search, every record
- * they return read again under that fence as the keyword index's hits are (`records-as-passages.ts`), then fused
+ * they return read again under that fence as the keyword index's hits are (`read/records/as-passages.ts`), then fused
  * (`fused.ts`) in their order. A record outside the search's scope is dropped and counted
  * (`search.retriever_foreign_dropped`). A search with no retriever configured is refused in one sentence. The
  * configuration's reranker, or `null`, travels with the pool.

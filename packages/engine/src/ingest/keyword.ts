@@ -8,7 +8,7 @@ import type { Sql } from "postgres";
 import { telemetry } from "../observability/telemetry.js";
 import { displayApp } from "../read/listing/apps.js";
 import { documentOfEntry } from "../read/listing/keyword-documents.js";
-import { passageContextMode, writesPassageContext } from "../store/context-mode.js";
+import { writesPassageContext } from "../store/context-mode.js";
 import { appsOf, type Bm25Doc, keywordDoc } from "../store/keyword-document.js";
 import { bm25GroupCommitOn } from "../store/keyword-index.js";
 import { documentEntryOf, entryOfCurrent } from "./document-entry.js";
@@ -84,7 +84,7 @@ export async function keywordHeader(
   orgId: string,
   record: HeaderDocument,
 ): Promise<string | null> {
-  return writesPassageContext(await passageContextMode(writes.sql, orgId))
+  return writesPassageContext(await writeHooksOf(writes).contextMode(orgId))
     ? writeHooksOf(writes).passageRules.documentHeader(record)
     : null;
 }

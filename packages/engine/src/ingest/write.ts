@@ -35,7 +35,7 @@ export async function writeSlice(
   // Which space these vectors are in, once per workspace per process: a model change without a re-embed shows at boot.
   const orgId = parts[0]?.ctx.orgId;
   if (ids.length > 0 && orgId) await recordEmbeddingSpace(embedderOf(writes), writes.sql, orgId);
-  // And whatever the build does after a write (`passage-write-seam.ts`): best effort, never a failure of this write.
+  // And whatever the build does after a write (`passage-writes.ts`): best effort, never a failure of this write.
   const { passageWrites } = writeHooksOf(writes);
   await afterPassagesWritten(passageWrites, "passage", ids);
   await afterPassagesWritten(passageWrites, "context", ids);

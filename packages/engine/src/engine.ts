@@ -19,7 +19,7 @@ import type { Store } from "./store/pool.js";
  * to its logger unless given, and a logger, its own unless given.
  */
 export type EngineParts = {
-  /** The pool it reads and writes through (`store.ts`). */
+  /** The pool it reads and writes through (`store/pool.ts`). */
   readonly store: Store;
   /** How text becomes vectors. */
   readonly embedder: Embedder;

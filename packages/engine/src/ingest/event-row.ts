@@ -6,7 +6,7 @@ import type { Revision } from "./revision.js";
 /**
  * An open event's row: the revision as it arrived, deduplicated by one statement, `on conflict do nothing` on the event
  * id or the per-feed key (org, connector, workspace, idempotency key). The open ingest has no queue, so the row carries
- * no lease, claim or reading state: content waits only to be indexed (`index_status`), which `index-open.ts` settles.
+ * no lease, claim or reading state: content waits only to be indexed (`index_status`), which `indexer.ts` settles.
  * Whether the event may be written at all is the caller's.
  */
 export type EventRow = {
@@ -19,7 +19,7 @@ export type EventRow = {
 
 /**
  * The advisory lock name of one record of one feed: every accept, withdrawal and relocation of the record takes it
- * (`accept-open.ts`, `withdraw-open.ts` `lockRecords`), so they serialise against each other.
+ * (`accept.ts`, `withdraw.ts` `lockRecords`), so they serialise against each other.
  */
 export function documentLockName(
   orgId: string,

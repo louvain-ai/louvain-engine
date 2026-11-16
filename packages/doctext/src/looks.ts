@@ -113,7 +113,7 @@ const ALIGN: Record<string, CellLook["align"]> = {
 
 /**
  * Per `cellXfs` entry, its look, or null when it draws as an unstyled cell. Index-aligned with the cell formats
- * `zip-sheet-base.ts` reads from the same entries.
+ * a spreadsheet view reads from the same entries.
  */
 export function cellLooks(styles: string, theme: string): (CellLook | null)[] {
   if (!styles) return [];

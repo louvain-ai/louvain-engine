@@ -5,7 +5,7 @@
  * before its body is read (`respond.ts`), a body is capped before anything parses it, every answer carries the security
  * headers and streams as its route writes it, a closed connection aborts the request a route is answering, and a tool
  * call's reply is bounded by the deadline while the work under way runs on. The caller binds the reads and hands over
- * the surfaces and the reading (`mcp-server.ts`), so nothing here chooses them.
+ * the surfaces and the reading (`main.ts`), so nothing here chooses them.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -23,7 +23,7 @@ export type ServeSettings = {
   toolDeadlineMs: number;
   /** The read token, for every read route and the browser's sign-in. */
   token: string;
-  /** The source `POST /ingest` opens and its token, or null for no door (`ingest-http.ts`). */
+  /** The source `POST /ingest` opens and its token, or null for no door (`ingest-route.ts`). */
   door: IngestDoor | null;
   /** The origin of a proxy in front, when browsers reach the server through one. */
   publicOrigin?: string | undefined;

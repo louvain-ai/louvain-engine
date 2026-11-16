@@ -173,7 +173,7 @@ export async function fetchPublic(raw: string, options: FetchPublicOptions): Pro
 }
 
 /**
- * The hop loop every vetted GET shares (`fetchPublic`, `fetchMedia` in `media.ts`), so the two cannot drift apart:
+ * The hop loop every vetted GET shares (`fetchPublic`, and any media fetch built on it), so the two cannot drift apart:
  * each hop is `publicUrl`, the caller's own host test (`admits`, a media fetch's allowlist), every resolved address
  * public, a socket pinned to the address that passed, and a redirect followed by hand. A caller adds NO header of
  * its own: it names what it needs — the conditional validators (each one line, `oneLine`) or a byte range (two safe

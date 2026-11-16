@@ -191,6 +191,11 @@ class Handler(BaseHTTPRequestHandler):
                 if any(k in narrow and not isinstance(narrow[k], list) for k in ("ids", "apps")):
                     self._send(400, {"error": "ids and apps must be lists"})
                     return
+                titles = req.get("titles")
+                need = titles.get("need") if isinstance(titles, dict) else None
+                if titles is not None and (not isinstance(need, int) or isinstance(need, bool) or not 1 <= need <= 8):
+                    self._send(400, {"error": "titles.need must be an integer from 1 to 8"})
+                    return
                 order = req.get("order", "relevance")
                 if order not in ("relevance", "newest"):
                     self._send(400, {"error": "order must be relevance or newest"})
@@ -206,6 +211,9 @@ class Handler(BaseHTTPRequestHandler):
                     self._send(409, {"error": "index_unreadable", "rebuild": True})
                     return
                 last = req.get("strategy") == "last"
+                if last and need is not None:
+                    self._send(400, {"error": "titles asks the plain match; it takes no strategy"})
+                    return
                 if store is None:
                     # An org with no index holds nothing: the empty answer, and a read never makes an index.
                     self._send(200, NOTHING_LAST if last else {"hits": [], "tookMs": 0})
@@ -216,7 +224,7 @@ class Handler(BaseHTTPRequestHandler):
                         self._send(200, search_last(store, org, boxes, query, limit, as_of, narrow))
                         return
                     hits, took_ms = search(
-                        store, org, boxes, query, limit, as_of, title_boost, narrow, exact_boost, order
+                        store, org, boxes, query, limit, as_of, title_boost, narrow, exact_boost, order, need
                     )
                 except FilterUnsupported as err:
                     self._send(409, {"error": "filter_unsupported", "field": str(err)})
