@@ -1,7 +1,8 @@
 # Permissions and threat model
 
 **In short:** this build has one reader: whoever holds the token in `.engine/token` reads every document loaded. Keep
-the server on `127.0.0.1`, and read any plugin before you add it.
+the server on `127.0.0.1`, and read any plugin before you add it. The [security model](security-model.md) states what the fence guarantees, what it
+does not, and how each guarantee is checked.
 
 ## Who can read what
 

@@ -37,11 +37,12 @@ the handle the read runs on, the host's resolver of who may read what, the hooks
 own: an entry opens its store (`src/store.ts` `openStore`: the pool, its plan and JIT settings, and the bounds every
 bounded read keeps) and the engine ends it (`close`). It depends on no plugin: the CLI chooses the defaults, and the two
 shipped readers are only its tests' devDependencies. Where its counts, timings and lines go are parts too (`telemetry`,
-nowhere unless given; `logger`, its own unless given), carried by its context and writes. It keeps nothing between
-calls in its modules: a search cursor's key, the keyword index's settings and group commit (its keyword index's
-`endpoint`) and the lines it has said once are the engine's own, so two engines in one process share nothing either
-learned. Everything is imported by one name, `@louvain/engine` (`src/index.ts`, the only export of the published
-package), and nothing it reaches opens a socket, a file or a timer while it loads.
+nowhere unless given; `logger`, its own unless given), carried by its context and writes. A search cursor's key, the
+keyword index's settings and group commit (its keyword index's `endpoint`) and the lines it has said once are the
+engine's own, not its modules', so two engines in one process do not share them; the few things still kept once per
+process are listed in the [security model](security-model.md). Everything is imported by one name, `@louvain/engine` (`src/index.ts`, the only export of the published
+package), and nothing it reaches opens a socket, a file or a timer while it loads. What each of these guarantees for who may read
+what, what none of them does, and how each is checked is the [security model](security-model.md).
 - `src/ingest/` and `src/open/ingest/`: one ingest for every source. It adds a new key, leaves an unchanged one alone,
   replaces an updated one and withdraws a removed one.
 - `src/kg/read/`: the fenced reads. Every read resolves the reader's readable set once and applies it inside each

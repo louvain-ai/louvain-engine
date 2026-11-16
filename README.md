@@ -251,6 +251,7 @@ agent and its guidance, each listed in [docs/how-this-figure-was-produced.md](do
 | [How search works](docs/search.md) | The stages, what "matched" means, paging, what a hit carries |
 | [Ingest](docs/ingest.md) | Sources, keys and revisions, the HTTP door |
 | [Permissions and threat model](docs/permissions.md) | The fence, the host, what is defended and what is trusted |
+| [Security model](docs/security-model.md) | What the fence guarantees and what it does not, the tokens, what an operator must do, and how each is checked |
 | [Limits and known defects](docs/limits.md) | Every bound, and the defects the tests record |
 | [The app](docs/app.md) | Search and Ask in a browser: turning it on, the model key, what each page does |
 | [How the figure was produced](docs/how-this-figure-was-produced.md) | The benchmark run, part by part |
