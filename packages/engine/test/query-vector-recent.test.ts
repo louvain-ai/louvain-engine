@@ -17,6 +17,11 @@ import { openTestEngine } from "./db/open-engine.js";
  * loader is the open build's embedder, which talks to a local stub.
  */
 const ORG = "org-a";
+/** The memo's own lane, never asked here: each read names its loader. */
+const refusing = async (): Promise<string> => {
+  throw new Error("the memo's own lane was asked");
+};
+
 const counting = () => {
   const calls: string[] = [];
   return {
@@ -100,7 +105,7 @@ test("a question's memo still memoises past the shared store, and finds what a c
     // Forgotten from the shared store mid-question (its 60 s, its 64 texts): the question's own memo still holds it.
     forgetRecentQueryVectors(other.load);
     await queryVectorWith("handover notes", other.load, ORG);
-  });
+  }, refusing);
   assert.deepEqual(other.calls, ["handover notes"]);
 });
 

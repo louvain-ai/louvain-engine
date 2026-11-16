@@ -30,7 +30,7 @@ export function eventOf(
     observedAt: at,
     actor: { sourceUserId: place.nativeId.split("/").at(-1) ?? "" },
     body: { text: doc.text, presentation: { document: {} } },
-    permissions: { containerTuples: [], visibility: "container" },
+    permissions: { containerTuples: [], visibility: "container" as const },
   };
 }
 

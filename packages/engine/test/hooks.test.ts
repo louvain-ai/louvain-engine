@@ -28,7 +28,7 @@ function parts(hooks?: ReadHooks): EngineParts {
       end: async () => {},
     },
     embedder: {} as never,
-    plugins: { list: () => [], close: async () => {} },
+    plugins: { list: () => [], waiting: () => [], one: () => null, close: async () => {} },
     host: { readableSet: {} as never },
     settings: {} as never,
     ...(hooks ? { hooks } : {}),

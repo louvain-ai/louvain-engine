@@ -19,6 +19,7 @@ const ask = (query: string, bounded = false): RetrieverAsk => ({
 function failedReading() {
   const asked: { digits: boolean; limit: number; mode?: string }[] = [];
   const read: FencedReading = {
+    scope: { orgId: "org", containers: [], filters: {} },
     passages: async (_q, how) => {
       asked.push({ digits: how.digits === true, limit: how.limit, mode: how.mode });
       return { hits: [], degraded: [how.digits ? "passages:digits" : `passages:${how.mode}`] };

@@ -113,6 +113,7 @@ const page = {
 };
 const tools = await mcp().create();
 const read = {
+  tools: () => [],
   tool: async () => ({}),
   counts: async () => ({ documents: 0, collections: [] }),
   answerer: null,

@@ -21,6 +21,8 @@ function parts(closed: string[], fail = false): EngineParts {
     embedder: {} as never,
     plugins: {
       list: () => [],
+      waiting: () => [],
+      one: () => null,
       close: async () => {
         closed.push("plugins");
         if (fail) throw new Error("a reranker would not stop");

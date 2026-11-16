@@ -19,7 +19,7 @@ const run: ToolRun = async (name, args) => {
 };
 /** What a Streamable HTTP client sends with every POST: its token, JSON, and that it reads JSON or a stream. */
 const sent = (authorization: string | undefined, more: Record<string, string> = {}) => ({
-  authorization,
+  ...(authorization === undefined ? {} : { authorization }),
   accept: "application/json, text/event-stream",
   "content-type": "application/json",
   ...more,

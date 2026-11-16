@@ -35,7 +35,7 @@ async function recordOf(key: string, older = false): Promise<string> {
 /** A pool of one retriever that returns these records, searched as staff; what it kept and what it dropped. */
 async function planted(
   recordIds: string[],
-  opts: { asOf?: string; narrow?: { containers: string[] } } = {},
+  opts: { asOf?: string; narrow?: { containers?: string[]; window?: { from?: string } } } = {},
 ) {
   const { retrieverPool } = await import("../../src/search/pool.js");
   const { registerTelemetry } = await import("../../src/telemetry.js");
