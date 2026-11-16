@@ -2,12 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import postgres from "postgres";
 import { documentPredicates } from "../src/read/filters.js";
+import { arrived, genreIn, markedBy } from "../src/read/listing/filter-asks.js";
 import {
   type AddedFilters,
-  arrived,
   FilterUnsupported,
-  genreIn,
-  markedBy,
   noAddedFilters,
 } from "../src/read/listing/filter-seam.js";
 
@@ -25,11 +23,14 @@ const open: AddedFilters = noAddedFilters;
 test("the open build's filters refuse a mark, an arrivals view, a participant and a genre, and narrow to nothing", async () => {
   assert.throws(() => markedBy(open, reader, "ann"), FilterUnsupported);
   assert.throws(() => markedBy(open, reader, "ann"), /no `starredBy` filter/);
-  assert.throws(() => arrived(open, sql, "e", "r"), /no `news` filter/);
-  assert.throws(() => genreIn(open, sql, reader.orgId, ["bulk"]), /no `genre` filter/);
+  assert.throws(() => arrived(open, sql, { alias: "e", revision: "r" }), /no `news` filter/);
+  assert.throws(
+    () => genreIn(open, sql, { orgId: reader.orgId, genres: ["bulk"] }),
+    /no `genre` filter/,
+  );
   const org = reader.orgId;
-  const predicates = (f: Parameters<typeof documentPredicates>[3]) =>
-    documentPredicates(sql, open, org, f);
+  const predicates = (f: Parameters<typeof documentPredicates>[1]["filters"]) =>
+    documentPredicates(sql, { added: open, orgId: org, filters: f });
   assert.throws(() => predicates({ participants: ["a@x.test"] }), /`participants`/);
   assert.throws(() => predicates({ genre: { include: ["bulk"] } }), /`genre`/);
   assert.throws(() => predicates({ genre: { exclude: ["bulk"] } }), /`genre`/);

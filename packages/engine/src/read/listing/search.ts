@@ -2,21 +2,23 @@ import type { SourceSearch } from "@louvain/engine-core";
 import { logOf, telemetryOf } from "../../host/given.js";
 import { isUnreachable } from "../../observability/unreachable.js";
 import { embedderOf } from "../../store/embedder.js";
-import { bounded, fenced, narrow as narrowed, type ReadContext } from "../fence.js";
+import { bounded } from "../bounded.js";
+import { narrow as narrowed, type ReadContext } from "../fence.js";
+import { fenced } from "../fenced.js";
 import { hooksOf } from "../hooks.js";
-import { REACH_DOCS, REACH_EVENTS } from "./bounds.js";
-import { type Owner, type Scope, scope, summary } from "./core.js";
+import { type Owner, type Scope, scope } from "./core.js";
 import { emptySearch } from "./empty.js";
 import { indexListing } from "./index-listing.js";
 import type { SearchInput } from "./input.js";
 import { keywordSources } from "./keyword.js";
+import { REACH_DOCS, REACH_EVENTS } from "./limits.js";
 import { sourceSort } from "./order.js";
 import { timed } from "./timings.js";
 import { sourceQueryVectorOf } from "./vector-space.js";
 
 /** Search: the reader's reach, its stage timings, and the hybrid listing (meaning and words) over it. */
 /**
- * The reader's whole reach, when it is small (`bounds.ts`): the current documents of at most `REACH_EVENTS`
+ * The reader's whole reach, when it is small (`limits.ts`): the current documents of at most `REACH_EVENTS`
  * events of their containers, or null when the containers hold more events than that, or more than `REACH_DOCS`
  * documents. Read by the `(org_id, container)` index and, per event, the current-event index (`limit 1` in a lateral
  * keeps the planner from hashing the whole document table on its container estimate). Every id it returns is still
@@ -28,7 +30,7 @@ export async function reachOf(context: ReadContext, s: Scope): Promise<string[] 
     const [counted] = await trx<{ events: number }[]>`
       select count(*)::int as events from (
         select 1 from event_log
-        where org_id = ${s.orgId} and ${fenced(trx, s, trx`container`, { shape: "any" })}
+        where org_id = ${s.orgId} and ${fenced(trx, s, { column: trx`container`, shape: "any" })}
         limit ${REACH_EVENTS + 1}) t`;
     if (!counted || counted.events > REACH_EVENTS) return null;
     const [row] = await trx<{ ids: string[] }[]>`
@@ -36,7 +38,7 @@ export async function reachOf(context: ReadContext, s: Scope): Promise<string[] 
       from event_log ev left join lateral (
         select d.id from source_document d where d.current_event_id = ev.id and d.org_id = ${s.orgId} limit 1
       ) d on true
-      where ev.org_id = ${s.orgId} and ${fenced(trx, s, trx`ev.container`, { shape: "any" })}`;
+      where ev.org_id = ${s.orgId} and ${fenced(trx, s, { column: trx`ev.container`, shape: "any" })}`;
     const ids = row?.ids ?? [];
     return ids.length > REACH_DOCS ? null : ids;
   });
@@ -78,9 +80,11 @@ export async function searchScope(
  */
 export async function searchSources(
   context: ReadContext,
-  owner: Owner,
-  input: SearchInput,
-  embed: (query: string) => Promise<number[] | null> = sourceQueryVectorOf(embedderOf(context)),
+  {
+    owner,
+    input,
+    embed = sourceQueryVectorOf(embedderOf(context)),
+  }: { owner: Owner; input: SearchInput; embed?: (query: string) => Promise<number[] | null> },
 ): Promise<SourceSearch> {
   const { keyword, filters } = hooksOf(context);
   if (input.q !== "" && !keyword.documents)

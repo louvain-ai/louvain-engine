@@ -1,9 +1,9 @@
 import { logOf, telemetryOf } from "../../host/given.js";
 import type { Tags } from "../../observability/telemetry.js";
+import { stage } from "../ask-deadline.js";
 import type { ReadContext } from "../fence.js";
 import { hooksOf } from "../hooks.js";
-import type { KeywordLegRead, Row } from "../passages/types.js";
-import { stage } from "../question.js";
+import type { KeywordLegRead, Row } from "../passages/leg-types.js";
 import { bm25Narrowing, bm25Rows } from "./rows.js";
 
 /**

@@ -33,9 +33,11 @@ export const chatNeighboursMode = (): ChatNeighbours => {
 export async function withConversations(
   context: ReadContext,
   viewer: Viewer,
-  documents: SearchedDocument[],
-  opts: SearchOptions,
-  told: ConversationOptions = {},
+  {
+    documents,
+    opts,
+    told = {},
+  }: { documents: SearchedDocument[]; opts: SearchOptions; told?: ConversationOptions | undefined },
 ): Promise<string[]> {
   const neighbours = chatNeighboursMode();
   if (neighbours === "off") return [];
@@ -53,7 +55,8 @@ export async function withConversations(
           ),
         )
       : undefined;
-  const { around, degraded } = await passages.around(context, viewer, hits, {
+  const { around, degraded } = await passages.around(context, viewer, {
+    ids: hits,
     k: CHAT_NEIGHBOURS.k,
     maxChars: CHAT_NEIGHBOURS.maxChars,
     filters: { ...(opts.narrow ?? {}), ...(opts.asOf ? { asOf: opts.asOf } : {}) },

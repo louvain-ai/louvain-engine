@@ -3,13 +3,8 @@ import type { PendingQuery, Row as SqlRow } from "postgres";
 import { type Bm25Endpoint, bm25, bm25Endpoint } from "../../store/keyword-index.js";
 import type { Queryable } from "../../store/sql.js";
 import type { ReadContext, Reader } from "../fence.js";
-import type {
-  KeywordLegRead,
-  PassageFilters,
-  PassageLegRead,
-  PassageRead,
-  Row,
-} from "../passages/types.js";
+import type { KeywordLegRead, PassageLegRead, Row } from "../passages/leg-types.js";
+import type { PassageFilters, PassageRead } from "../passages/types.js";
 import { tierWords } from "./tier-words.js";
 
 /**

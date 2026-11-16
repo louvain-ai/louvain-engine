@@ -1,7 +1,10 @@
 import type { Viewer } from "@louvain/engine-core";
 import { ITEM_FEED } from "../../ingest/item-feed.js";
-import { bounded, fenced, type ReadContext } from "../../read/fence.js";
-import { documentFence, type Scope, scope, sourceJoin } from "../../read/listing/core.js";
+import { bounded } from "../../read/bounded.js";
+import type { ReadContext } from "../../read/fence.js";
+import { fenced } from "../../read/fenced.js";
+import { type Scope, scope } from "../../read/listing/core.js";
+import { documentFence, sourceJoin } from "../../read/listing/join.js";
 import type { Queryable } from "../../store/sql.js";
 
 /**
@@ -81,7 +84,7 @@ async function belowUnread(q: Queryable, s: Scope, containers: string[]): Promis
       where up.depth < ${ANCESTORS_WALKED}
     )
     select distinct container from up
-    where not (${fenced(q, s, q`parent`, { shape: "any" })}) or depth = ${ANCESTORS_WALKED}`;
+    where not (${fenced(q, s, { column: q`parent`, shape: "any" })}) or depth = ${ANCESTORS_WALKED}`;
   return new Set(rows.map((row) => row.container));
 }
 

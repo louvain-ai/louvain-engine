@@ -1,4 +1,4 @@
-import type { SearchWith } from "./document.js";
+import type { SearchWith } from "./pool-types.js";
 import type { SearchRequest } from "./search.js";
 
 /** A question longer than this is cut: it is one person's turn, not a document. */

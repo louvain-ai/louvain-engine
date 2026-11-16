@@ -148,7 +148,7 @@ test("a search as of a date puts nothing in from today's exact reads", {
 });
 
 /**
- * An identifier is one literal (`relevance.ts` `literalsOf`, `wordsOf`): its pieces are not words. The text search
+ * An identifier is one literal (`words.ts` `literalsOf`, `wordsOf`): its pieces are not words. The text search
  * holds "SUP-1042" as "sup-1042", "sup" and "1042", so "sup" alone had marked all eighty look-alike tickets as holding
  * the search's words; a key no ticket is, and a GUID-like key sharing a ticket's digits, match no document by words.
  */

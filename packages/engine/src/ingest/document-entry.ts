@@ -1,4 +1,4 @@
-import { displayApp } from "../read/listing/core.js";
+import { displayApp } from "../read/listing/apps.js";
 import { documentEntryId } from "../read/listing/keyword-documents.js";
 import type { Bm25Doc } from "../store/keyword-document.js";
 import { type Writes, writeHooksOf } from "./writes.js";

@@ -1,12 +1,10 @@
-import type { RelevanceCutoffs, Reranker, Viewer } from "@louvain/engine-core";
-import type { Settings } from "../config/settings.js";
-import type { Embedder } from "../read/context.js";
-import type { ReadContext } from "../read/fence.js";
+import type { RelevanceCutoffs } from "@louvain/engine-core";
+import type { Embedder } from "../read/embedding.js";
 import type { DocumentFilters } from "../read/filters.js";
 import type { SpeakerNamer } from "../read/passages/around.js";
 import type { Neighbour } from "../read/passages/search.js";
 import type { RevisionSummary } from "../read/records/read.js";
-import type { WithIds } from "./evidence.js";
+import type { RerankWith } from "./pool-types.js";
 
 /**
  * The one document shape a search returns, and what it is asked with. Every stage of `search.ts` reads or writes these,
@@ -47,9 +45,6 @@ export type DocumentSearch = {
   reranked?: { model: string; cutoffs?: RelevanceCutoffs };
 };
 
-/** What the cross-encoder scores against when there is a question (`rerankQueryOf`). */
-export type RerankWith = "question" | "query" | "question+query";
-
 export type SearchOptions = {
   limit: number;
   mode?: "hybrid" | "keyword";
@@ -77,30 +72,3 @@ export type ConversationOptions = {
   names?: SpeakerNamer;
   ancestry?: (orgId: string, recordId: string) => Promise<string[]>;
 };
-
-/**
- * What a search reads with: its pool, the engine's settings (whether a question is searched, how the reranker is fed),
- * and what the caller tells its conversation stage.
- */
-export type SearchWith = {
-  pool: SearchPool;
-  settings: Pick<Settings, "retrieval" | "rerank">;
-  conversation?: ConversationOptions;
-};
-
-/** One fused row of the pool, with the legs that found it. */
-export type Pooled = { evidence: WithIds; score: number; legs: string[] };
-
-/**
- * Where the rows come from: the query's legs (and the question's, when there is one), fused into one ranking under the
- * reader's fence. The open build reads its retriever plugins (`pool.ts`); another build may pass its own.
- * The reranker that orders what it found travels with it, `null` for none; left out, the bound one (`rerank-seam.ts`).
- */
-export type SearchPool = ((
-  context: ReadContext,
-  viewer: Viewer,
-  query: string,
-  question: string | null,
-  depth: number,
-  opts: SearchOptions,
-) => Promise<{ found: Pooled[]; degraded: string[] }>) & { readonly reranker?: Reranker | null };

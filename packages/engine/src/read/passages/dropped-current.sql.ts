@@ -29,7 +29,7 @@ export const droppedCurrent = (q: Queryable, r: DroppedRead) => q<{ one: number 
                 ${knownLater(q, r.knownAt)}
                 -- sql-shape: only dropped passages, through the partial index that lists them, limit 1
                 ${admittedById(q, r.admitted)})
-           and ${passageFilter(q, r.fence, r.filters, r.added)}
+           and ${passageFilter(q, r)}
          limit 1`;
 
 const knownLater = (q: Queryable, knownAt: string | null) =>

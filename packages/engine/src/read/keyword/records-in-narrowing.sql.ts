@@ -16,4 +16,4 @@ export const revisionsInNarrowing = (
 ) => q<{ id: string }[]>`
       select e.id from event_log e
        where e.org_id = ${orgId} and e.id = any(${[...read.ids]}::text[])
-       ${documentPredicates(q, read.added, orgId, read.filters)}`;
+       ${documentPredicates(q, { added: read.added, orgId, filters: read.filters })}`;

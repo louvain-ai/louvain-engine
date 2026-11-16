@@ -1,27 +1,11 @@
 import { FILE_TYPE_RULES } from "@louvain/engine-core";
 import type { Queryable } from "../../store/sql.js";
-import type { ContainerSetShape } from "../fence.js";
-import { documentFence, filterApp, namedConnection, type Scope } from "./core.js";
-import { type AddedFilters, arrived, markedBy } from "./filter-seam.js";
+import type { ContainerSetShape } from "../fenced.js";
+import { filterApp, namedConnection } from "./apps.js";
+import { arrived, markedBy } from "./filter-asks.js";
+import type { AddedFilters } from "./filter-seam.js";
 import type { Listing, SearchInput } from "./input.js";
-
-/**
- * The listing walks a tenant's documents in date order and stops: it starts from the document's date index and reaches
- * the revision and the fence by key, so a page costs a page. The join is on the current event alone (both conditions
- * make the planner estimate one row and hash the table), and the order and date filters use the document's column,
- * the only one indexed. Both event joins stay: `documentFence()` names `e` and `ce`, which differ for historical revisions.
- */
-export const listingJoinBase = (
-  sql: Queryable,
-) => sql`from source_document d join source_revision r on r.event_id = d.current_event_id
-  join event_log e on e.id = r.event_id
-  join event_log ce on ce.id = d.current_event_id`;
-/**
- * `lead_row` names the walked row under an alias nothing else uses, so a bound `leadsItsSeries` can re-declare `d`, `r`,
- * `e` and `ce` for the sibling it looks for and still compare it with this row. It reads nothing new.
- */
-export const listingJoin = (sql: Queryable) => sql`${listingJoinBase(sql)}
-  cross join lateral (select d.id, d.series_key, d.current_modified_at as modified_at) lead_row`;
+import { documentFence } from "./join.js";
 /**
  * `and` one row per group among the rows this query returns, by the build's predicate (`AddedFilters.leadsItsSeries`),
  * over `lead_row`; nothing where the build has none.
@@ -92,7 +76,7 @@ export function listingFilter(
     ${input.type ? sql`and ${typeOf(sql, added.page)} = ${input.type}` : sql``}
     ${input.starredBy ? sql`and (${markedBy(added, s, input.starredBy)})` : sql``}
     ${input.narrow ? sql`and (${added.narrowed(sql, s, input.narrow)})` : sql``}
-    ${input.news ? sql`and (${arrived(added, sql, "e", "r")})` : sql``}
+    ${input.news ? sql`and (${arrived(added, sql, { alias: "e", revision: "r" })})` : sql``}
     and ${dateWindow(sql, input)}`;
 }
 /**

@@ -1,7 +1,7 @@
 import type { Engine } from "../../engine.js";
 import type { ReadContext } from "../../read/fence.js";
-import type { SearchWith } from "../../search/document.js";
 import { retrieverPool } from "../../search/pool.js";
+import type { SearchWith } from "../../search/pool-types.js";
 import { OPEN_PRINCIPAL, workspaceIdOnce } from "../../store/tenant.js";
 import type { ToolResult, ToolRun } from "../protocol.js";
 import { str, ToolInputError } from "./arguments.js";

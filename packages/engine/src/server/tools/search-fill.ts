@@ -34,16 +34,19 @@ export function listingPage(
   asked: SearchAsked,
   at: ListingAt,
 ) {
-  return searchSources(context, owner, {
-    q: asked.query,
-    mode: at.mode,
-    sort: "relevance",
-    app: asked.app,
-    after: asked.after,
-    before: asked.before,
-    offset: at.offset,
-    ...(at.containers ? { containers: at.containers } : {}),
-    ...clientListing(at.client),
+  return searchSources(context, {
+    owner,
+    input: {
+      q: asked.query,
+      mode: at.mode,
+      sort: "relevance",
+      app: asked.app,
+      after: asked.after,
+      before: asked.before,
+      offset: at.offset,
+      ...(at.containers ? { containers: at.containers } : {}),
+      ...clientListing(at.client),
+    },
   });
 }
 

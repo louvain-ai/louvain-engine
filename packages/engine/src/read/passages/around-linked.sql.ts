@@ -8,13 +8,16 @@ import type { Near } from "./around-walk.sql.js";
 import { passageFilter } from "./filter.js";
 
 /** The readable messages of `back` said before the hit `a`, in no order. */
-export const linkedBefore = (q: Queryable, r: AroundRead, a: Anchor, back: string[]) => q<
-  Omit<Near, "rn">[]
->`
+export const linkedBefore = (
+  q: Queryable,
+  r: AroundRead,
+  { a, back }: { a: Anchor; back: string[] },
+) =>
+  q<Omit<Near, "rn">[]>`
               select ${a.event_id} as anchor, p.event_id, p.container, p.author, p.occurred_at, p.text,
                      -1 as dir, true as linked
                 from passage p
-               where ${passageFilter(q, r.fence, { ...r.filters, recordIds: back }, r.added)} and p.seq = 0
+               where ${passageFilter(q, { ...r, filters: { ...r.filters, recordIds: back } })} and p.seq = 0
                  and p.container = ${a.container}
                  and ${notSuperseded(q, r, a)}
                  and (p.occurred_at, p.event_id) < (${a.at}::text::timestamptz, ${a.event_id})`;

@@ -1,12 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { SOURCE_COUNT_CAP } from "@louvain/engine-core";
-import {
-  boundedFacets,
-  boundedTotal,
-  COUNT_LIMIT,
-  WALK_LIMIT,
-} from "../src/read/listing/bounds.js";
+import { boundedFacets, boundedTotal } from "../src/read/listing/bounds.js";
+import { COUNT_LIMIT, WALK_LIMIT } from "../src/read/listing/limits.js";
 
 test("a count past the cap is reported as the cap, marked bounded", () => {
   assert.deepEqual(boundedTotal(12), { total: 12, totalBounded: false });

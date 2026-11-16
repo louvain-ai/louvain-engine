@@ -1,7 +1,7 @@
 import type { Viewer } from "@louvain/engine-core";
 import type { ReadContext } from "../../read/fence.js";
 import { hooksOf } from "../../read/hooks.js";
-import type { SearchWith } from "../../search/document.js";
+import type { SearchWith } from "../../search/pool-types.js";
 import { search } from "../../search/search.js";
 import { asOf, type ClientNarrow, str } from "./arguments.js";
 import {

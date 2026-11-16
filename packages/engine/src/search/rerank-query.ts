@@ -1,5 +1,5 @@
 import { environment } from "../config/environment.js";
-import type { RerankWith } from "./document.js";
+import type { RerankWith } from "./pool-types.js";
 
 /**
  * What the reranker scores against, with a question: the call's `rerankWith`, else `LOUVAIN_SEARCH_RERANK_QUERY`:

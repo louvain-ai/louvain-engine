@@ -40,10 +40,10 @@ export async function readSourcePage<O extends object = never>(
   extras: ReadExtras<O> = {},
 ) {
   const scope = { orgId: owner.orgId, principal: owner.principal };
-  const resolved = await resolveSource(context, scope, args.id, args.version);
+  const resolved = await resolveSource(context, scope, { id: args.id, version: args.version });
   if (!resolved) return NOT_VISIBLE;
   // Whatever a search listed opens, whatever its date: the fence admitted this id, so the date ceiling is lifted.
-  const read = await records.read(context, scope, resolved.recordId, { at: UNDATED });
+  const read = await records.read(context, scope, { id: resolved.recordId, at: UNDATED });
   if (!read) return NOT_VISIBLE;
   const readNames = read.summary?.connectionId
     ? await hooksOf(context).presentation.connectionNames(owner.orgId, owner.principal, [

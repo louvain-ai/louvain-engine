@@ -21,14 +21,18 @@ export type Near = {
 };
 
 /** The `k` nearest messages before (`dir` -1) or after (1) the hit `a`. */
-export const walkFrom = (q: Queryable, r: AroundRead & { k: number }, a: Anchor, dir: number) =>
+export const walkFrom = (
+  q: Queryable,
+  r: AroundRead & { k: number },
+  { a, dir }: { a: Anchor; dir: number },
+) =>
   q<Near[]>`
                 select ${a.event_id} as anchor, p.event_id, p.container, p.author, p.occurred_at, p.text,
                        ${dir}::int as dir, false as linked,
                        row_number() over (order by ${walkOrder(q, dir)})::int as rn
                   from (select p.event_id, p.container, p.author, p.occurred_at, p.text
                           from passage p
-                         where ${passageFilter(q, r.fence, r.filters, r.added)} and p.seq = 0
+                         where ${passageFilter(q, r)} and p.seq = 0
                            and p.container = ${a.container}
                            and ${notSuperseded(q, r, a)}
                            and ${beyond(q, a, dir)}

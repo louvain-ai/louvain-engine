@@ -1,21 +1,15 @@
 import type { SourceSearch } from "@louvain/engine-core";
-import { sidecarAuthHeaders } from "../../config/sidecar-auth.js";
-import { bm25Settings } from "../../store/keyword-index.js";
 import type { Queryable } from "../../store/sql.js";
-import { bounded, fenced, narrow, type ReadContext } from "../fence.js";
+import { bounded } from "../bounded.js";
+import { narrow, type ReadContext } from "../fence.js";
+import { fenced } from "../fenced.js";
 import { hooksOf } from "../hooks.js";
+import { namedConnection } from "./apps.js";
 import { boundedFacets } from "./bounds.js";
-import {
-  documentFence,
-  namedConnection,
-  type Scope,
-  type SourceRow,
-  sourceJoin,
-  summary,
-  summaryColumns,
-} from "./core.js";
+import { type Scope, type SourceRow, summary } from "./core.js";
 import { type Listed, postList } from "./index-list.js";
 import type { SearchInput } from "./input.js";
+import { documentFence, sourceJoin, summaryColumns } from "./join.js";
 import { documentEntryId, documentOfEntry } from "./keyword-documents.js";
 import { sourceSort } from "./order.js";
 
@@ -35,7 +29,7 @@ export async function indexListing(
   const unsupported = unsupportedIn(input);
   if (unsupported) throw new Error(`the keyword index's listing does not narrow by ${unsupported}`);
   const sort = sourceSort(input);
-  const listed = await askList(context.sql, s, input, sort);
+  const listed = await askList(context.sql, { s, input, sort });
   const rows = await documentsInOrder(context, s, listed.ids.map(documentOfEntry));
   const snippetOf = new Map(
     listed.ids.map((id, at) => [documentOfEntry(id), listed.snippets?.[at]]),
@@ -82,9 +76,7 @@ function unsupportedIn(input: SearchInput): string | null {
 /** One `/list` call: the fence (the scope's collections, as of now), the words, the order, the page and the narrowings. */
 async function askList(
   sql: Queryable,
-  s: Scope,
-  input: SearchInput,
-  sort: string,
+  { s, input, sort }: { s: Scope; input: SearchInput; sort: string },
 ): Promise<Listed> {
   // A search quoted whole is a phrase (Elasticsearch's `match_phrase`), as a query string reads one.
   const phrase = /^"[^"]+"$/.test(input.q.trim());

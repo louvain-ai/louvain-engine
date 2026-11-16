@@ -1,18 +1,15 @@
 import type { SourceSearch } from "@louvain/engine-core";
-import { bounded, type ReadContext } from "../fence.js";
+import { bounded } from "../bounded.js";
+import type { ReadContext } from "../fence.js";
 import { hooksOf } from "../hooks.js";
-import { boundedFacets, COUNT_LIMIT, pageTotal, unlessSkipped, WALK_LIMIT } from "./bounds.js";
-import {
-  filterApp,
-  namedConnection,
-  type Scope,
-  type SourceRow,
-  summary,
-  summaryColumns,
-} from "./core.js";
-import { andLeadsItsSeries, appFilter, listingFilter, listingJoin } from "./filter.js";
+import { filterApp, namedConnection } from "./apps.js";
+import { boundedFacets, pageTotal, unlessSkipped } from "./bounds.js";
+import { type Scope, type SourceRow, summary } from "./core.js";
+import { andLeadsItsSeries, appFilter, listingFilter } from "./filter.js";
 import type { AddedFilters } from "./filter-seam.js";
 import type { Listing, SearchInput } from "./input.js";
+import { listingJoin, summaryColumns } from "./join.js";
+import { COUNT_LIMIT, WALK_LIMIT } from "./limits.js";
 import { sourceSort, walkOrder } from "./order.js";
 import type { ListingWords } from "./words-seam.js";
 
@@ -86,7 +83,7 @@ export async function keywordSources(
 ): Promise<SourceSearch> {
   const sort = sourceSort(input);
   const skipFacets = input.facets === "skip";
-  const [rows, counted, byApp] = await keywordReads(context, s, input, skipFacets);
+  const [rows, counted, byApp] = await keywordReads(context, { s, input, skipFacets });
   const { total, totalBounded, hasMore } = pageTotal(input, counted, rows.length);
   const { facets, facetsBounded } = boundedFacets(byApp);
   const added = hooksOf(context).filters;
@@ -114,7 +111,10 @@ export async function keywordSources(
 }
 
 /** The page, the count (unless skipped) and the facets, read side by side. */
-function keywordReads(context: ReadContext, s: Scope, input: SearchInput, skipFacets: boolean) {
+function keywordReads(
+  context: ReadContext,
+  { s, input, skipFacets }: { s: Scope; input: SearchInput; skipFacets: boolean },
+) {
   const sort = sourceSort(input);
   const added = hooksOf(context).filters;
   // Each read's listing is written with that read's own handle.

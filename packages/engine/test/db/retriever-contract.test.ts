@@ -58,11 +58,11 @@ async function planted(
       },
     },
   ]);
-  const found = await pool(engine.readContext, engine.owner("staff"), "anything", null, 24, {
-    limit: 24,
-    recall: "full",
-    rerank: false,
-    ...opts,
+  const found = await pool(engine.readContext, engine.owner("staff"), {
+    query: "anything",
+    question: null,
+    depth: 24,
+    opts: { limit: 24, recall: "full", rerank: false, ...opts },
   });
   return { kept: found.found.map((f) => f.evidence), dropped: dropped.reduce((a, b) => a + b, 0) };
 }

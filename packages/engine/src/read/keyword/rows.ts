@@ -1,11 +1,14 @@
 import { environment } from "../../config/environment.js";
-import { instantOf, queryTerms } from "../context.js";
+import { bounded } from "../bounded.js";
+import { queryTerms } from "../context.js";
 import { firstChunkRows } from "../documents/rows.js";
-import { bounded, type ReadContext, type Reader } from "../fence.js";
+import type { ReadContext, Reader } from "../fence.js";
 import { type DocumentFilters, hasDocumentFilters } from "../filters.js";
 import { hooksOf } from "../hooks.js";
+import { instantOf } from "../instant.js";
 import { stillCurrent } from "../passages/filter.js";
-import type { PassageFilters, Row } from "../passages/types.js";
+import type { Row } from "../passages/leg-types.js";
+import type { PassageFilters } from "../passages/types.js";
 import { passageTieOrder } from "../passages/vector.js";
 import { revisionsInNarrowing } from "./records-in-narrowing.sql.js";
 import { bm25Tiers, type TierHit } from "./tiers.js";
@@ -114,7 +117,7 @@ async function indexHits(context: ReadContext, read: IndexRead): Promise<Hit[]> 
 async function stillReadable(context: ReadContext, read: IndexRead, hits: Hit[]): Promise<Hit[]> {
   const { fence, limit, asOf, narrowing = {} } = read;
   const ids = hits.map((h) => h.id);
-  const current = await stillCurrent(context, fence, ids, asOf);
+  const current = await stillCurrent(context, { fence: fence, ids: ids, asOf: asOf });
   const { ids: _given, figures: _stated, ...filters } = narrowing;
   const narrowed =
     Object.keys(filters).length > 0

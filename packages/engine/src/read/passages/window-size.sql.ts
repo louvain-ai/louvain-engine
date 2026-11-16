@@ -14,5 +14,5 @@ export const windowSize = (
 ) => q<{ n: number }[]>`
         select count(*)::int as n from (
           select 1 from passage p
-           where ${passageFilter(q, r.fence, r.filters, r.added)} and p.${q(r.columns.passage)} is not null
+           where ${passageFilter(q, r)} and p.${q(r.columns.passage)} is not null
            limit ${cap}) w`;

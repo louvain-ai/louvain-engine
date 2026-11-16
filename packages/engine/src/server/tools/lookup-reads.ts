@@ -1,14 +1,10 @@
 import { createHash } from "node:crypto";
 import type { PendingQuery, Row } from "postgres";
-import { bounded, type ReadContext } from "../../read/fence.js";
+import { bounded } from "../../read/bounded.js";
+import type { ReadContext } from "../../read/fence.js";
 import { hooksOf } from "../../read/hooks.js";
-import {
-  documentFence as fence,
-  type Scope,
-  type SourceRow,
-  sourceJoin,
-  summaryColumns,
-} from "../../read/listing/core.js";
+import type { Scope, SourceRow } from "../../read/listing/core.js";
+import { documentFence as fence, sourceJoin, summaryColumns } from "../../read/listing/join.js";
 import type { Queryable } from "../../store/sql.js";
 import type { Identifier } from "./identifier.js";
 

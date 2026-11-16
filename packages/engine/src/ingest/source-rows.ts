@@ -1,5 +1,6 @@
 import type postgres from "postgres";
-import { type Presented, type SourceOrigin, sourceMetadata } from "../read/originals/metadata.js";
+import { sourceMetadata } from "../read/originals/metadata.js";
+import type { Presented, SourceOrigin } from "../read/originals/metadata-types.js";
 import { sanitizeId } from "../store/ids.js";
 import { rankOf } from "../store/version.js";
 import type { Revision } from "./revision.js";

@@ -196,7 +196,7 @@ async function surface({ engine, sql, readContext, orgId, ids }: Awaited<ReturnT
     passages: (reader: Reader, query: string, mode: Mode, within?: readonly Collection[]) => {
       const narrowed = containers(within);
       const filters = narrowed ? { containers: narrowed } : {};
-      return searchPassages(readContext, owner(reader), query, { mode, limit: 72, filters });
+      return searchPassages(readContext, owner(reader), { query: query, mode, limit: 72, filters });
     },
     /** The documents the tool pages through (`search/search.ts`); `reranked` puts the stand-in reranker after the fusion. */
     documents: async (

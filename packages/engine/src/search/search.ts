@@ -4,18 +4,13 @@ import { documentRanks } from "../read/passages/leg-ranks.js";
 import { records } from "../read/records/index.js";
 import { withConversations } from "./conversation.js";
 import { searchHeadDepth, withoutShown } from "./depth.js";
-import type {
-  DocumentSearch,
-  SearchedDocument,
-  SearchOptions,
-  SearchPool,
-  SearchWith,
-} from "./document.js";
+import type { DocumentSearch, SearchedDocument, SearchOptions } from "./document.js";
 import { AGENT_SEARCH_CHUNK_BONUS, documentOrder } from "./document-order.js";
 import { pageOf } from "./evidence.js";
 import { excerptOf } from "./excerpt.js";
 import { oneOfEachOriginal } from "./original.js";
 import { poolDepth } from "./pool-depth.js";
+import type { SearchPool, SearchWith } from "./pool-types.js";
 import { questionFor } from "./question.js";
 import { rerankQueryOf } from "./rerank-query.js";
 import { type Staged, stage, whole } from "./stage.js";
@@ -49,7 +44,9 @@ export async function search(request: SearchRequest, using: SearchWith): Promise
   const limit = Math.max(1, Math.min(searchHeadDepth(), Math.floor(options.limit)));
   const question = questionFor(request, using);
   const titling = stage("titled", () => titledDocuments(request));
-  const legs = await stage("legs", () => legsOf(request, question, poolDepth(limit), using));
+  const legs = await stage("legs", () =>
+    legsOf(request, { question, depth: poolDepth(limit), using }),
+  );
   const documents = await stage("documents", () =>
     documentsOf(request, question, { found: legs.value, using }),
   );
@@ -74,30 +71,40 @@ export async function search(request: SearchRequest, using: SearchWith): Promise
   const conversation = await stage("conversation", () =>
     conversationOf(request, unshown.kept, using),
   );
-  // Counted in originals: a run of copies past the page is not more.
+  return pageFrom(unshown, {
+    staged: [legs, documents, titled, conversation],
+    reranker: documents.value.reranker,
+  });
+}
+
+/**
+ * The page: the documents kept, whether more follow (counted in originals: a run of copies past the page is not more),
+ * every stage's degradations in stage order, and the reranker that ordered it.
+ */
+function pageFrom(
+  unshown: { kept: SearchedDocument[]; more: boolean },
+  {
+    staged,
+    reranker,
+  }: {
+    staged: { degraded: readonly string[] }[];
+    reranker: Parameters<typeof rerankedBy>[0] | null | undefined;
+  },
+): DocumentSearch {
   return {
     documents: unshown.kept,
     hasMore: unshown.more,
-    degraded: [
-      ...new Set([
-        ...legs.degraded,
-        ...documents.degraded,
-        ...titled.degraded,
-        ...conversation.degraded,
-      ]),
-    ],
-    ...(documents.value.reranker ? { reranked: rerankedBy(documents.value.reranker) } : {}),
+    degraded: [...new Set(staged.flatMap((s) => s.degraded))],
+    ...(reranker ? { reranked: rerankedBy(reranker) } : {}),
   };
 }
 
 /** The caller's pool for the query, and the question's when it is searched too. */
 async function legsOf(
   { context, reader, query, options }: SearchRequest,
-  question: string | null,
-  depth: number,
-  using: SearchWith,
+  { question, depth, using }: { question: string | null; depth: number; using: SearchWith },
 ): Promise<Staged<Awaited<ReturnType<SearchPool>>>> {
-  const found = await using.pool(context, reader, query, question, depth, options);
+  const found = await using.pool(context, reader, { query, question, depth, opts: options });
   return { value: found, degraded: found.degraded };
 }
 
@@ -109,7 +116,11 @@ async function conversationOf(
 ): Promise<Staged<null>> {
   return {
     value: null,
-    degraded: await withConversations(context, reader, documents, options, using.conversation),
+    degraded: await withConversations(context, reader, {
+      documents,
+      opts: options,
+      told: using.conversation,
+    }),
   };
 }
 

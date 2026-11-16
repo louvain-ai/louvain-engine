@@ -1,6 +1,6 @@
 import type { AskMode } from "@louvain/engine-core";
 import { environment } from "../config/environment.js";
-import type { AskSettings } from "../read/question.js";
+import type { AskSettings } from "../read/ask-settings.js";
 
 /**
  * The mode table: what each answer mode spends on retrieval. A mode is on the request, not in the environment, because

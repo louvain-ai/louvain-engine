@@ -31,7 +31,8 @@ async function documentTexts(
 ): Promise<Attempted<Map<string, string>>> {
   if (!feed || fed !== "document" || ids.length === 0) return { value: new Map(), degraded: [] };
   return attempt("rerank:document_text", new Map<string, string>(), () =>
-    passages.asDocuments(feed.context, feed.viewer, ids, {
+    passages.asDocuments(feed.context, feed.viewer, {
+      ids: ids,
       maxChars,
       ...(feed.asOf ? { asOf: feed.asOf } : {}),
     }),

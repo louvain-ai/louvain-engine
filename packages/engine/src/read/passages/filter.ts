@@ -1,21 +1,15 @@
-import type { PendingQuery, Row } from "postgres";
 import type { Queryable } from "../../store/sql.js";
-import { laterVersion } from "../../store/version.js";
-import { instantOf } from "../context.js";
-import { bounded, fenced, type ReadContext, type Reader } from "../fence.js";
+import { bounded } from "../bounded.js";
+import type { ReadContext, Reader } from "../fence.js";
+import { fenced } from "../fenced.js";
 import { documentPredicates, hasDocumentFilters } from "../filters.js";
 import { hooksOf } from "../hooks.js";
+import { instantOf } from "../instant.js";
 import type { AddedFilters } from "../listing/filter-seam.js";
 import { currentRevisions } from "./still-current.sql.js";
 import type { PassageFilters } from "./types.js";
+import { newerVersionHeld, type VersionAt } from "./versions.js";
 import { windowsPredicate } from "./windows.js";
-
-/** When a version is read (`validAt`, `knownAt`), and the `presentation` keys that declare a record whole. */
-type VersionAt = {
-  validAt: string | PendingQuery<Row[]>;
-  knownAt: string | null;
-  whole: readonly string[];
-};
 
 /**
  * The version rule for a passage, on its record `e` (joined by the caller): a version is not found once a newer
@@ -24,72 +18,15 @@ type VersionAt = {
  * version; any other change is a delta and keeps its history. A newer version the viewer cannot read retires nothing.
  * Gated on `has_newer`, so an unedited record costs a boolean. The legs, the keyword hits and the neighbours ask this.
  */
-export function newerVersionRead(sql: Queryable, fence: Reader, at: VersionAt, e = sql`e`) {
+export function newerVersionRead(sql: Queryable, fence: Reader, at: VersionAt) {
   // The viewer's whole readable set, never a search's narrowed one: a version they read retires an older one anywhere.
   const readable = fence.readable ?? fence.containers;
-  return newerVersionHeld(
-    sql,
+  return newerVersionHeld(sql, {
     // Each version's collection is tested on its own row (`offset 0`): the planner never drives the join from the set.
-    (column) =>
+    here: (column) =>
       sql`exists (select 1 from unnest(${readable}::text[]) v(c) where v.c = ${column} offset 0)`,
     at,
-    e,
-  );
-}
-
-/**
- * The version rule with its collection test given (`here`): `newerVersionRead` passes "a collection the viewer reads",
- * and the vector drop (`ingest/superseded-vectors.ts`) passes "the old version's own collection". The writer that drops
- * a version's vectors and the reader that retires it share this one fragment, so the order, the time test (a newer
- * version stamped in the future retires nothing yet), the declaration test and the passages test cannot drift.
- */
-export function newerVersionHeld(
-  sql: Queryable,
-  here: (column: PendingQuery<Row[]>) => PendingQuery<Row[]>,
-  at: VersionAt,
-  e = sql`e`,
-) {
-  return sql`(${e}.has_newer and exists (
-      ${newerVersions(sql, here, at, e)}))`;
-}
-
-/** The newer versions that retire `e` under `here` and `at` (`newerVersionHeld`'s rows), as `select <columns> …`. */
-export function newerVersions(
-  sql: Queryable,
-  here: (column: PendingQuery<Row[]>) => PendingQuery<Row[]>,
-  at: VersionAt,
-  e = sql`e`,
-  columns = sql`1`,
-) {
-  return sql`select ${columns} from event_log r2
-       where r2.org_id = ${e}.org_id and r2.connector = ${e}.connector and r2.workspace = ${e}.workspace
-         and r2.record_key = ${e}.record_key and ${laterVersion(sql, sql`r2`, e)}
-         and (
-           (${e}.kind in ('message', 'file') and r2.kind in ('message', 'file'))
-           or (${e}.kind = 'record.change' and r2.kind = 'record.change'
-             and r2.connection_id = ${e}.connection_id
-             and exists (
-               ${declaringVersions(sql, here, at, e)})))
-         and ${here(sql`r2.container`)}
-         and r2.occurred_at <= ${at.validAt}
-         ${at.knownAt === null ? sql`` : sql`and r2.observed_at <= ${at.knownAt}`}
-         and exists (select 1 from passage p2 where p2.event_id = r2.id)`;
-}
-
-/** The versions of `e`'s record that declare it re-rendered whole (`at.whole`), under `here` and by `at.knownAt`. */
-export function declaringVersions(
-  sql: Queryable,
-  here: (column: PendingQuery<Row[]>) => PendingQuery<Row[]>,
-  at: Pick<VersionAt, "knownAt" | "whole">,
-  e = sql`e`,
-  columns = sql`1`,
-) {
-  return sql`select ${columns} from event_log m
-                where m.connection_id = ${e}.connection_id and m.record_key = ${e}.record_key
-                  and m.kind = 'record.change' and m.org_id = ${e}.org_id
-                  and ${here(sql`m.container`)}
-                  ${at.knownAt === null ? sql`` : sql`and m.observed_at <= ${at.knownAt}`}
-                  and jsonb_exists_any(m.body -> 'presentation', ${[...at.whole]}::text[])`;
+  });
 }
 
 /**
@@ -108,14 +45,16 @@ function currentForViewer(sql: Queryable, fence: Reader, at: VersionAt) {
 }
 
 /**
- * Of `eventIds`, those still their record's current version for this viewer: the BM25 leg's hits, which no Postgres
+ * Of `ids`, those still their record's current version for this viewer: the BM25 leg's hits, which no Postgres
  * leg filtered. A bounded read like the legs (`bounded`: its statement timeout, plan cache mode and `jit = off`).
  */
 export async function stillCurrent(
   context: ReadContext,
-  fence: Reader,
-  eventIds: readonly string[],
-  asOf: PassageFilters["asOf"],
+  {
+    fence,
+    ids: eventIds,
+    asOf,
+  }: { fence: Reader; ids: readonly string[]; asOf: PassageFilters["asOf"] },
 ): Promise<Set<string>> {
   if (eventIds.length === 0) return new Set();
   const at = { ...instantOf(asOf, "passages.search"), whole: hooksOf(context).filters.wholeKeys };
@@ -131,9 +70,7 @@ export async function stillCurrent(
  */
 export function passageFilter(
   sql: Queryable,
-  fence: Reader,
-  f: PassageFilters,
-  added: AddedFilters,
+  { fence, filters: f, added }: { fence: Reader; filters: PassageFilters; added: AddedFilters },
 ) {
   // `containers` is already applied to `fence.containers` by the caller; it must not fall through to the
   // record predicates, which would look for an `event_log` column of that name.
@@ -141,7 +78,7 @@ export function passageFilter(
   const { validAt: at, knownAt } = instantOf(asOf, "passages.search");
   const from = window?.from ?? since;
   const to = window?.to ?? until;
-  return sql`p.org_id = ${fence.orgId} and ${fenced(sql, fence, sql`p.container`, { record: sql`p.event_id` })}
+  return sql`p.org_id = ${fence.orgId} and ${fenced(sql, fence, { column: sql`p.container`, record: sql`p.event_id` })}
     and p.occurred_at <= ${at}
     and ${currentForViewer(sql, fence, { validAt: at, knownAt, whole: added.wholeKeys })}
     ${
@@ -161,7 +98,7 @@ export function passageFilter(
       hasDocumentFilters(onRecord)
         ? sql`and exists (select 1 from event_log e
             where e.id = p.event_id and e.org_id = ${fence.orgId}
-            ${documentPredicates(sql, added, fence.orgId, onRecord)})`
+            ${documentPredicates(sql, { added, orgId: fence.orgId, filters: onRecord })})`
         : sql``
     }`;
 }

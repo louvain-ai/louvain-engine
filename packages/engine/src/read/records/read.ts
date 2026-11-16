@@ -5,8 +5,11 @@
  */
 import type { SourceSummary, Viewer } from "@louvain/engine-core";
 import type { Queryable } from "../../store/sql.js";
-import { type AsOf, instantOf, type Speaker } from "../context.js";
-import { bounded, fence, fenced, type ReadContext, type Reader } from "../fence.js";
+import { bounded } from "../bounded.js";
+import type { AsOf, Speaker } from "../context.js";
+import { fence, type ReadContext, type Reader } from "../fence.js";
+import { fenced } from "../fenced.js";
+import { instantOf } from "../instant.js";
 import { readableSources } from "../listing/detail.js";
 import { notQuarantined } from "../listing/quarantine.js";
 import type { KnownPrecision } from "../precision.js";
@@ -77,8 +80,7 @@ export type RevisionRead = {
 export async function readRevision(
   context: ReadContext,
   viewer: Viewer,
-  recordId: string,
-  opts: { version?: string; at?: AsOf } = {},
+  { id: recordId, ...opts }: { id: string; version?: string; at?: AsOf },
 ): Promise<RevisionRead | null> {
   const reader = await fence(context, viewer);
   if (!reader) return null;
@@ -187,12 +189,12 @@ function recordRow(
 function currentForViewer(q: Queryable, fence: Reader) {
   return q`coalesce((
     select case
-      when ce.id is not null and ${fenced(q, fence, q`ce.container`, { record: q`ce.id` })} and ${notQuarantined(q, "ce")}
+      when ce.id is not null and ${fenced(q, fence, { column: q`ce.container`, record: q`ce.id` })} and ${notQuarantined(q, "ce")}
         then d.current_event_id = e.id
       else not exists (
         select 1 from source_revision r2 join event_log e2 on e2.id = r2.event_id
         where r2.source_id = d.id and e2.org_id = e.org_id and r2.event_id <> e.id
-          and ${fenced(q, fence, q`e2.container`, { record: q`e2.id` })} and ${notQuarantined(q, "e2")}
+          and ${fenced(q, fence, { column: q`e2.container`, record: q`e2.id` })} and ${notQuarantined(q, "e2")}
           and (r2.modified_at > r.modified_at
             or (r2.modified_at = r.modified_at and r2.event_id > r.event_id)))
     end

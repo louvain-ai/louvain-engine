@@ -12,4 +12,4 @@ export const hitAnchors = (q: Queryable, r: AroundRead, ids: string[]) => q<Anch
                  e.body->'presentation' as presentation,
                  (select s.kind from source_revision s where s.event_id = p.event_id limit 1) as kind
             from passage p join event_log e on e.id = p.event_id and e.org_id = p.org_id
-           where ${passageFilter(q, r.fence, { ...r.filters, recordIds: ids }, r.added)} and p.seq = 0`;
+           where ${passageFilter(q, { ...r, filters: { ...r.filters, recordIds: ids } })} and p.seq = 0`;

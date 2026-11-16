@@ -1,7 +1,7 @@
-import type { Queryable } from "../../store/sql.js";
 import type { ReadContext } from "../fence.js";
 import { hooksOf } from "../hooks.js";
-import { documentFence, type Owner, type Scope, scope, sourceJoin } from "./core.js";
+import { type Owner, type Scope, scope } from "./core.js";
+import { documentFence, sourceJoin } from "./join.js";
 
 /*
  * Moved here from `read-detail.ts`, verbatim: resolving an id needs no statement read, and the source tools resolve
@@ -20,8 +20,7 @@ export type ResolvedSource = { documentId: string; recordId: string };
 export async function resolveSource(
   context: ReadContext,
   owner: Owner,
-  id: string,
-  version?: string,
+  { id, version }: { id: string; version?: string | undefined },
 ): Promise<ResolvedSource | null> {
   const s = await scope(context, owner);
   if (s.containers.length === 0) return null;

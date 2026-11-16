@@ -2,13 +2,9 @@ import type { DocumentFilters } from "@louvain/engine-core";
 import type { PendingQuery, Row } from "postgres";
 import { connectorsOfApp } from "../store/apps.js";
 import type { Queryable } from "../store/sql.js";
-import { filterApp } from "./listing/core.js";
-import {
-  type AddedFilters,
-  FilterUnsupported,
-  genreIn,
-  type Named,
-} from "./listing/filter-seam.js";
+import { filterApp } from "./listing/apps.js";
+import { genreIn } from "./listing/filter-asks.js";
+import { type AddedFilters, FilterUnsupported, type Named } from "./listing/filter-seam.js";
 
 /**
  * Filters on the record a row came from, shared by `passages.search` and `records.window` (the core's type, which a
@@ -40,8 +36,7 @@ export const hasDocumentFilters = (f: DocumentFilters | undefined): boolean =>
 const names = (
   sql: Queryable,
   added: AddedFilters,
-  named: Named,
-  labels: "required" | "optional",
+  { labels, ...named }: Named & { labels: "required" | "optional" },
 ): Fragment => {
   const participant = added.participant;
   if (participant === null && labels === "required") throw new FilterUnsupported("`participants`");
@@ -60,23 +55,25 @@ const names = (
  */
 export function documentPredicates(
   sql: Queryable,
-  added: AddedFilters,
-  orgId: string,
-  f: DocumentFilters,
-  occurredAt: Fragment = sql`e.occurred_at`,
+  {
+    added,
+    orgId,
+    filters: f,
+    occurredAt = sql`e.occurred_at`,
+  }: { added: AddedFilters; orgId: string; filters: DocumentFilters; occurredAt?: Fragment },
 ): Fragment {
   const parts: Fragment[] = [];
   if (f.sender !== undefined) {
     const who = f.sender.trim().toLowerCase();
     parts.push(
-      sql`and ${names(sql, added, { orgId, value: sql`${who}`, roles: ["from"] }, "optional")}`,
+      sql`and ${names(sql, added, { orgId, value: sql`${who}`, roles: ["from"], labels: "optional" })}`,
     );
   }
   const participants = [...new Set((f.participants ?? []).map((p) => p.trim().toLowerCase()))];
   if (participants.length > 0) {
     parts.push(sql`and not exists (
       select 1 from unnest(${participants}::text[]) as want(v)
-      where not ${names(sql, added, { orgId, value: sql`want.v`, roles: null }, "required")})`);
+      where not ${names(sql, added, { orgId, value: sql`want.v`, roles: null, labels: "required" })})`);
   }
   if (f.window?.from !== undefined) parts.push(sql`and ${occurredAt} >= ${f.window.from}`);
   if (f.window?.to !== undefined) parts.push(sql`and ${occurredAt} < ${f.window.to}`);
@@ -93,10 +90,10 @@ export function documentPredicates(
       where r.event_id = e.id and d.org_id = ${orgId}) = any(${f.apps}::text[]))`);
   }
   if (f.genre?.include && f.genre.include.length > 0) {
-    parts.push(sql`and (${genreIn(added, sql, orgId, f.genre.include)})`);
+    parts.push(sql`and (${genreIn(added, sql, { orgId, genres: f.genre.include })})`);
   }
   if (f.genre?.exclude && f.genre.exclude.length > 0) {
-    parts.push(sql`and not (${genreIn(added, sql, orgId, f.genre.exclude)})`);
+    parts.push(sql`and not (${genreIn(added, sql, { orgId, genres: f.genre.exclude })})`);
   }
   return parts.reduce((acc, p) => sql`${acc} ${p}`, sql``);
 }

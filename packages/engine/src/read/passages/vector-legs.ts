@@ -2,7 +2,7 @@
 
 import type { Reader } from "../fence.js";
 import type { AddedFilters } from "../listing/filter-seam.js";
-import type { VectorSpace } from "../vector-space.js";
+import type { VectorSpace } from "../vector-space-types.js";
 import type { PassageFilters } from "./types.js";
 
 export type VectorRead = {

@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 /**
- * The same token written several ways is one (`relevance.ts` `literalsOf`, `fold`): a figure with or without its
+ * The same token written several ways is one (`words.ts` `literalsOf`, `fold`): a figure with or without its
  * separators, an identifier joined, hyphenated or spaced, a word with or without its accents. No database: the
  * extraction and the fold only; the SQL side folds and joins the passage's text the same way.
  */
-const { fold, literalsOf, wordsOf } = await import("../src/read/relevance.js");
+const { fold, literalsOf, wordsOf } = await import("../src/read/words.js");
 
 test("every written form of a figure is the same bare digits", () => {
   for (const q of ["2400", "2,400", "2.400", "2 400", "£2,400", "a fee of GBP 2,400 a month"])
