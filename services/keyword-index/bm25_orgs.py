@@ -110,7 +110,13 @@ class Orgs:
     def index(self, docs: list[dict], to_commit: bool) -> int:
         """Each document into its org's index, its org in the directory first; with `to_commit`, every index with adds
         pending is committed, this batch's and any an earlier `commit: false` left. An id is one entry: one written
-        before for another org leaves that org's index, as an upsert replaces it in its own."""
+        before for another org leaves that org's index, as an upsert replaces it in its own.
+
+        A committing batch commits each org's index before it opens the next one's writer, so it holds one writer at a
+        time however many workspaces it spans. A writer's heap (`LOUVAIN_BM25_HEAP_MB`) is the process's largest
+        allocation: a rebuild's batch walks `event_log` in id order across every workspace, and with every org's
+        writer open until the end of the batch, two 256 MB writers took a 512 MB machine past its memory (OOM-killed
+        at anon-rss 415 MB)."""
         by_org: dict[str, list[dict]] = {}
         for doc in docs:
             by_org.setdefault(str(doc["org"]), []).append(doc)
@@ -131,7 +137,7 @@ class Orgs:
                     "insert into entry (id, org) values (?, ?) on conflict (id) do update set org = excluded.org",
                     [(str(d["id"]), org) for d in batch],
                 )
-            index_docs(self._writing(org), batch, False)
+            index_docs(self._writing(org), batch, to_commit)
         if to_commit:
             self.commit()
         return len(docs)

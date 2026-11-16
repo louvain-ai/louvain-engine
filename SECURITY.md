@@ -14,10 +14,10 @@ ask us not to.
 In scope: the code in this repository, its database schema (`db/baseline.sql`) and the sidecar images built from
 `services`. A problem in a third-party dependency is in scope when the engine's use of it makes it exploitable.
 
-The engine reads through one readable-set resolver, and this build's resolver lets the one reader it serves read every
-collection: it serves one reader by design. Running it for several people who must not see each other's data is outside
-what this build promises; a report that one reader reads everything is expected behaviour, not a vulnerability. A way to read past the predicate the resolver's set feeds (a query that ignores the set, or a
-cache served across sets) is in scope.
+Every read goes through one readable-set resolver. Each reader (`./engine reader add <name>`) has a token of its own
+and reads only the collections `engine.config.ts` grants it; the engine's own token reads everything loaded, by design.
+A way for a reader to see, count or rank anything outside its grants is in scope: a query that ignores the set, a
+token read as another reader, or a cache served across sets.
 
 On one machine, a caller is anyone who can reach a loopback port: another local user, or a web page open in a
 browser. Postgres, the sidecars and the tool server listen on `127.0.0.1` only, and each requires a secret made for

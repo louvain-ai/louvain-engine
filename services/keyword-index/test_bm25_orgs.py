@@ -9,6 +9,8 @@
   again for another workspace leaves the first; an id never written is a no-op.
 - A commit with no documents (the engine's group commit) commits every workspace's pending adds; a commit that fails
   leaves them pending, so the client's retry commits them, never a 200 that committed nothing.
+- A committing batch that spans workspaces holds one writer at a time: each workspace is committed before the next
+  one's writer opens (a writer's heap is the process's largest allocation; a rebuild's batches span workspaces).
 - `/delete_org` removes one workspace's index and nothing of another's.
 - An index from before this layout, shared at the root of the directory, is never read, and `/healthz` asks for the
   rebuild; `/healthz` counts every workspace's entries, and names none.
@@ -20,6 +22,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+import bm25_orgs  # noqa: E402
 from bm25_orgs import ORGS, Orgs, dir_of  # noqa: E402
 from bm25_store import Knobs  # noqa: E402
 from test_bm25 import HOST, check, free_port, request, stop, wait_healthy  # noqa: E402
@@ -152,6 +155,31 @@ def failed_commit_retried(tmp: str) -> None:
     check("so the retry commits them", store.index.searcher().num_docs == 1)
 
 
+def one_writer_at_a_time(tmp: str) -> None:
+    orgs = Orgs(f"{tmp}/one-writer", 64, Knobs())
+    open_when_writing: list[int] = []
+    real = bm25_orgs.index_docs
+
+    def counting(store, docs, commit):
+        open_when_writing.append(sum(1 for s in orgs.stores.values() if s.writer is not None))
+        return real(store, docs, commit)
+
+    bm25_orgs.index_docs = counting
+    try:
+        orgs.index([*ALPHA, *BETA[:3], doc("g1", "gamma", "The night pump.")], True)
+    finally:
+        bm25_orgs.index_docs = real
+    check("a committing batch over three workspaces writes each", len(open_when_writing) == 3, str(open_when_writing))
+    check("with no other workspace's writer open as each one's opens", open_when_writing == [0, 0, 0],
+          str(open_when_writing))
+    check("and leaves none open", all(s.writer is None for s in orgs.stores.values()))
+    check("and every entry committed", sum(s.index.searcher().num_docs for s in orgs.stores.values()) == 7)
+    orgs.index(ALPHA[:1], False)
+    orgs.index(BETA[:1], False)
+    check("adds sent without a commit still wait in their writers, for the group commit",
+          sum(1 for s in orgs.stores.values() if s.writer is not None) == 2)
+
+
 def legacy(tmp: str) -> None:
     root = Path(tmp) / "legacy"
     root.mkdir()
@@ -181,6 +209,7 @@ def main() -> None:
         reads_make_nothing(tmp)
         deletes_and_commits(tmp)
         failed_commit_retried(tmp)
+        one_writer_at_a_time(tmp)
         legacy(tmp)
     print("ok: test_bm25_orgs")
 
