@@ -1,6 +1,6 @@
 import { sidecarAuthHeaders } from "../../../config/sidecar-auth.js";
 import { log } from "../../../observability/logging.js";
-import { bm25Settings } from "../bm25.js";
+import type { Bm25Endpoint } from "../bm25.js";
 import type { Bm25Narrowing } from "./rows.js";
 
 /**
@@ -27,16 +27,21 @@ export type Tiers = {
   dropped: string[];
 };
 
-/** One tiered `/search`, fenced by `containers` (already the reader's), narrowed only by what `narrow` names. */
-export async function bm25Tiers(args: {
+type TierAsk = {
   orgId: string;
   containers: readonly string[];
   query: string;
   limit: number;
   asOf?: string | undefined;
   narrow?: Bm25Narrowing & { ids?: readonly string[] };
-}): Promise<Tiers> {
-  const { endpoint, timeoutMs } = bm25Settings();
+};
+
+/**
+ * One tiered `/search` of the engine's keyword index (`index`, `endpointOf(context)`), fenced by `containers`
+ * (already the reader's), narrowed only by what `narrow` names.
+ */
+export async function bm25Tiers(index: Bm25Endpoint, args: TierAsk): Promise<Tiers> {
+  const { endpoint, timeoutMs } = index.settings();
   if (!endpoint) throw new Error("bm25 tiers: LOUVAIN_BM25_URL is not configured");
   const res = await fetch(`${endpoint.replace(/\/$/, "")}/search`, {
     method: "POST",
@@ -53,7 +58,11 @@ export async function bm25Tiers(args: {
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (!res.ok) throw new Error(`bm25 tiers ${res.status}`);
-  const data = (await res.json()) as Partial<Tiers>;
+  return tiersOf((await res.json()) as Partial<Tiers>);
+}
+
+/** The answer's tiers; an index older than this engine answers a plain search, and that is said once. */
+function tiersOf(data: Partial<Tiers>): Tiers {
   if (!Array.isArray(data.hits) || typeof data.asked !== "number") {
     log.sayOnce("the keyword index is older than this engine; run ./engine up");
     throw new Error("bm25 tiers: an index older than this engine answered without tiers");

@@ -1,3 +1,4 @@
+import { environment } from "../../../config/environment.js";
 import { recordsInNarrowing } from "../bm25/records-in-narrowing.sql.js";
 import { instantOf, queryTerms } from "../context.js";
 import { firstChunkRows } from "../document-rows.js";
@@ -26,8 +27,7 @@ export type Bm25Narrowing = {
   figures?: true;
 };
 
-const bm25FilteredOn = (): boolean =>
-  (process.env.LOUVAIN_BM25_FILTERED ?? "").trim().toLowerCase() === "on";
+const bm25FilteredOn = (): boolean => environment("LOUVAIN_BM25_FILTERED");
 
 /** What the build's keyword index (`index`) can narrow a read by itself, or null where the read goes to its passes. */
 export function bm25Narrowing(index: KeywordIndex, f: PassageFilters): Bm25Narrowing | null {
@@ -100,7 +100,9 @@ async function indexHits(context: ReadContext, read: IndexRead): Promise<Hit[]> 
   const at = instantOf(asOf, "passages.search").validAt;
   const ask = { orgId: fence.orgId, containers: fence.containers, query, limit: limit * 2 };
   return hooksOf(context).keyword.tiers
-    ? (await bm25Tiers({ ...ask, asOf: at, narrow: narrowing })).hits.map(tierOrdered)
+    ? (
+        await bm25Tiers(hooksOf(context).keyword.endpoint, { ...ask, asOf: at, narrow: narrowing })
+      ).hits.map(tierOrdered)
     : await hooksOf(context).keyword.endpoint.search({ ...ask, asOf: at, ...narrowing });
 }
 

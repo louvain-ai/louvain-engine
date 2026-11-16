@@ -1,5 +1,6 @@
 import type { Viewer } from "@louvain/engine-core";
 import { telemetryOf } from "../../given.js";
+import { endpointOf } from "../../kg/read/bm25.js";
 import { fence, type ReadContext } from "../../kg/read/fence.js";
 import { hooksOf } from "../../kg/read/hooks.js";
 import { bm25Tiers, type Tiers } from "../../kg/read/keyword/tiers.js";
@@ -47,7 +48,12 @@ async function tiersOrNone(
   const containers = reader?.containers.filter((c) => !scope || scope.includes(c)) ?? [];
   if (!reader || containers.length === 0) return null;
   try {
-    return await bm25Tiers({ orgId: reader.orgId, containers, query, limit: 1 });
+    return await bm25Tiers(endpointOf(context), {
+      orgId: reader.orgId,
+      containers,
+      query,
+      limit: 1,
+    });
   } catch (err) {
     telemetryOf(context).error("search.unheld_words", err, {});
     return null;

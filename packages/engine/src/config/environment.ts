@@ -212,18 +212,22 @@ const Live = z.object({
   LOUVAIN_PASSAGE_WINDOW_EXACT: raw.describe(
     "A small date range is read exactly; `off` is the kill switch. Internal: a kill switch, on by default.",
   ),
-  LOUVAIN_BM25_URL: raw.describe("The BM25 sidecar; unset, the lexical leg is Postgres's alone."),
-  LOUVAIN_BM25_TIMEOUT_MS: raw.describe(
-    "How long a BM25 call may take, in milliseconds (3,000). Internal: a measured bound; its default is the measured one.",
-  ),
+  LOUVAIN_BM25_URL: text.describe("The BM25 sidecar; unset, the lexical leg is Postgres's alone."),
+  LOUVAIN_BM25_TIMEOUT_MS: raw
+    .transform((v) => orDefault(v, 3_000))
+    .describe(
+      "How long a BM25 call may take, in milliseconds (3,000). Internal: a measured bound; its default is the measured one.",
+    ),
   LOUVAIN_SEARCH_WIDE: raw
     .transform((v) => (v ?? "").trim().toLowerCase() === "on")
     .describe(
       "A search's ranked head is 100 documents deep instead of 24; only `on`. Internal: a rollout, off by default.",
     ),
-  LOUVAIN_BM25_FILTERED: raw.describe(
-    "A filtered keyword search is ranked by BM25 too; only `on`. Internal: a rollout, off by default.",
-  ),
+  LOUVAIN_BM25_FILTERED: raw
+    .transform((v) => (v ?? "").trim().toLowerCase() === "on")
+    .describe(
+      "A filtered keyword search is ranked by BM25 too; only `on`. Internal: a rollout, off by default.",
+    ),
 });
 
 /** The engine's and the embeddings package's, which the engine composes: one list of every name the open engine reads. */

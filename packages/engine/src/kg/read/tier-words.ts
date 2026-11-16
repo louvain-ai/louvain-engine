@@ -15,7 +15,7 @@ export const tierWords: WordsTest = {
     if (!endpointOf(context).configured()) return new Set();
     try {
       const { orgId, containers } = reader;
-      const tiers = await bm25Tiers({
+      const tiers = await bm25Tiers(endpointOf(context), {
         orgId,
         containers,
         query,
@@ -33,7 +33,7 @@ export const tierWords: WordsTest = {
     const held = await Promise.all(
       [...new Set(words)].map(async (word) => {
         try {
-          const t = await bm25Tiers({
+          const t = await bm25Tiers(endpointOf(context), {
             orgId: reader.orgId,
             containers: reader.containers,
             query: word,

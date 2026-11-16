@@ -18,6 +18,8 @@ test("an index that answers without tiers fails the call and says so once", asyn
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
   process.env.LOUVAIN_BM25_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   const { bm25Tiers } = await import("../src/kg/read/keyword/tiers.js");
+  const { bm25Endpoint } = await import("../src/kg/read/bm25.js");
+  const index = bm25Endpoint();
   const ask = { orgId: "o", containers: ["c"], query: "leese", limit: 1 };
   const said: string[] = [];
   const out = process.stdout.write.bind(process.stdout);
@@ -26,8 +28,8 @@ test("an index that answers without tiers fails the call and says so once", asyn
   process.stdout.write = ((chunk: string) =>
     said.push(String(chunk)) > 0) as typeof process.stdout.write;
   try {
-    await assert.rejects(bm25Tiers(ask), /older than this engine/);
-    await assert.rejects(bm25Tiers(ask), /older than this engine/);
+    await assert.rejects(bm25Tiers(index, ask), /older than this engine/);
+    await assert.rejects(bm25Tiers(index, ask), /older than this engine/);
   } finally {
     console.log = log;
     process.stdout.write = out;
@@ -38,7 +40,7 @@ test("an index that answers without tiers fails the call and says so once", asyn
     status: 200,
     body: { hits: [{ id: "e1", score: 2, words: 1 }], asked: 1, corrected: ["leese"] },
   };
-  assert.deepEqual(await bm25Tiers(ask), {
+  assert.deepEqual(await bm25Tiers(index, ask), {
     hits: [{ id: "e1", score: 2, words: 1 }],
     asked: 1,
     completed: [],
@@ -46,6 +48,6 @@ test("an index that answers without tiers fails the call and says so once", asyn
     dropped: [],
   });
   reply = { status: 500, body: {} };
-  await assert.rejects(bm25Tiers(ask), /bm25 tiers 500/);
+  await assert.rejects(bm25Tiers(index, ask), /bm25 tiers 500/);
   await new Promise((done) => server.close(done));
 });

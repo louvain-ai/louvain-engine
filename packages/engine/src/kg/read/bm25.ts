@@ -24,6 +24,7 @@
  */
 
 import { config } from "../../config/engine.js";
+import { environment } from "../../config/environment.js";
 import { sidecarAuthHeaders } from "../../config/sidecar-auth.js";
 import type { Bm25Doc } from "./bm25-doc.js";
 
@@ -32,17 +33,11 @@ type Bm25Settings = {
   timeoutMs: number;
 };
 
-/** An endpoint's settings, read from the environment on its first call (`bm25Endpoint`). */
-function readSettings(): Bm25Settings {
-  const url = process.env.LOUVAIN_BM25_URL;
-  return {
-    // Compose writes an unset optional as an empty string
-    // (`LOUVAIN_BM25_URL: ${LOUVAIN_BM25_URL:-}`), and an empty string is
-    // truthy enough to survive `||` but is not a URL — treat it as absent.
-    endpoint: url && url.trim() !== "" ? url : undefined,
-    timeoutMs: Number(process.env.LOUVAIN_BM25_TIMEOUT_MS ?? 3_000) || 3_000,
-  };
-}
+/** An endpoint's settings, read through the one environment reader (`config/environment.ts`) on its first call. */
+const readSettings = (): Bm25Settings => ({
+  endpoint: environment("LOUVAIN_BM25_URL"),
+  timeoutMs: environment("LOUVAIN_BM25_TIMEOUT_MS"),
+});
 
 type Bm25Hit = { id: string; score: number; snippet?: { text: string } | null };
 
