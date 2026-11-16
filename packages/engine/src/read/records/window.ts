@@ -9,15 +9,15 @@ import { CONTENT_EVENT_KINDS, type Viewer } from "@louvain/engine-core";
 import type { Queryable } from "../../store/sql.js";
 import type { Evidence } from "../context.js";
 import { bounded, fence, fenced, type ReadContext, type Reader } from "../fence.js";
-import { type RecordFilters, recordPredicates } from "../filters.js";
-import { agentWritten, instructionLikeRecords, labelOf, referenceRead } from "../generated.js";
+import { type DocumentFilters, documentPredicates } from "../filters.js";
+import { agentWritten, instructionLikeRevisions, labelOf, referenceRead } from "../generated.js";
 import { hooksOf } from "../hooks.js";
 import { boundedTotal, COUNT_LIMIT } from "../listing/bounds.js";
 import { notQuarantined } from "../listing/quarantine.js";
 import { originsFor } from "../originals/reads.js";
 import type { KnownPrecision } from "../precision.js";
 
-export type RecordWindowFilters = Omit<RecordFilters, "apps"> & {
+export type RevisionWindowFilters = Omit<DocumentFilters, "apps"> & {
   kinds?: ("message" | "file" | "record.change")[];
   /** Narrows to these containers — intersected with the readable set, never added to it. */
   containers?: string[];
@@ -28,7 +28,7 @@ export type RecordWindowFilters = Omit<RecordFilters, "apps"> & {
   textChars?: number;
 };
 
-export type RecordHit = Evidence & {
+export type RevisionHit = Evidence & {
   kind: "record";
   connector: string;
   recordKind: string;
@@ -38,8 +38,8 @@ export type RecordHit = Evidence & {
   length: number;
 };
 
-export type RecordWindow = {
-  records: RecordHit[];
+export type RevisionWindow = {
+  records: RevisionHit[];
   /** Exact when `bounded` is false; otherwise the cap, and there are at least this many. */
   count: number;
   bounded: boolean;
@@ -59,12 +59,12 @@ type Row = {
 };
 
 /** The records in a window for this viewer, a bounded count of them, and the cursor for the next page. */
-export async function recordWindow(
+export async function revisionWindow(
   context: ReadContext,
   viewer: Viewer,
-  filters: RecordWindowFilters = {},
-): Promise<RecordWindow> {
-  const none: RecordWindow = { records: [], count: 0, bounded: false, next: null };
+  filters: RevisionWindowFilters = {},
+): Promise<RevisionWindow> {
+  const none: RevisionWindow = { records: [], count: 0, bounded: false, next: null };
   const scope = await fence(context, viewer, filters.containers);
   if (!scope) return none;
   const limit = Math.min(Math.max(1, filters.limit ?? 50), 500);
@@ -84,7 +84,7 @@ export async function recordWindow(
   };
 }
 
-type WindowRead = { scope: Reader; filters: RecordWindowFilters; limit: number; chars: number };
+type WindowRead = { scope: Reader; filters: RevisionWindowFilters; limit: number; chars: number };
 
 /**
  * The page and its bounded count, side by side. The page reads its ids first, then the bodies of those rows only:
@@ -96,7 +96,7 @@ function windowReads(context: ReadContext, { scope, filters, limit, chars }: Win
   const where = (q: Queryable) => q`
     e.org_id = ${scope.orgId} and ${fenced(q, scope, q`e.container`)}
     and e.kind = any(${kinds}::text[]) and ${notQuarantined(q, "e")}
-    ${recordPredicates(q, hooksOf(context).filters, scope.orgId, filters)}`;
+    ${documentPredicates(q, hooksOf(context).filters, scope.orgId, filters)}`;
   return Promise.all([
     bounded(
       context,
@@ -130,7 +130,11 @@ function windowReads(context: ReadContext, { scope, filters, limit, chars }: Win
  * instruction-like label, read in parallel. None can empty the page: an origin is presentation (lost, it costs only
  * the grouping), and the agent and reference reads fail closed to "generated" and "reference".
  */
-async function windowHits(context: ReadContext, fence: Reader, rows: Row[]): Promise<RecordHit[]> {
+async function windowHits(
+  context: ReadContext,
+  fence: Reader,
+  rows: Row[],
+): Promise<RevisionHit[]> {
   const { sql } = context;
   const ids = rows.map((r) => r.id);
   const [origins, generated, reference, instructionLike] = await Promise.all([
@@ -140,9 +144,9 @@ async function windowHits(context: ReadContext, fence: Reader, rows: Row[]): Pro
     }),
     agentWritten(sql, fence.orgId, ids),
     referenceRead(sql, hooksOf(context).reading, fence.orgId, ids),
-    instructionLikeRecords(sql, fence.orgId, ids),
+    instructionLikeRevisions(sql, fence.orgId, ids),
   ]);
-  return rows.map((r): RecordHit => {
+  return rows.map((r): RevisionHit => {
     const text = r.text ?? "";
     const origin = origins.get(r.id);
     return {

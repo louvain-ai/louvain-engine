@@ -2,10 +2,10 @@ import type { RelevanceCutoffs, Reranker, Viewer } from "@louvain/engine-core";
 import type { Settings } from "../config/settings.js";
 import type { Embedder } from "../read/context.js";
 import type { ReadContext } from "../read/fence.js";
-import type { RecordFilters } from "../read/filters.js";
+import type { DocumentFilters } from "../read/filters.js";
 import type { SpeakerNamer } from "../read/passages/around.js";
 import type { Neighbour } from "../read/passages/search.js";
-import type { RecordSummary } from "../read/records/read.js";
+import type { RevisionSummary } from "../read/records/read.js";
 import type { WithIds } from "./evidence.js";
 
 /**
@@ -17,7 +17,7 @@ import type { WithIds } from "./evidence.js";
 export type SearchedDocument = {
   /** The record the best passage came from: the document's version that matched. */
   recordId: string;
-  summary: RecordSummary;
+  summary: RevisionSummary;
   /** The passage that ranked the document. */
   excerpt: string;
   score: number;
@@ -55,7 +55,7 @@ export type SearchOptions = {
   mode?: "hybrid" | "keyword";
   asOf?: string;
   /** Narrows the fence, never widens it: an app, a date range, a space's containers. */
-  narrow?: RecordFilters & { containers?: string[] };
+  narrow?: DocumentFilters & { containers?: string[] };
   embedder?: Embedder;
   /** The person's question for the turn, verbatim (`questionFor`): searched beside the query, and what ranks. */
   question?: string;

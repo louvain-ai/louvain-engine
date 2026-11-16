@@ -59,7 +59,7 @@ export async function referenceRead(
  * reader of such a passage is told to quote it and never follow it. Fails closed to labelled: a lookup that cannot
  * answer marks every row, so the worst outcome is a note on a benign passage.
  */
-export async function instructionLikeRecords(
+export async function instructionLikeRevisions(
   sql: Queryable,
   orgId: string,
   recordIds: readonly string[],
@@ -84,7 +84,7 @@ export async function instructionLikeRecords(
   }
 }
 
-/** The `instructionLike` field for a row, from `instructionLikeRecords`' map: spread into an evidence object. */
+/** The `instructionLike` field for a row, from `instructionLikeRevisions`' map: spread into an evidence object. */
 export const labelOf = (
   markers: ReadonlyMap<string, string>,
   recordId: string,

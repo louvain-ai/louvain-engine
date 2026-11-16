@@ -14,15 +14,15 @@ import { textPage } from "./text-page.js";
 const UNDATED = "9999-12-31T23:59:59.999Z";
 
 /** What the fenced read returned for an admitted record. */
-export type ReadRecord = NonNullable<Awaited<ReturnType<typeof records.read>>>;
+export type ReadRevision = NonNullable<Awaited<ReturnType<typeof records.read>>>;
 
 /**
  * What a host may add to a read, at its own place on the page: a copy to edit (`editCopy`) and the file's own bytes
  * (`original`), each asked only after the fenced read admitted the record. The engine's own server adds neither.
  */
 export type ReadExtras<O extends object> = {
-  editCopy?: (read: ReadRecord) => Promise<{ editCopy?: { url: string; label: string } }>;
-  original?: (read: ReadRecord) => Promise<O | null>;
+  editCopy?: (read: ReadRevision) => Promise<{ editCopy?: { url: string; label: string } }>;
+  original?: (read: ReadRevision) => Promise<O | null>;
 };
 
 const NOT_VISIBLE = { error: "No source with that id is visible to you." } as const;
@@ -70,7 +70,7 @@ export async function readSourcePage<O extends object = never>(
 
 /** What the list view says of a read record: its title, app, kind, author, date, address and whether it is current. */
 function described(
-  read: ReadRecord,
+  read: ReadRevision,
   names: ReadonlyMap<string, string>,
   documentId: string,
   linkTo: LinkTo,

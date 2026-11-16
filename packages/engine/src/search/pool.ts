@@ -11,8 +11,8 @@ import type {
 import { telemetry } from "../observability/telemetry.js";
 import { fence, type ReadContext } from "../read/fence.js";
 import { passages } from "../read/passages/index.js";
-import { readableRecords } from "../read/readable-records.js";
-import { recordsAsPassages } from "../read/records/as-passages.js";
+import { readableRevisions } from "../read/readable-records.js";
+import { revisionsAsPassages } from "../read/records/as-passages.js";
 import { attempt } from "./degraded.js";
 import type { SearchOptions, SearchPool } from "./document.js";
 import type { WithIds } from "./evidence.js";
@@ -75,7 +75,7 @@ const legsOf = (
  * A reading fenced to one search: the reader, the search's narrowing and its as-of, never the pool, and their
  * description (`scope`) for a retriever that asks an index of its own. A row it handed out is kept as handed (two legs
  * hand out the same passage with their own scores, so the row itself, not its id); any other a retriever returns is
- * its record, read again as the keyword index's hits are (`recordsAsPassages`). `recheck` then reads every
+ * its record, read again as the keyword index's hits are (`revisionsAsPassages`). `recheck` then reads every
  * survivor's record under the fence, by id.
  */
 async function fencedReading(context: ReadContext, viewer: Viewer, opts: SearchOptions) {
@@ -102,7 +102,7 @@ async function fencedReading(context: ReadContext, viewer: Viewer, opts: SearchO
     const own = await ownRows(context, viewer, { named, handed, opts });
     const ids = own.flatMap((n) => n.legs.flatMap((l) => l.rows.map((row) => row.recordId)));
     const containers = opts.narrow?.containers;
-    const readable = await readableRecords(context, viewer, { recordIds: ids, containers });
+    const readable = await readableRevisions(context, viewer, { recordIds: ids, containers });
     return {
       legs: own.flatMap(({ name, legs }) =>
         legs.map((l) => ({
@@ -125,7 +125,7 @@ async function scopeOf(
   const { containers, ...filters } = opts.narrow ?? {};
   const reader = await fence(context, viewer, containers);
   return {
-    orgId: viewer.orgId,
+    workspaceId: viewer.orgId,
     containers: reader ? [...reader.containers] : [],
     ...(opts.asOf ? { asOf: opts.asOf } : {}),
     filters,
@@ -134,7 +134,7 @@ async function scopeOf(
 
 /**
  * Each leg's rows as the engine's own evidence: the passage the reading handed out, by its id, else the record read
- * again (`recordsAsPassages`); one neither gives is dropped and counted.
+ * again (`revisionsAsPassages`); one neither gives is dropped and counted.
  */
 async function ownRows(
   context: ReadContext,
@@ -145,7 +145,7 @@ async function ownRows(
   const foreign = named.flatMap(({ got }) =>
     got.legs.flatMap((l) => l.rows.filter((row) => !handedOf(row)).map((row) => row.recordId)),
   );
-  const reread = await recordsAsPassages(context, viewer, {
+  const reread = await revisionsAsPassages(context, viewer, {
     recordIds: foreign,
     ...(opts.asOf ? { asOf: opts.asOf } : {}),
     ...(opts.narrow ? { narrow: opts.narrow } : {}),

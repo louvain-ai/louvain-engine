@@ -4,14 +4,14 @@
  * description, never a key: the engine checks every record a retriever returns against it again.
  */
 export type ReadingScope = {
-  readonly orgId: string;
+  readonly workspaceId: string;
   readonly containers: readonly string[];
   readonly asOf?: string;
-  readonly filters: Readonly<RecordFilters>;
+  readonly filters: Readonly<DocumentFilters>;
 };
 
 /** The search's narrowings on the record a row came from, beside its fence. */
-export type RecordFilters = {
+export type DocumentFilters = {
   /** The actor (`actor_id` or `actor_email`), or a `from` participant where one is bound (`names`), lower-cased. */
   sender?: string;
   /** Every listed identifier appears as the actor or as a participant in any role; refused where none is bound. */

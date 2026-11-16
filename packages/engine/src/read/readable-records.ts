@@ -2,7 +2,7 @@ import type { Viewer } from "@louvain/engine-core";
 import { fence, fenced, type ReadContext } from "./fence.js";
 
 /** The records to check, and the search's collections to narrow the fence to. */
-export type ReadableRecordsAsk = {
+export type ReadableRevisionsAsk = {
   recordIds: readonly string[];
   containers?: readonly string[] | undefined;
 };
@@ -12,10 +12,10 @@ export type ReadableRecordsAsk = {
  * the check a search makes on every row a retriever hands back, before fusion. A retriever that reads under the fence
  * returns only these; one that does not has its other rows dropped here. Bounded by the ids asked, by the primary key.
  */
-export async function readableRecords(
+export async function readableRevisions(
   context: ReadContext,
   viewer: Viewer,
-  { recordIds, containers }: ReadableRecordsAsk,
+  { recordIds, containers }: ReadableRevisionsAsk,
 ): Promise<Set<string>> {
   const { sql } = context;
   const ids = [...new Set(recordIds)];

@@ -1,6 +1,6 @@
 import type { Viewer } from "@louvain/engine-core";
 import { fence, type ReadContext } from "./fence.js";
-import { recordTexts } from "./passages/by-id.js";
+import { revisionTexts } from "./passages/by-id.js";
 
 /**
  * The text at a span, as written: each record's stored text read again under the viewer's fence and cut at the span a
@@ -15,7 +15,7 @@ export async function spanTexts(
 ): Promise<Map<string, string>> {
   const reader = await fence(context, viewer);
   if (!reader || wanted.length === 0) return new Map();
-  const texts = await recordTexts(
+  const texts = await revisionTexts(
     context.sql,
     reader,
     wanted.map((w) => w.recordId),

@@ -5,7 +5,7 @@ import type { Queryable } from "../../store/sql.js";
 import { fenced, type Reader } from "../fence.js";
 
 /** Each readable record of `ids` with its text. */
-export const recordTextRows = (sql: Queryable, fence: Reader, ids: string[]) => sql<
+export const revisionTextRows = (sql: Queryable, fence: Reader, ids: string[]) => sql<
   { id: string; text: string | null }[]
 >`
     select id, body->>'text' as text from event_log

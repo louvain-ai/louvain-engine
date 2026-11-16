@@ -14,7 +14,7 @@ type CurrentRead = {
 };
 
 /** The ids, of `eventIds`, no newer version retires. */
-export const currentRecords = (q: Queryable, r: CurrentRead) => q<{ id: string }[]>`
+export const currentRevisions = (q: Queryable, r: CurrentRead) => q<{ id: string }[]>`
       select e.id from event_log e
        where e.org_id = ${r.orgId} and e.id = any(${[...r.eventIds]}::text[])
          and not (e.record_key is not null and ${r.newer})`;

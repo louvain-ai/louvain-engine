@@ -46,7 +46,7 @@ test("a value out of range, or a setting that does not exist, stops the start by
 test("how a keyword hit is shown is the keyword retriever's own setting, taken when it is created", async () => {
   const asked: unknown[] = [];
   const read = {
-    scope: { orgId: "org", containers: [], filters: {} },
+    scope: { workspaceId: "org", containers: [], filters: {} },
     passages: async (_q: string, how: unknown) => {
       asked.push(how);
       return { hits: [], degraded: [] };

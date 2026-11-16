@@ -102,14 +102,14 @@ async function load(
   const { sql } = engine.store;
   const { containerId } = await import("../../src/store/ids.js");
   const { loadEvents } = await import("../load-events.js");
-  const { openOrgId } = await import("../../src/store/tenant.js");
+  const { workspaceIdOf } = await import("../../src/store/tenant.js");
   const { writeProjection } = await import("../../src/store/readable-rows.js");
   let loaded: Awaited<ReturnType<typeof loadEvents>> | undefined;
   await around(engine.writes, async () => {
     loaded = await loadEvents(engine.writes, events);
   });
   if (loaded?.accepted !== events.length) throw new Error(`load: ${JSON.stringify(loaded)}`);
-  const orgId = await openOrgId(sql);
+  const orgId = await workspaceIdOf(sql);
   // Every container the load filed, by the collection it is (its last part): a folder's, or a drive's copy.
   const loadedContainers = (
     await sql<{ container: string }[]>`select distinct container from event_log`

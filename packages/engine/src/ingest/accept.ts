@@ -1,4 +1,4 @@
-import { recordKeyOf } from "@louvain/engine-core";
+import { documentKeyOf } from "@louvain/engine-core";
 import type { Sql, TransactionSql } from "postgres";
 import { containerId, sanitizeId } from "../store/ids.js";
 import { insertEventRow, recordLockName } from "./event-row.js";
@@ -46,7 +46,7 @@ export async function acceptOpen(
     ev,
     workspace: sanitizeId(ev.source.workspace),
     container: containerId(ev.source.connector, ev.source.workspace, ev.source.container),
-    recordKey: recordKeyOf(ev),
+    recordKey: documentKeyOf(ev),
   };
   const write = (trx: TransactionSql) => writeOne(trx, one);
   const stored = within ? await write(within) : await sql.begin(write);

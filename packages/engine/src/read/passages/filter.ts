@@ -3,10 +3,10 @@ import type { Queryable } from "../../store/sql.js";
 import { laterVersion } from "../../store/version.js";
 import { instantOf } from "../context.js";
 import { bounded, fenced, type ReadContext, type Reader } from "../fence.js";
-import { hasRecordFilters, recordPredicates } from "../filters.js";
+import { documentPredicates, hasDocumentFilters } from "../filters.js";
 import { hooksOf } from "../hooks.js";
 import type { AddedFilters } from "../listing/filter-seam.js";
-import { currentRecords } from "./still-current.sql.js";
+import { currentRevisions } from "./still-current.sql.js";
 import type { PassageFilters } from "./types.js";
 import { windowsPredicate } from "./windows.js";
 
@@ -120,7 +120,7 @@ export async function stillCurrent(
   if (eventIds.length === 0) return new Set();
   const at = { ...instantOf(asOf, "passages.search"), whole: hooksOf(context).filters.wholeKeys };
   const rows = await bounded(context, (q) =>
-    currentRecords(q, { orgId: fence.orgId, eventIds, newer: newerVersionRead(q, fence, at) }),
+    currentRevisions(q, { orgId: fence.orgId, eventIds, newer: newerVersionRead(q, fence, at) }),
   );
   return new Set(rows.map((r) => r.id));
 }
@@ -158,10 +158,10 @@ export function passageFilter(
     ${from === undefined ? sql`` : sql`and p.occurred_at >= ${from}`}
     ${to === undefined ? sql`` : sql`and p.occurred_at < ${to}`}
     ${
-      hasRecordFilters(onRecord)
+      hasDocumentFilters(onRecord)
         ? sql`and exists (select 1 from event_log e
             where e.id = p.event_id and e.org_id = ${fence.orgId}
-            ${recordPredicates(sql, added, fence.orgId, onRecord)})`
+            ${documentPredicates(sql, added, fence.orgId, onRecord)})`
         : sql``
     }`;
 }

@@ -1,11 +1,11 @@
 import type { AsOf, Embedder, Evidence } from "../context.js";
 import type { Reader } from "../fence.js";
-import type { RecordFilters } from "../filters.js";
+import type { DocumentFilters } from "../filters.js";
 import type { AddedFilters } from "../listing/filter-seam.js";
 
 /** The types the passage reads share: what they take, what they return, and the row a leg reads. */
 
-export type PassageFilters = RecordFilters & {
+export type PassageFilters = DocumentFilters & {
   /** Bi-temporal ceiling, as recall's: nothing said after this. Default now. */
   asOf?: AsOf;
   /**

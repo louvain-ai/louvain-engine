@@ -418,10 +418,10 @@ export type FencedReading = {
 };
 
 export type ReadingScope = {
-  readonly orgId: string;
+  readonly workspaceId: string;
   readonly containers: readonly string[]; // what the reader may read, narrowed to the search's collections
   readonly asOf?: string;
-  readonly filters: Readonly<RecordFilters>; // sender, participants, window, connectors, apps, genre
+  readonly filters: Readonly<DocumentFilters>; // sender, participants, window, connectors, apps, genre
 };
 
 export type Retrieved = {

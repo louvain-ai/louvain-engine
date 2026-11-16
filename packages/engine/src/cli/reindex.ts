@@ -7,7 +7,7 @@
  */
 import { indexOpen, OpenIndexMissing } from "../ingest/indexer.js";
 import { type Writes, writeHooksOf } from "../ingest/writes.js";
-import { openOrgId } from "../store/tenant.js";
+import { workspaceIdOf } from "../store/tenant.js";
 
 /** How many times a record the keyword index missed is tried. */
 export const PASSES = 3;
@@ -24,7 +24,7 @@ export async function reindexKeywords(
 ): Promise<{ indexed: number; missed: string[] }> {
   if (!writeHooksOf(writes).keyword.endpoint.configured()) throw new NoKeywordIndex();
   const { sql } = writes;
-  const orgId = await openOrgId(sql);
+  const orgId = await workspaceIdOf(sql);
   await sql`update event_log set keyword_indexed_at = null where org_id = ${orgId}`;
   const records = await sql<
     { id: string }[]

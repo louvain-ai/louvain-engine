@@ -8,7 +8,7 @@ import type { Sql } from "postgres";
 export const OPEN_PRINCIPAL = "engine-reader";
 
 /** The engine's organisation id in this pool's database: the default organisation's. Throws when the schema has none. */
-export async function openOrgId(sql: Sql): Promise<string> {
+export async function workspaceIdOf(sql: Sql): Promise<string> {
   const [row] = await sql<{ id: string }[]>`select id::text as id from org where slug = 'default'`;
   if (!row)
     throw new Error(
@@ -21,10 +21,10 @@ export async function openOrgId(sql: Sql): Promise<string> {
  * The organisation id for one served value (the tools, a search): read on its first call and kept by it, since the
  * schema creates it and nothing changes it. A refusal is not kept, so loading the schema mends the next call.
  */
-export function orgIdOnce(sql: Sql): () => Promise<string> {
+export function workspaceIdOnce(sql: Sql): () => Promise<string> {
   let known: string | undefined;
   return async () => {
-    known ??= await openOrgId(sql);
+    known ??= await workspaceIdOf(sql);
     return known;
   };
 }

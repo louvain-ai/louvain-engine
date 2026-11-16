@@ -2,7 +2,7 @@ import type { Engine } from "../../engine.js";
 import type { ReadContext } from "../../read/fence.js";
 import type { SearchWith } from "../../search/document.js";
 import { retrieverPool } from "../../search/pool.js";
-import { OPEN_PRINCIPAL, orgIdOnce } from "../../store/tenant.js";
+import { OPEN_PRINCIPAL, workspaceIdOnce } from "../../store/tenant.js";
 import type { ToolResult, ToolRun } from "../protocol.js";
 import { str, ToolInputError } from "./arguments.js";
 import { toolArgs } from "./input.js";
@@ -45,7 +45,7 @@ export const poolOf = ({ plugins, settings }: Pick<Engine, "plugins" | "settings
 export function openTools(engine: ToolEngine): ToolRun {
   // Made once: with no retriever configured the start is refused, never the first search.
   const pool = poolOf(engine);
-  const orgId = orgIdOnce(engine.store.sql);
+  const orgId = workspaceIdOnce(engine.store.sql);
   return async (name, args) => {
     const reader = { orgId: await orgId(), principal: OPEN_PRINCIPAL };
     const asked = toolArgs(name, args, engine.settings);
@@ -58,7 +58,7 @@ export function openTools(engine: ToolEngine): ToolRun {
 /** One search as the search tool runs it, for a caller in this process (the terminal's `search`). */
 export function openSearch(engine: ToolEngine) {
   const pool = poolOf(engine);
-  const orgId = orgIdOnce(engine.store.sql);
+  const orgId = workspaceIdOnce(engine.store.sql);
   return async (args: Record<string, unknown>) => {
     const reader = { orgId: await orgId(), principal: OPEN_PRINCIPAL };
     return searchOrList(

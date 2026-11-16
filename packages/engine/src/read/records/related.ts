@@ -22,7 +22,7 @@ type RelatedSource = {
   date: string;
 };
 
-export type RelatedRecords = {
+export type RelatedRevisions = {
   /** The other messages of this message's thread, oldest first. Empty for anything that is not a threaded message. */
   thread: RelatedSource[];
   /**
@@ -34,7 +34,7 @@ export type RelatedRecords = {
   more: { thread: boolean; versions: boolean };
 };
 
-const NO_RELATED: RelatedRecords = {
+const NO_RELATED: RelatedRevisions = {
   thread: [],
   versions: [],
   selfNewest: true,
@@ -42,11 +42,11 @@ const NO_RELATED: RelatedRecords = {
 };
 
 /** The thread and the versions and copies of one record, for this viewer. */
-export async function relatedRecords(
+export async function relatedRevisions(
   context: ReadContext,
   viewer: Viewer,
   recordId: string,
-): Promise<RelatedRecords> {
+): Promise<RelatedRevisions> {
   const { sql } = context;
   const reader = await fence(context, viewer);
   if (!reader) return NO_RELATED;
@@ -125,7 +125,7 @@ function relatedOf(
     same_document: boolean;
     is_self: boolean;
   }[],
-): RelatedRecords {
+): RelatedRevisions {
   const iso = (d: Date) => new Date(d).toISOString();
   const newestId = versions[0]?.id ?? recordId;
   const others = versions.filter((v) => !v.is_self);

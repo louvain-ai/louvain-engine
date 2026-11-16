@@ -2,13 +2,13 @@ import { decayed, fuse, type Viewer } from "@louvain/engine-core";
 import { passageContextMode, readsPassageContext } from "../../store/context-mode.js";
 import { locateQuote } from "../../text/words.js";
 import { fence, type ReadContext } from "../fence.js";
-import { agentWritten, instructionLikeRecords, labelOf, referenceRead } from "../generated.js";
+import { agentWritten, instructionLikeRevisions, labelOf, referenceRead } from "../generated.js";
 import { hooksOf } from "../hooks.js";
 import { keywordLeg } from "../keyword/leg.js";
 import { originsFor } from "../originals/reads.js";
 import { precisionField, precisionsOf } from "../precision.js";
 import { vectorSpaceFor } from "../vector-space.js";
-import { pageOf, readOffPages, recordTexts } from "./by-id.js";
+import { pageOf, readOffPages, revisionTexts } from "./by-id.js";
 import { noteLegRanks } from "./leg-ranks.js";
 import type { PassageHit, PassageSearch, PassageSearchOptions, Row, WindowRead } from "./types.js";
 import { passageTieOrder, vectorLegTold } from "./vector.js";
@@ -123,7 +123,7 @@ export async function searchPassages(
     await Promise.all([
       opts.spans === false
         ? Promise.resolve(new Map<string, string>())
-        : recordTexts(context.sql, reader, eventIds),
+        : revisionTexts(context.sql, reader, eventIds),
       // Which ORIGINAL each record copies: two hits sharing one origin are one message delivered twice.
       originsFor(context.sql, reader.orgId, eventIds).catch(() => {
         // swallowed: an origin is presentation — which copies are one message — and never a
@@ -132,7 +132,7 @@ export async function searchPassages(
       }),
       agentWritten(context.sql, reader.orgId, eventIds),
       referenceRead(context.sql, reading, reader.orgId, eventIds),
-      instructionLikeRecords(context.sql, reader.orgId, eventIds),
+      instructionLikeRevisions(context.sql, reader.orgId, eventIds),
       precisionsOf(context.sql, reader.orgId, eventIds),
       readOffPages(context.sql, reader.orgId, passageIds),
     ]);

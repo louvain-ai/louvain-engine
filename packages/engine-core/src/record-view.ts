@@ -27,9 +27,9 @@ export type StructuredPayloadView = {
  * The fields after `labels` are optional in the type only so a synthetic fixture need not state them; every record
  * the core loads carries all of them (an absent source value is `null`, `false` or empty).
  */
-export type RecordView = {
+export type RevisionView = {
   id: string;
-  orgId: string;
+  workspaceId: string;
   container: string;
   connector: string;
   kind: string;
@@ -45,7 +45,7 @@ export type RecordView = {
   /** `event_log.workspace`: the source's own boundary, which scopes a source's native ids. */
   workspace?: string;
   /** `event_log.record_key` (`<objectType>:<nativeId>`): what a structured record's earlier events are found by. */
-  recordKey?: string | null;
+  documentKey?: string | null;
   /** Who wrote it, as the source stated: an address, a display name, and whether the source says it relays. */
   actor?: { email: string | null; displayName: string | null; relays: boolean };
   /** The facts and snapshots a structured source handed over, or null. */

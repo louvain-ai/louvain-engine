@@ -12,7 +12,7 @@ import { serverSettings } from "../config/standalone.js";
 import type { Engine } from "../engine.js";
 import { hooksOf } from "../read/hooks.js";
 import { loadedCounts } from "../read/loaded-counts.js";
-import { openOrgId } from "../store/tenant.js";
+import { workspaceIdOf } from "../store/tenant.js";
 import { type IngestDoor, IngestDoorRefused, ingestDoor } from "./ingest-route.js";
 import { serve } from "./serve.js";
 import { EngineTokenRefused, engineToken } from "./token.js";
@@ -35,7 +35,7 @@ export async function startToolServer(engine: ServedEngine, state: string): Prom
   // The engine's cursors are sealed under a key its token makes, so a cursor this server issued outlives a restart.
   hooksOf(engine.context).presentation.keyCursorsFrom?.(doors.token);
   // Fail at start, not at the first call, when the database has no default org.
-  await openOrgId(engine.store.sql);
+  await workspaceIdOf(engine.store.sql);
   const publicOrigin = environment("LOUVAIN_ENGINE_PUBLIC_ORIGIN")?.trim() || undefined;
   const { token, door } = doors;
   const surfaces = plugins.list("surface");

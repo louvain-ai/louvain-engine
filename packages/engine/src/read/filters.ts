@@ -1,4 +1,4 @@
-import type { RecordFilters } from "@louvain/engine-core";
+import type { DocumentFilters } from "@louvain/engine-core";
 import type { PendingQuery, Row } from "postgres";
 import { connectorsOfApp } from "../store/apps.js";
 import type { Queryable } from "../store/sql.js";
@@ -17,11 +17,11 @@ import {
  * `apps`, since its walk would probe every event in the period; a genre is the predicate an application binds
  * (`filter-seam.ts` `genreIn`), refused where none is.
  */
-export type { RecordFilters } from "@louvain/engine-core";
+export type { DocumentFilters } from "@louvain/engine-core";
 
 type Fragment = PendingQuery<Row[]>;
 
-export const hasRecordFilters = (f: RecordFilters | undefined): boolean =>
+export const hasDocumentFilters = (f: DocumentFilters | undefined): boolean =>
   f !== undefined &&
   (f.sender !== undefined ||
     (f.participants?.length ?? 0) > 0 ||
@@ -58,11 +58,11 @@ const names = (
  * The filters as `and …` predicates over `event_log e`, the build's among them (`added`). `occurredAt` names the column
  * the window applies to, so a passage leg can put it on the passage's own indexed time.
  */
-export function recordPredicates(
+export function documentPredicates(
   sql: Queryable,
   added: AddedFilters,
   orgId: string,
-  f: RecordFilters,
+  f: DocumentFilters,
   occurredAt: Fragment = sql`e.occurred_at`,
 ): Fragment {
   const parts: Fragment[] = [];

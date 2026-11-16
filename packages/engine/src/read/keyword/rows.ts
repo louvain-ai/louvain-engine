@@ -2,12 +2,12 @@ import { environment } from "../../config/environment.js";
 import { instantOf, queryTerms } from "../context.js";
 import { firstChunkRows } from "../documents/rows.js";
 import { bounded, type ReadContext, type Reader } from "../fence.js";
-import { hasRecordFilters, type RecordFilters } from "../filters.js";
+import { type DocumentFilters, hasDocumentFilters } from "../filters.js";
 import { hooksOf } from "../hooks.js";
 import { stillCurrent } from "../passages/filter.js";
 import type { PassageFilters, Row } from "../passages/types.js";
 import { passageTieOrder } from "../passages/vector.js";
-import { recordsInNarrowing } from "./records-in-narrowing.sql.js";
+import { revisionsInNarrowing } from "./records-in-narrowing.sql.js";
 import { bm25Tiers, type TierHit } from "./tiers.js";
 import type { KeywordIndex } from "./titled.js";
 
@@ -41,7 +41,7 @@ export function bm25Narrowing(index: KeywordIndex, f: PassageFilters): Bm25Narro
     instantOf(asOf, "passages.search").knownAt !== null
   )
     return null;
-  if (hasRecordFilters(rest)) return null;
+  if (hasDocumentFilters(rest)) return null;
   const from = window?.from ?? since;
   const to = window?.to ?? until;
   // Given records and a figures read narrow in the index (`ids`, `figures`, each a must clause beside the fence).
@@ -67,7 +67,7 @@ export function bm25Narrowing(index: KeywordIndex, f: PassageFilters): Bm25Narro
  * sidecar ranks every stored version, so it is asked for twice the page; when the versions this viewer has a newer
  * one of still leave the page short of what the sidecar had, the answer is `null` and the caller takes the Postgres
  * pass, which applies the rule before its limit, rather than a short page that looks complete. A NARROWED search's
- * hits are re-checked in SQL by the passage legs' own predicate (`recordPredicates`, `narrowedHere`), so an index
+ * hits are re-checked in SQL by the passage legs' own predicate (`documentPredicates`, `narrowedHere`), so an index
  * built before a record changed app, or one rounded to seconds, never widens a page; a hit dropped there is a short
  * page too.
  */
@@ -185,7 +185,7 @@ async function narrowedHere(
   { fence, ids, n }: { fence: Reader; ids: readonly string[]; n: Bm25Narrowing },
 ): Promise<Set<string>> {
   if (ids.length === 0) return new Set();
-  const filters: RecordFilters = {
+  const filters: DocumentFilters = {
     ...(n.apps ? { apps: n.apps } : {}),
     ...(n.from !== undefined || n.to !== undefined
       ? { window: { ...(n.from ? { from: n.from } : {}), ...(n.to ? { to: n.to } : {}) } }
@@ -193,7 +193,7 @@ async function narrowedHere(
   };
   const added = hooksOf(context).filters;
   const rows = await bounded(context, (q) =>
-    recordsInNarrowing(q, fence.orgId, { ids, filters, added }),
+    revisionsInNarrowing(q, fence.orgId, { ids, filters, added }),
   );
   return new Set(rows.map((r) => r.id));
 }

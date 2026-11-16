@@ -1,4 +1,4 @@
-import { keyOfRecord } from "@louvain/engine-core";
+import { keyOfDocument } from "@louvain/engine-core";
 import type { Sql } from "postgres";
 import { bm25Configured } from "../store/keyword-index.js";
 import { type Collection, everyEvent, type Held, type HeldEvent } from "./holdings-types.js";
@@ -15,7 +15,7 @@ type HeldRow = {
 };
 
 const recordKeyOfItem = (key: string): string =>
-  keyOfRecord({ objectType: ITEM_RECORD_TYPE, nativeId: key });
+  keyOfDocument({ objectType: ITEM_RECORD_TYPE, nativeId: key });
 const keyOfRecordKey = (recordKey: string): string => recordKey.slice(ITEM_RECORD_TYPE.length + 1);
 const eventOf = (collection: Collection, id: string, recordKey: string): HeldEvent => ({
   id,

@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import { openOrgId } from "../store/tenant.js";
+import { workspaceIdOf } from "../store/tenant.js";
 
 /** What is loaded: how many documents, in which collections (a loaded folder's subfolders; "." is its top level). */
 export type LoadedCounts = {
@@ -8,7 +8,7 @@ export type LoadedCounts = {
 };
 
 export async function loadedCounts(sql: Sql): Promise<LoadedCounts> {
-  const orgId = await openOrgId(sql);
+  const orgId = await workspaceIdOf(sql);
   const rows = await sql<{ name: string; documents: number }[]>`
     -- fence-ok: the open build's one reader reads every document loaded; this counts them by the loader's container
     select coalesce(substring(native_id from '^(.*)/[^/]*$'), '.') as name, count(*)::int as documents

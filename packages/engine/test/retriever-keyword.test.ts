@@ -13,7 +13,7 @@ const ask: RetrieverAsk = { query: "SUP-1042 export", limit: 12, mode: "hybrid",
 function standInIndex(answer: { hits: string[]; degraded: string[] }) {
   const asked: { query: string; mode: string; limit: number }[] = [];
   const read: FencedReading = {
-    scope: { orgId: "org", containers: [], filters: {} },
+    scope: { workspaceId: "org", containers: [], filters: {} },
     passages: async (query, how) => {
       asked.push({ query, mode: how.mode, limit: how.limit });
       return { hits: answer.hits.map((recordId) => ({ recordId })), degraded: answer.degraded };

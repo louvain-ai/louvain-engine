@@ -28,9 +28,9 @@ export function safeSourceUrl(value: unknown): string | null {
  */
 export const GENERATED_VIAS = ["agent", "assistant"] as const;
 /** Which record, in a source: the identity pair every record key spells. */
-export type RecordRef = { objectType: string; nativeId: string };
+export type DocumentRef = { objectType: string; nativeId: string };
 /**
  * A record's key, as it is stored and listed: `<objectType>:<nativeId>`. `objectType` cannot contain `:` (the contract
  * refuses it), so the first colon separates the halves, and a native id may hold as many as it likes.
  */
-export const keyOfRecord = (r: RecordRef): string => `${r.objectType}:${r.nativeId}`;
+export const keyOfDocument = (r: DocumentRef): string => `${r.objectType}:${r.nativeId}`;

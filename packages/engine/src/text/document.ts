@@ -1,4 +1,4 @@
-import type { RecordView } from "@louvain/engine-core";
+import type { RevisionView } from "@louvain/engine-core";
 import { isObject } from "./words.js";
 
 /**
@@ -12,7 +12,7 @@ export function documentBlock(presentation: Record<string, unknown>): Record<str
 }
 
 /** Where the document's own text starts inside the record's text. */
-export function documentTextStart(record: Pick<RecordView, "text" | "presentation">): number {
+export function documentTextStart(record: Pick<RevisionView, "text" | "presentation">): number {
   const offset = documentBlock(record.presentation).textOffset;
   return typeof offset === "number" &&
     Number.isInteger(offset) &&

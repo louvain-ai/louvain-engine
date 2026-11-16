@@ -3,13 +3,13 @@ import { telemetry } from "../../observability/telemetry.js";
 import type { Queryable } from "../../store/sql.js";
 import { locateQuote } from "../../text/words.js";
 import { bounded, fence, type ReadContext, type Reader } from "../fence.js";
-import { agentWritten, instructionLikeRecords, labelOf, referenceRead } from "../generated.js";
+import { agentWritten, instructionLikeRevisions, labelOf, referenceRead } from "../generated.js";
 import { hooksOf } from "../hooks.js";
 import { originsFor } from "../originals/reads.js";
 import { precisionField, precisionsOf } from "../precision.js";
 import { passagesWithIds } from "./by-id.sql.js";
 import { readOffRows } from "./read-off-pages.sql.js";
-import { recordTextRows } from "./record-texts.sql.js";
+import { revisionTextRows } from "./record-texts.sql.js";
 import type { PassageFilters, PassageRead } from "./types.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -83,7 +83,7 @@ async function decorate(context: ReadContext, fence: Reader, rows: ByIdRow[]) {
   const events = rows.map((r) => r.event_id);
   const [spans, origins, generated, reference, instructionLike, precision, readOff] =
     await Promise.all([
-      recordTexts(sql, fence, events),
+      revisionTexts(sql, fence, events),
       originsFor(sql, fence.orgId, events).catch(() => {
         // swallowed: an origin is presentation (which copies are one message), never a fence input. Losing it costs
         // the grouping on the page, never the page.
@@ -91,7 +91,7 @@ async function decorate(context: ReadContext, fence: Reader, rows: ByIdRow[]) {
       }),
       agentWritten(sql, fence.orgId, events),
       referenceRead(sql, hooksOf(context).reading, fence.orgId, events),
-      instructionLikeRecords(sql, fence.orgId, events),
+      instructionLikeRevisions(sql, fence.orgId, events),
       precisionsOf(sql, fence.orgId, events),
       readOffPages(
         sql,
@@ -128,13 +128,13 @@ function byIdPassage(row: ByIdRow, d: Decorations): PassageRead {
 }
 
 /** The hits' record texts, re-fenced, for locating each passage in its record. */
-export async function recordTexts(
+export async function revisionTexts(
   sql: Queryable,
   fence: Reader,
   recordIds: string[],
 ): Promise<Map<string, string>> {
   const ids = [...new Set(recordIds)];
   if (ids.length === 0) return new Map();
-  const rows = await recordTextRows(sql, fence, ids);
+  const rows = await revisionTextRows(sql, fence, ids);
   return new Map(rows.flatMap((r) => (r.text === null ? [] : [[r.id, r.text] as const])));
 }

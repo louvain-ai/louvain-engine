@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import postgres from "postgres";
-import { recordPredicates } from "../src/read/filters.js";
+import { documentPredicates } from "../src/read/filters.js";
 import {
   type AddedFilters,
   arrived,
@@ -28,8 +28,8 @@ test("the open build's filters refuse a mark, an arrivals view, a participant an
   assert.throws(() => arrived(open, sql, "e", "r"), /no `news` filter/);
   assert.throws(() => genreIn(open, sql, reader.orgId, ["bulk"]), /no `genre` filter/);
   const org = reader.orgId;
-  const predicates = (f: Parameters<typeof recordPredicates>[3]) =>
-    recordPredicates(sql, open, org, f);
+  const predicates = (f: Parameters<typeof documentPredicates>[3]) =>
+    documentPredicates(sql, open, org, f);
   assert.throws(() => predicates({ participants: ["a@x.test"] }), /`participants`/);
   assert.throws(() => predicates({ genre: { include: ["bulk"] } }), /`genre`/);
   assert.throws(() => predicates({ genre: { exclude: ["bulk"] } }), /`genre`/);

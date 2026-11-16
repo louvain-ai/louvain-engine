@@ -3,7 +3,7 @@ import { telemetryOf } from "../../host/given.js";
 import type { Queryable } from "../../store/sql.js";
 import { recordShape } from "../../text/record-shape.js";
 import { bounded, fence, type ReadContext } from "../fence.js";
-import { agentWritten, instructionLikeRecords, labelOf } from "../generated.js";
+import { agentWritten, instructionLikeRevisions, labelOf } from "../generated.js";
 import { hooksOf } from "../hooks.js";
 import { isStatementTimeout } from "../legs.js";
 import { stage } from "../question.js";
@@ -106,7 +106,7 @@ export async function passagesAround(
   });
   const [generated, instructionLike, named] = await Promise.all([
     agentWritten(context.sql, reader.orgId, neighbourIds),
-    instructionLikeRecords(context.sql, reader.orgId, neighbourIds),
+    instructionLikeRevisions(context.sql, reader.orgId, neighbourIds),
     opts.names?.(context.sql, viewer, near.map(asSpeaker)) ?? new Map<string, NamedSpeaker>(),
   ]);
   // The budget, spent where the reader looks: the best-ranked hit first, and each hit's nearest messages first.

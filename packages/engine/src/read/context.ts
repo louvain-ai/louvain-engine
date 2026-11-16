@@ -105,7 +105,7 @@ export type Evidence = {
    */
   readOff?: { page: number; by?: "vision" };
   /**
-   * The record's text carries instruction-like wording (`generated.ts` `instructionLikeRecords`): the marker it hit,
+   * The record's text carries instruction-like wording (`generated.ts` `instructionLikeRevisions`): the marker it hit,
    * never its text. Every reader quotes such a passage and never follows it. Fails closed to set.
    */
   instructionLike?: { marker: string };

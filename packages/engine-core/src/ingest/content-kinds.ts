@@ -1,4 +1,4 @@
-import { keyOfRecord, type RecordRef } from "../plain.js";
+import { type DocumentRef, keyOfDocument } from "../plain.js";
 
 /**
  * The kinds that carry CONTENT: text a person wrote, which the engine reads, cuts into passages and cites.
@@ -18,11 +18,11 @@ export function isContentKind(kind: string): kind is (typeof CONTENT_EVENT_KINDS
  * unambiguously. Here, beside `keyOfRecord`, because readers and writers both need it (the open engine
  * reads it without the ingest path).
  */
-export function recordKeyOf(ev: {
+export function documentKeyOf(ev: {
   kind: string;
-  record?: RecordRef | null | undefined;
+  record?: DocumentRef | null | undefined;
 }): string | null {
   if (!ev.record) return null;
   if (!isContentKind(ev.kind) && ev.kind !== "record.state") return null;
-  return keyOfRecord(ev.record);
+  return keyOfDocument(ev.record);
 }

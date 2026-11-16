@@ -1,4 +1,4 @@
-import { isContentKind, recordKeyOf } from "@louvain/engine-core";
+import { documentKeyOf, isContentKind } from "@louvain/engine-core";
 import type { TransactionSql } from "postgres";
 import { occurredPrecisionOf } from "./event-fields.js";
 import type { Revision } from "./revision.js";
@@ -47,7 +47,7 @@ export async function insertEventRow(trx: TransactionSql, row: EventRow): Promis
          ${ev.actor.displayName ?? null},
          ${ev.actor.relays ?? false},
          ${trx.json(ev.body as never)},
-         ${ev.permissions.visibility}, ${orgId}, ${recordKeyOf(ev)},
+         ${ev.permissions.visibility}, ${orgId}, ${documentKeyOf(ev)},
          ${ev.record?.parents ?? null},
          ${isContentKind(ev.kind) ? "pending" : "done"})
       on conflict do nothing

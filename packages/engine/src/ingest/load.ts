@@ -5,7 +5,7 @@
  */
 import { sanitizeId } from "../store/ids.js";
 import { writeProjection } from "../store/readable-rows.js";
-import { OPEN_PRINCIPAL, openOrgId } from "../store/tenant.js";
+import { OPEN_PRINCIPAL, workspaceIdOf } from "../store/tenant.js";
 import { acceptOpen, type OpenAcceptResult } from "./accept.js";
 import type { Revision } from "./revision.js";
 import type { Writes } from "./writes.js";
@@ -19,7 +19,7 @@ export type LoadState = Writes & { orgId: string; principal: string; known: Set<
 
 export async function openLoadState(writes: Writes): Promise<LoadState> {
   const { sql } = writes;
-  const orgId = await openOrgId(sql);
+  const orgId = await workspaceIdOf(sql);
   const principal = sanitizeId(OPEN_PRINCIPAL);
   const known = new Set(
     (

@@ -84,8 +84,8 @@ const entryOf = async (key: string) => held.get(`doc:${await documentOf(key)}`);
 
 async function withdraw(event: (typeof EVENTS)[number]) {
   const { withdrawOpen } = await import("../../src/ingest/withdraw.js");
-  const { openOrgId } = await import("../../src/store/tenant.js");
-  return withdrawOpen(engine.writes, await openOrgId(engine.sql), [
+  const { workspaceIdOf } = await import("../../src/store/tenant.js");
+  return withdrawOpen(engine.writes, await workspaceIdOf(engine.sql), [
     { id: event.id, connector: "http", workspace: "folder", recordKey: null },
   ]);
 }
