@@ -30,8 +30,8 @@
     "entities": "^6.0.1",
     "fflate": "^0.8.2",
     "ical.js": "2.2.1",
-    "pdfjs-dist": "^6.3.289",
-    "postal-mime": "4.1.4",
+    "pdfjs-dist": "^6.5.438",
+    "postal-mime": "4.2.1",
     "windows-iana": "5.1.0"
   },
   "devDependencies": {
