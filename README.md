@@ -2,10 +2,10 @@
   <img src="assets/banner.svg" alt="Louvain Engine" width="760">
 </p>
 
-<h1 align="center">Open-source retrieval for agents and RAG.</h1>
+<h1 align="center">Permission-aware retrieval for enterprise AI.</h1>
 
 <p align="center">
-  Hybrid search over your company’s documents, with a permission fence in every query, running from one command.
+  Hybrid search over your company’s documents for agents and RAG, with a permission check in every query, from one command.
 </p>
 
 <p align="center">

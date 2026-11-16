@@ -1,7 +1,7 @@
 {
   "name": "louvain-engine",
   "version": "0.1.0",
-  "description": "Open-source retrieval for agents and RAG. Hybrid search over your company’s documents, with a permission fence in every query, running from one command.",
+  "description": "Permission-aware retrieval for enterprise AI. Hybrid search over your company’s documents for agents and RAG, with a permission check in every query, from one command.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
