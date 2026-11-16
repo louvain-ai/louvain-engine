@@ -9,7 +9,7 @@ import { settleListing } from "./changes.js";
 import { checkItem } from "./check-item.js";
 import { heldCount, heldOf, heldTexts } from "./holdings.js";
 import type { Collection } from "./holdings-types.js";
-import { take } from "./item.js";
+import { finish, indexTaken, take } from "./item.js";
 import { removeItem } from "./item-retire.js";
 import { legacyHeld } from "./legacy.js";
 import { type LoadState, openLoadState } from "./load.js";
@@ -132,12 +132,28 @@ async function takeBatch(run: Run, batch: readonly (IngestItem | ItemProblem)[])
   const { sql } = run.state;
   const held = await heldOf(sql, run.collection, keys);
   const retired = run.sendsChanges ? await retiredOf(sql, run.collection, keys) : new Map();
+  // Accepted in order, indexed together, then finished in order: each item's lines come out where they always did.
+  const after: (() => Promise<void>)[] = [];
+  const taken = [];
   for (const entry of checked) {
     await run.hold.renew();
     // Listed whatever it holds: a file the source could not read is still in the source, never taken for gone.
     if (entry.key !== undefined) run.listed?.add(entry.key);
-    if ("problem" in entry) skip(run, { key: entry.at, why: entry.problem });
-    else if (entry.removed) await removeItem(run, entry.key, held.get(entry.key));
-    else await take(run, entry, { held: held.get(entry.key), retired: retired.get(entry.key) });
+    if ("problem" in entry)
+      after.push(async () => skip(run, { key: entry.at, why: entry.problem }));
+    else if (entry.removed) after.push(() => removeItem(run, entry.key, held.get(entry.key)));
+    else {
+      const one = await take(run, entry, {
+        held: held.get(entry.key),
+        retired: retired.get(entry.key),
+      });
+      taken.push(one);
+      after.push(() => finish(run, one));
+    }
+  }
+  await indexTaken(run, taken);
+  for (const then of after) {
+    await run.hold.renew();
+    await then();
   }
 }

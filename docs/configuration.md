@@ -223,3 +223,12 @@ COHERE_API_KEY, or pass apiKey`). If Cohere refuses, each search keeps the legs'
    `EMBEDDING_MATRYOSHKA`, and the archive and checksum arguments). The default is `Xenova/bge-base-en-v1.5`.
 2. Run **`./engine down --volumes`**, then **`./engine up`**, and load your documents again. Vectors from different
    models cannot be compared.
+
+## How fast documents are embedded
+
+The default embedder runs on the machine's CPU, using every core, and that sets how fast documents load: the rest of
+indexing takes a small share of the time. It embeds about 7 passages a second at best, measured on an Apple M1 Max:
+3 a second one at a time, 6 in requests of 16, 7 in requests of 32 or 64. So the engine sends it 32 passages a request
+(`LOUVAIN_EMBEDDINGS_REQUEST_BATCH`, at most 256), and loading a large collection is a
+matter of hours, not minutes. To load faster, serve an embedder on a GPU at the same address (`LOUVAIN_EMBEDDINGS_URL`):
+the engine embeds through any service that answers the same requests.

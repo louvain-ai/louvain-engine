@@ -46,7 +46,9 @@ export type EmbedderOptions = {
 };
 
 /** The settings as the environment holds them now: what an embedder made without explicit settings is read from. */
-export const settingsFromEnv = (): EmbeddingsSettingsValue => EmbeddingsSettings.parse(process.env);
+/** The settings from the environment; `defaults` stand where the environment names nothing (a build's own default). */
+export const settingsFromEnv = (defaults: Record<string, string> = {}): EmbeddingsSettingsValue =>
+  EmbeddingsSettings.parse({ ...defaults, ...process.env });
 
 /**
  * An embedder from its settings: a parsed value, or a function read once on first use (so a process that sets its

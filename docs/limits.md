@@ -47,6 +47,11 @@ To move a bound, set its setting in `.env` and run `./engine down`, then `./engi
 - **The match floor is known for one embedder.** A document matches by meaning only above a floor measured for
   `Xenova/bge-base-en-v1.5` (0.57). With another model, documents match by their words, identifiers and figures alone.
 - **A changed embedding model needs a fresh database.** Vectors from different models share no space.
+- **Loading has no bulk mode yet.** Documents load in batches, but each passage is added to the meaning index as it is
+  written (about 1.2 ms a passage) and each record is accepted on its own (about 4 ms), measured on an Apple M1 Max:
+  about 80 records a second with embedding left aside, 5 a second with the CPU embedder ([Configuration](configuration.md)).
+  Building the meaning index once after a large first load, and accepting a batch's records together, would load
+  faster.
 
 ## Known defects
 

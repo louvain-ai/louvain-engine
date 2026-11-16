@@ -104,7 +104,8 @@ try {
   await sql.begin((trx) =>
     writeProjection(trx, orgId, sanitizeId(principal), [accepted.container]),
   );
-  const indexed = await indexOpen(writes, orgId, accepted.eventId);
+  const [indexed] = await indexOpen(writes, orgId, [accepted.eventId]);
+  if (!indexed) throw new Error("indexOpen answered nothing for the record");
   check(
     indexed.passages > 0,
     "indexOpen writes passages through the embedding sidecar",
@@ -116,7 +117,7 @@ try {
     "a second accept is a duplicate",
   );
   check(
-    (await indexOpen(writes, orgId, accepted.eventId)).passages === 0,
+    (await indexOpen(writes, orgId, [accepted.eventId]))[0]?.passages === 0,
     "a second index writes nothing",
   );
 

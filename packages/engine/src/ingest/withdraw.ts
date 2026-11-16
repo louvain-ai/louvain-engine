@@ -135,7 +135,7 @@ export async function refreshDocuments(
   );
   const currents = standing.map((d) => d.current);
   await sql`update event_log set keyword_indexed_at = null where org_id = ${orgId} and id = any(${currents}::text[])`;
-  for (const current of currents)
-    if ((await indexOpen(writes, orgId, current)).keyword === "missed") missed++;
+  for (const result of await indexOpen(writes, orgId, currents))
+    if (result.keyword === "missed") missed++;
   return missed;
 }

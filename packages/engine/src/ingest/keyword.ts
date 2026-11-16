@@ -9,38 +9,69 @@ import { telemetry } from "../observability/telemetry.js";
 import { displayApp } from "../read/listing/core.js";
 import { documentOfEntry } from "../read/listing/keyword-documents.js";
 import { passageContextMode, writesPassageContext } from "../store/context-mode.js";
-import { appsOf, keywordDoc } from "../store/keyword-document.js";
+import { appsOf, type Bm25Doc, keywordDoc } from "../store/keyword-document.js";
 import { bm25GroupCommitOn } from "../store/keyword-index.js";
 import { documentEntryOf, entryOfCurrent } from "./document-entry.js";
 import type { HeaderRecord } from "./passage-context.js";
 import { indexableEvent } from "./passage-rules.js";
-import { bestEffort } from "./stage.js";
-import { type Writes, writeHooksOf } from "./writes.js";
+import { bestEffort, stage } from "./stage.js";
+import { inOneTransaction, type Writes, writeHooksOf } from "./writes.js";
 
-/** The record's keyword entry, written once (`keyword_indexed_at`) for a record that still stands. */
+type Entry = { ctx: { eventId: string; orgId: string }; entry: Bm25Doc };
+
+/** One record's keyword input: its event, its text and its header (its own keyword field; none leaves it empty). */
+export type KeywordRecord = {
+  ctx: { eventId: string; orgId: string; container: string; occurredAt: string };
+  text: string;
+  header: string | null;
+};
+
+/**
+ * The records' keyword entries, each written once (`keyword_indexed_at`) for a record that still stands, in ONE durable
+ * write: every entry added, one commit, then each record's marker. A batch that fails is taken again a record at a
+ * time, the batch of one being the write as it always was, so a record's outcome never depends on its neighbours'.
+ */
 export async function indexKeywords(
   writes: Writes,
-  ctx: { eventId: string; orgId: string; container: string; occurredAt: string },
-  text: string,
-  /** The record's header, as its own keyword field; none leaves the field empty until the record is next indexed. */
-  header: string | null = null,
+  records: readonly KeywordRecord[],
 ): Promise<void> {
-  const { filters, passageRules, work, keyword } = writeHooksOf(writes);
+  const { work, keyword } = writeHooksOf(writes);
   work.check();
   if (!keyword.endpoint.configured()) return;
+  const entries: Entry[] = [];
+  for (const record of records) {
+    const entry = await entryToWrite(writes, record);
+    if (entry) entries.push({ ctx: record.ctx, entry });
+  }
+  if (entries.length === 0) return;
+  if (entries.length === 1 || records.length === 1) {
+    for (const { ctx, entry } of entries)
+      await bestEffort("ingest.keyword", () => writeKeywordEntries(writes, [{ ctx, entry }]), {
+        missed: missedKeyword,
+        work,
+      });
+    return;
+  }
+  try {
+    await stage("ingest.keyword", () => writeKeywordEntries(writes, entries));
+  } catch {
+    // swallowed: the batch is taken again a record at a time, each counted or thrown on as it always was.
+    for (const record of records) await indexKeywords(writes, [record]);
+  }
+}
+
+/** The record's entry, or null: a record that no longer stands, or one already in the index. */
+async function entryToWrite(writes: Writes, { ctx, text, header }: KeywordRecord) {
+  const { filters, passageRules } = writeHooksOf(writes);
   const { sql } = writes;
   const [event] =
     await sql`select keyword_indexed_at, connector, (select ${displayApp(sql, filters.app)} from source_revision r
     join source_document d on d.id = r.source_id where r.event_id = event_log.id) as app,
     (select r.title from source_revision r where r.event_id = event_log.id) as title
     from event_log where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableEvent(passageRules, sql)}`;
-  if (!event || event.keyword_indexed_at) return;
+  if (!event || event.keyword_indexed_at) return null;
   const apps = appsOf(event.connector, event.app);
-  const entry = () => keywordDoc(ctx, { text, title: event.title, header, apps });
-  await bestEffort("ingest.keyword", () => writeKeywordEntry(writes, ctx, entry()), {
-    missed: missedKeyword,
-    work,
-  });
+  return keywordDoc(ctx, { text, title: event.title, header, apps });
 }
 
 /**
@@ -59,28 +90,41 @@ export async function keywordHeader(
 }
 
 /**
- * Index the entry durably, with its document's entry when it is the current revision (`keyword-documents.ts`), then
- * mark the event. A withdrawal can land between the read and the write and would leave the entry of a record that is
- * gone, so one probe after the write deletes it again when the event no longer stands, and its document's entry when
- * the document went with it; a document the withdrawal moved to another revision is written again by the withdrawal.
+ * Index the entries durably, each with its document's entry when it is the current revision (`keyword-documents.ts`),
+ * in one write and one commit, then mark each event. A withdrawal can land between the read and the write and would
+ * leave the entry of a record that is gone, so one probe after the write deletes it again when the event no longer
+ * stands, and its document's entry when the document went with it; a document the withdrawal moved to another revision
+ * is written again by the withdrawal.
  */
-async function writeKeywordEntry(
+async function writeKeywordEntries(writes: Writes, entries: readonly Entry[]): Promise<void> {
+  const { endpoint } = writeHooksOf(writes).keyword;
+  const written: { ctx: Entry["ctx"]; document: Bm25Doc | null }[] = [];
+  for (const { ctx, entry } of entries)
+    written.push({ ctx, document: await documentEntryOf(writes, entry) });
+  const docs = entries.flatMap(({ entry }, i) => [
+    entry,
+    ...(written[i]?.document ? [written[i].document] : []),
+  ]);
+  // Durable before the markers: one group commit shared with whatever else waits, or, with group commit off, its own.
+  if (bm25GroupCommitOn()) await endpoint.indexDurably(docs);
+  else await endpoint.index(docs);
+  await inOneTransaction(writes, async (batch) => {
+    for (const { ctx, document } of written) await markOrWithdraw(batch, ctx, document);
+  });
+}
+
+/** The event's marker, or, for one withdrawn while its entry was written, the entry deleted again. */
+async function markOrWithdraw(
   writes: Writes,
   ctx: { eventId: string; orgId: string },
-  entry: ReturnType<typeof keywordDoc>,
+  document: Bm25Doc | null,
 ): Promise<void> {
   const { sql } = writes;
   const { passageRules: rules, work, keyword } = writeHooksOf(writes);
-  const { endpoint } = keyword;
-  const document = await documentEntryOf(writes, entry);
-  const doc = document ? [entry, document] : [entry];
-  // Durable before the marker: one group commit shared with whatever else waits, or, with group commit off, its own.
-  if (bm25GroupCommitOn()) await endpoint.indexDurably(doc);
-  else await endpoint.index(doc);
   const [still] = await sql`
       select 1 from event_log where id = ${ctx.eventId} and org_id = ${ctx.orgId} ${indexableEvent(rules, sql)}`;
   if (!still) {
-    await endpoint.withdraw([
+    await keyword.endpoint.withdraw([
       ctx.eventId,
       ...(document && (await documentGone(sql, ctx.orgId, document.id)) ? [document.id] : []),
     ]);

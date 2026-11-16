@@ -1,4 +1,4 @@
--- store.chunksToWrite, found by its text
+-- passages.chunksToWrite, found by its text
 -- parameters: 2
 -- read by: loading the corpus
 -- plan on Postgres 17: Seq Scan on passage

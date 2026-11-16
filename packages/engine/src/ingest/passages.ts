@@ -4,36 +4,74 @@
  * that fences the record it was cut from: adding retrieval surface never adds an access path.
  */
 import { chunk } from "./cut.js";
-import { embedSlice } from "./embed.js";
+import { embedRecords } from "./embed.js";
 import type { PlannedContext } from "./passage-context-write.js";
 import { indexableEvent, textRows } from "./passage-rules.js";
 import { stage } from "./stage.js";
 import { settleVersions, writeSlice } from "./write.js";
-import { type Writes, writeHooksOf } from "./writes.js";
+import { inOneTransaction, type Writes, writeHooksOf } from "./writes.js";
+
+/** One record's passages to write: its context, its text, and the context planned for each chunk. */
+export type PassageWrite = {
+  ctx: MemoryWriteContext;
+  text: string;
+  planned: readonly PlannedContext[] | null;
+};
 
 /**
  * The verbatim tier, written for every admitted message, so a question can be answered from the words actually said.
- * Only the chunks whose text changed are embedded and written, in slices that each commit (a retry skips what landed),
- * and a record cut into fewer chunks than before loses its rows past the new end. `planned` carries each chunk's
- * context, written with it. A slice that finds the event gone stops the rest, unsettled.
+ * A batch of records at a time (one record is a batch of one): each record's changed chunks are cut, then the batch's
+ * chunks go in slices of `PASSAGE_SLICE`, across its records: each slice embedded in one call and written in one
+ * transaction that commits, so an attempt cut short keeps what landed and a retry resumes; a record cut into fewer
+ * chunks than before loses its rows past the new end. `planned` carries each chunk's context, written with it. A slice
+ * that finds a record's event gone stops that record's rest, unsettled. Returns each record's rows written.
  */
 export async function writePassages(
   writes: Writes,
-  ctx: MemoryWriteContext,
-  text: string,
-  planned: readonly PlannedContext[] | null = null,
-): Promise<number> {
-  const { passageRules } = writeHooksOf(writes);
-  const missing = await cutText(writes, ctx, text);
-  let written = 0;
-  for (const slice of slicesOf(missing)) {
-    const rows = await stage("ingest.embed", () => embedSlice(writes, slice, planned));
-    const count = await stage("ingest.write", () => writeSlice(writes, ctx, rows));
-    if (count === null) return written;
-    written += count;
+  records: readonly PassageWrite[],
+): Promise<number[]> {
+  const missing: (Piece[] | null)[] = [];
+  for (const { ctx, text } of records) missing.push(await cutText(writes, ctx, text));
+  const written = records.map(() => 0);
+  const stopped = new Set<number>();
+  for (const slice of slicesOf(
+    missing.flatMap((m, i) => (m ?? []).map((piece) => ({ i, piece }))),
+  )) {
+    const parts = partsOf(slice.filter(({ i }) => !stopped.has(i)));
+    const rows = await stage("ingest.embed", () =>
+      embedRecords(
+        writes,
+        parts.map(({ i, pieces }) => ({ missing: pieces, planned: records[i]?.planned ?? null })),
+      ),
+    );
+    const counts = await stage("ingest.write", () =>
+      writeSlice(
+        writes,
+        parts.map(({ i }, k) => ({ ctx: (records[i] as PassageWrite).ctx, rows: rows[k] ?? [] })),
+      ),
+    );
+    for (const [k, { i }] of parts.entries()) {
+      const count = counts[k];
+      if (count === null || count === undefined) stopped.add(i);
+      else written[i] = (written[i] ?? 0) + count;
+    }
   }
-  await settleVersions(writes, ctx, missing);
+  const whole = records.flatMap(({ ctx }, i) =>
+    stopped.has(i) ? [] : [{ ctx, missing: missing[i] ?? null }],
+  );
+  await inOneTransaction(writes, (batch) => settleVersions(batch, whole));
   return written;
+}
+
+/** A slice's chunks, by the record they belong to, in order. */
+function partsOf(slice: readonly { i: number; piece: Piece }[]): { i: number; pieces: Piece[] }[] {
+  const parts: { i: number; pieces: Piece[] }[] = [];
+  for (const { i, piece } of slice) {
+    const last = parts.at(-1);
+    if (last?.i === i) last.pieces.push(piece);
+    else parts.push({ i, pieces: [piece] });
+  }
+  return parts;
 }
 
 export type MemoryWriteContext = {
@@ -69,11 +107,10 @@ async function cutText(
 /** A chunk to write, and the place it is written at. */
 export type Piece = { body: string; seq: number };
 
-/** The pieces in slices of `PASSAGE_SLICE`, each embedded and written as one. */
-function* slicesOf(missing: readonly Piece[] | null): Generator<Piece[]> {
-  const pieces = missing ?? [];
-  for (let at = 0; at < pieces.length; at += PASSAGE_SLICE)
-    yield pieces.slice(at, at + PASSAGE_SLICE);
+/** The chunks in slices of `PASSAGE_SLICE`, each embedded and written as one. */
+function* slicesOf<T>(chunks: readonly T[]): Generator<T[]> {
+  for (let at = 0; at < chunks.length; at += PASSAGE_SLICE)
+    yield chunks.slice(at, at + PASSAGE_SLICE);
 }
 
 /** The chunks whose stored text differs, after removing rows past the new last chunk under the event's lock. */

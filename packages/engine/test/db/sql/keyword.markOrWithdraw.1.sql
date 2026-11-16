@@ -1,4 +1,4 @@
--- keyword.writeKeywordEntry, found by its text
+-- keyword.markOrWithdraw, found by its text
 -- parameters: 2
 -- read by: loading the corpus
 -- plan on Postgres 17: Seq Scan on event_log

@@ -1,9 +1,9 @@
-import { indexRecord } from "./index-record.js";
-import { type Writes, writeHooksOf } from "./writes.js";
+import { indexRecords } from "./index-record.js";
+import { inOneTransaction, type Writes, writeHooksOf } from "./writes.js";
 
 /**
- * The engine's indexer: one accepted record made findable by `indexRecord` (its passages with their header contexts,
- * then its keyword entry). The loader calls it after `acceptOpen`; a keyword entry or context the embedding service
+ * The engine's indexer: accepted records made findable by `indexRecords`, a batch at a time (their passages with their
+ * header contexts, then their keyword entries in one durable write). The loader calls it after `acceptOpen`; a keyword entry or context the embedding service
  * misses is counted and returned as `missed`, so a loader can report it and run again. Idempotent: a second run writes
  * nothing and answers the same.
  */
@@ -24,17 +24,33 @@ export class OpenIndexMissing extends Error {
   }
 }
 
+/** Index the records, in order, and say for each what was written. One record is a batch of one. */
 export async function indexOpen(
   writes: Writes,
   orgId: string,
-  eventId: string,
+  eventIds: readonly string[],
+): Promise<OpenIndexResult[]> {
+  const { sql } = writes;
+  // The org first: `indexRecords` reads by id, and a record of another org is not this caller's to index.
+  const held = await sql<{ id: string }[]>`
+    select id from event_log where id = any(${[...eventIds]}::text[]) and org_id = ${orgId}::uuid`;
+  if (held.length !== new Set(eventIds).size) throw new OpenIndexMissing();
+  const written = await indexRecords(writes, eventIds);
+  return inOneTransaction(writes, async (batch) => {
+    const out: OpenIndexResult[] = [];
+    for (const [i, eventId] of eventIds.entries())
+      out.push(await settled(batch, orgId, { eventId, passages: written[i] ?? 0 }));
+    return out;
+  });
+}
+
+/** One record's outcome, once its batch is indexed: its status recorded, its keyword entry's state read. */
+async function settled(
+  writes: Writes,
+  orgId: string,
+  { eventId, passages }: { eventId: string; passages: number },
 ): Promise<OpenIndexResult> {
   const { sql } = writes;
-  // The org first: `indexRecord` reads by id, and a record of another org is not this caller's to index.
-  const [held] = await sql<{ id: string }[]>`
-    select id from event_log where id = ${eventId} and org_id = ${orgId}::uuid`;
-  if (!held) throw new OpenIndexMissing();
-  const passages = await indexRecord(writes, eventId);
   await sql`
     update event_log set index_status = 'done',
       indexed_at = clock_timestamp(), first_indexed_at = coalesce(first_indexed_at, clock_timestamp())

@@ -1,4 +1,4 @@
--- indexer.indexOpen, found by its text
+-- indexer.settled, found by its text
 -- parameters: 2
 -- read by: loading the corpus
 -- plan on Postgres 17: ModifyTable on event_log > Seq Scan on event_log

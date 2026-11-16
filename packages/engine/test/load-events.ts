@@ -35,10 +35,13 @@ export async function loadEvents(
   let seen = 0;
   for await (const event of events) {
     seen += 1;
-    let loaded: Awaited<ReturnType<typeof acceptInto>> & Awaited<ReturnType<typeof indexOpen>>;
+    let loaded: Awaited<ReturnType<typeof acceptInto>> &
+      Awaited<ReturnType<typeof indexOpen>>[number];
     try {
       const accepted = await acceptInto(state, event);
-      loaded = { ...accepted, ...(await indexOpen(state, state.orgId, accepted.eventId)) };
+      const [indexed] = await indexOpen(state, state.orgId, [accepted.eventId]);
+      if (!indexed) throw new Error("indexOpen answered nothing for the event");
+      loaded = { ...accepted, ...indexed };
     } catch (err) {
       if (err instanceof OpenAcceptRefused) {
         s.refused[err.reason] = (s.refused[err.reason] ?? 0) + 1;

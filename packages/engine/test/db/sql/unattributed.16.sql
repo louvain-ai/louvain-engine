@@ -1,31 +1,46 @@
 -- unattributed, found by its text
--- parameters: 6
+-- parameters: 9
 -- under: set local statement_timeout = 15000; set local jit = off; set local plan_cache_mode = force_custom_plan
--- read by: reading a short document; reading a long document; reading a revised document; reading an earlier version
--- plan on Postgres 17: Nested Loop (Seq Scan on event_log, ProjectSet > Result, Nested Loop (Hash Join (Seq Scan on source_document, Hash > Seq Scan on source_revision), Index Scan on event_log using event_log_pkey, ProjectSet > Result, Nested Loop (Hash Join (Seq Scan on event_log, Hash > Seq Scan on source_revision), ProjectSet > Result)), Seq Scan on injection_flag)
+-- read by: a plain question; a question sharing no word with its answer; an exact code; the keyword mode; words two near-duplicates share; words from inside a long document; a revised document's current words; a revised document's earlier words; a revised document's earlier words alone; a fact deep in a long document, in other words; a figure written another way; an identifier typed joined; a query and the person's question; a search leaving out what was shown; after a date; before a date; between two dates; the ranked view, every page; a matched search paged to its end; the documents, fused; the documents, reranked; long and short documents, reranked; one collection; one collection, the documents; as known on a day; a word in no document; the scored stages: a question; the scored stages: a title; the scored stages: a dated search; a reader's search for what only others read; a reader's search for a word only a hidden document holds; a reader's documents, reranked; a reader naming one they read and one they cannot; a reader's ranked view, every page; search by staff: inside a hidden collection
+-- plan on Postgres 17: Nested Loop (Hash Join (Bitmap Heap Scan on passage (Bitmap Index Scan using passage_event_seq_idx, Hash Join (Seq Scan on event_log, Hash > Hash Join (Index Scan on event_log using event_log_record_key_idx > Function Scan, Hash > Seq Scan on passage), Seq Scan on event_log > Function Scan)), Hash > Seq Scan on event_log), Materialize > ProjectSet > Result, Limit > Seq Scan on source_revision)
 
 
-        select e.id, e.container, e.connector, e.kind, e.occurred_at, e.occurred_precision, e.actor_id,
-               coalesce((
-    select case
-      when ce.id is not null and ce.container in (select unnest($1::text[])) and true
-        then d.current_event_id = e.id
-      else not exists (
-        select 1 from source_revision r2 join event_log e2 on e2.id = r2.event_id
-        where r2.source_id = d.id and e2.org_id = e.org_id and r2.event_id <> e.id
-          and e2.container in (select unnest($2::text[])) and true
-          and (r2.modified_at > r.modified_at
-            or (r2.modified_at = r.modified_at and r2.event_id > r.event_id)))
-    end
-    from source_revision r
-    join source_document d on d.id = r.source_id and d.org_id = e.org_id
-    left join event_log ce on ce.id = d.current_event_id and ce.org_id = e.org_id
-    where r.event_id = e.id
-  ), false) as current,
-               (select x.marker from injection_flag x
-                 where x.event_id = e.id and x.org_id = e.org_id) as instruction_marker
-        from event_log e
-        where e.org_id = $3 and e.id = $4
-          and e.container in (select unnest($5::text[])) and e.occurred_at <= $6
-          
-          and true
+          select p.event_id, p.container, p.occurred_at::text as at, e.connector, e.workspace, e.record_key,
+                 e.body->'presentation' as presentation,
+                 (select s.kind from source_revision s where s.event_id = p.event_id limit 1) as kind
+            from passage p join event_log e on e.id = p.event_id and e.org_id = p.org_id
+           where p.org_id = $1 and p.container in (select unnest($2::text[]))
+    and p.occurred_at <= $3
+    and (not p.record_has_newer or not exists (
+      select 1 from event_log e
+       where e.id = p.event_id and e.org_id = $4 and e.record_key is not null
+         and (e.has_newer and exists (
+      select 1 from event_log r2
+       where r2.org_id = e.org_id and r2.connector = e.connector and r2.workspace = e.workspace
+         and r2.record_key = e.record_key and (coalesce(r2.version_rank, r2.occurred_at), r2.id)
+    > (coalesce(e.version_rank, e.occurred_at), e.id)
+         and (
+           (e.kind in ('message', 'file') and r2.kind in ('message', 'file'))
+           or (e.kind = 'record.change' and r2.kind = 'record.change'
+             and r2.connection_id = e.connection_id
+             and exists (
+               select 1 from event_log m
+                where m.connection_id = e.connection_id and m.record_key = e.record_key
+                  and m.kind = 'record.change' and m.org_id = e.org_id
+                  and exists (select 1 from unnest($5::text[]) v(c) where v.c = m.container offset 0)
+                  
+                  and jsonb_exists_any(m.body -> 'presentation', $6::text[]))))
+         and exists (select 1 from unnest($7::text[]) v(c) where v.c = r2.container offset 0)
+         and r2.occurred_at <= $8
+         
+         and exists (select 1 from passage p2 where p2.event_id = r2.id)))
+       -- Per row, never hashed: without offset 0 the planner hashes this subquery over every flagged record and keyed
+       -- version in the org, a cost that grows with the store instead of the page.
+       offset 0))
+    
+    and p.event_id = any($9::text[])
+    
+    
+    
+    
+     and p.seq = 0

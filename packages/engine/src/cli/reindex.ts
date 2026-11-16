@@ -46,7 +46,7 @@ export async function reindexKeywords(
 /** What the index stage did with one record's keyword entry; a record that is not content has none. */
 async function keywordOf(writes: Writes, orgId: string, id: string): Promise<string | null> {
   try {
-    return (await indexOpen(writes, orgId, id)).keyword;
+    return (await indexOpen(writes, orgId, [id]))[0]?.keyword ?? null;
   } catch (err) {
     // Not a content record (a withdrawal, a permission change): nothing of it is in the keyword index.
     if (!(err instanceof OpenIndexMissing)) throw err;
