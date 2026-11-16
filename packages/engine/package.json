@@ -14,10 +14,10 @@
     "build": "node ../../scripts/clean-dist.mjs && tsc -p tsconfig.json && node scripts/copy-runtime-assets.mjs && node scripts/source-hash.mjs --write",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json",
     "dev": "node scripts/dev-watch.mjs",
-    "test": "node --import tsx --test --test-concurrency=4 test/*.test.ts",
-    "test:db": "node --import tsx --test test/db/*.test.ts",
-    "test:table": "node --import tsx --test test/db/search.table*.test.ts",
-    "test:db:record": "GOLDEN=write node --import tsx --test test/db/*.test.ts && biome format --write test/db"
+    "test": "node ../../scripts/run-tests.mjs --test-concurrency=4 -- test/*.test.ts",
+    "test:db": "node ../../scripts/run-tests.mjs -- test/db/*.test.ts",
+    "test:table": "node ../../scripts/run-tests.mjs -- test/db/search.table*.test.ts",
+    "test:db:record": "GOLDEN=write node ../../scripts/run-tests.mjs -- test/db/*.test.ts && biome format --write test/db"
   },
   "dependencies": {
     "@louvain/doctext": "workspace:*",

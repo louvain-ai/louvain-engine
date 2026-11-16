@@ -15,7 +15,7 @@
 The open retrieval engine behind Louvain: it finds the right document in your company’s files, behind a permission
 fence, and hands it to your agent with its source, self-hosted, over MCP and HTTP.
 
-**91.32% on EnterpriseRAG-Bench** (preliminary). EnterpriseRAG-Bench asks enterprise questions over a large company corpus and judges each answer on
+Louvain's own build scored **91.32%** (preliminary, on a 100-question development sample); this repository doesn't reproduce it yet. EnterpriseRAG-Bench asks enterprise questions over a large company corpus and judges each answer on
 whether it is correct and complete. [How it was measured](https://louvain.ai/benchmarks)
 
 <p align="center"><img src="assets/quickstart.svg" alt="A terminal running the quickstart" width="760"></p>
@@ -235,10 +235,10 @@ The engine starts with the two readers, the `folder` and `records` sources, the 
 
 | EnterpriseRAG-Bench | Score |
 | --- | --- |
-| Louvain's scored configuration | **91.32%** (preliminary) |
+| Louvain's own build | **91.32%** (preliminary, on a 100-question development sample) |
 
-The figure is the scored configuration's, not the build `./engine up` starts: a tuned embedder, Cohere's reranker, an
-agent and its guidance, each listed in [docs/benchmark-method.md](docs/benchmark-method.md).
+This repository doesn't reproduce it yet: the figure is Louvain's own build's, with a tuned embedder, Cohere's reranker,
+an agent and its guidance, each listed in [docs/benchmark-method.md](docs/benchmark-method.md).
 
 ## Documentation
 
