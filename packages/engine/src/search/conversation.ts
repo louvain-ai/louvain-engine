@@ -5,7 +5,7 @@ import { passages } from "../kg/read/passages-api.js";
 import type { ConversationOptions, SearchedDocument, SearchOptions } from "./document.js";
 
 /**
- * A CHAT HIT IS SHOWN WITH ITS CONVERSATION (`passages.around`): the `k` messages either side of each of the first
+ * A chat hit is shown with its conversation (`passages.around`): the `k` messages either side of each of the first
  * `hits` documents that is a chat message, at most `maxChars` across them, read under the search's own fence, narrowing
  * and as-of. A message found alone ("I moved it to Thursday") does not say what it answers; the messages beside it put
  * the answer's facts in hand. Ranking is untouched. `LOUVAIN_CHAT_NEIGHBOURS=off` is the kill switch, read per call;
@@ -14,11 +14,11 @@ import type { ConversationOptions, SearchedDocument, SearchOptions } from "./doc
  * FILL (`LOUVAIN_CHAT_NEIGHBOURS=fill`): a hit an unthreaded message is GHOST-LINKED back from
  * (the caller's `ancestry`, its own ancestry in its container as the build links it, at most 8; none passed, no links) also gets
  * those linked messages, listed first, in
- * the budget the window leaves, under the same fence. Links exist only where the workspace's `ghost-threads` decision wrote them
- * under `on`, so elsewhere fill is the window. `window` (the default) is unchanged; fill becomes the default only after
+ * the budget the window leaves, under the same fence. Links exist only where the build wrote them, so
+ * elsewhere fill is the window. `window` (the default) is unchanged; fill becomes the default only after
  * a judged agent-arm run of window against fill says so.
  *
- * WHERE THE LIMIT IS: context beside a hit adds little when the fact's own message does not reach the first few hits,
+ * Where the limit is: context beside a hit adds little when the fact's own message does not reach the first few hits,
  * and embedding a message with the messages before it raises its vector rank but not its place: the reranker scores
  * the message's text alone.
  */

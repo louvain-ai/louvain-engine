@@ -5,7 +5,7 @@ export const isStatementTimeout = (err: unknown): boolean =>
   (err as { code?: unknown } | null)?.code === "57014";
 
 /**
- * THE VECTOR LEGS RUN UNDER THEIR OWN SCAN SETTINGS.
+ * The vector legs run under their own scan settings.
  *
  * Every vector leg is `where org_id and container = any(…) order by embedding
  * <=> q limit N`, and pgvector's HNSW scan applies that fence AFTER walking

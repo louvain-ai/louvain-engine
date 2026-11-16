@@ -1,7 +1,7 @@
 import type { Clip, ItemPrecision } from "@louvain/engine-core";
 
 /**
- * WHAT A READ HANDS THE READER: one row of evidence, and a recall's page of them. The knowledge core's reads
+ * What a read hands the reader: one row of evidence, and a recall's page of them. The knowledge core's reads
  * produce it (`ask/evidence.ts`), and the reader, the verifier, the answer log and the receipts consume it.
  */
 
@@ -58,7 +58,7 @@ export type Evidence = {
    */
   eventId?: string;
   /**
-   * WHICH ORIGINAL that event is a copy of (keyed by the build that groups
+   * Which original that event is a copy of (keyed by the build that groups
    * copies) — the same on every copy of one message, however many
    * connections delivered it, and absent where the source has no verified
    * identity. Stamped once per page from the fenced rows' own documents.

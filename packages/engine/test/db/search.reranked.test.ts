@@ -5,7 +5,7 @@ import { type Engine, openEngine } from "./engine.js";
 import { normalise, readGolden, writeGolden, writing } from "./golden.js";
 
 /**
- * THE PAGE WITH A RERANKER CONFIGURED, PINNED. The stand-in reranker (`stand-ins.ts`) scores by the search's words and
+ * The page with a reranker configured, pinned. The stand-in reranker (`stand-ins.ts`) scores by the search's words and
  * carries measured cut-offs, as a shipped model does. Each answer is recorded in `search.reranked.golden.json`, and
  * beside the recording the rules that hold whatever is recorded: a search for nothing shows nothing; a real word no
  * document holds matches nothing, its nearest listed apart; an answer worded differently from the search still

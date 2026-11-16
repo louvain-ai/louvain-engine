@@ -8,7 +8,7 @@ import { openEngine } from "../src/engine.js";
 import { over } from "../src/profile.js";
 
 /**
- * A PROFILE IS A FOLDER WITH ITS OWN engine.config.ts: the one `.engine/profile` names runs instead of the root's, its
+ * A profile is a folder with its own engine.config.ts: the one `.engine/profile` names runs instead of the root's, its
  * settings over the root's leaf by leaf, its state its own; with none remembered, the root's runs as ever; a remembered
  * name with no folder is refused, saying how to return.
  */

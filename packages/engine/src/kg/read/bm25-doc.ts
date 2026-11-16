@@ -25,7 +25,7 @@ export type Bm25Doc = {
    */
   figures?: boolean;
   /**
-   * A DOCUMENT ENTRY (`sources/keyword-documents.ts`): one per document, its current revision's text and header, never
+   * A document entry (`sources/keyword-documents.ts`): one per document, its current revision's text and header, never
    * a search hit. `modified` orders a listing, `app` is the one it shows as, a facet.
    */
   kind?: "document";
@@ -60,7 +60,7 @@ export function keywordDoc(
 }
 
 /**
- * THE APPS A RECORD IS FOUND BY, as the passage legs' app filter decides it (`filters.ts` `apps`): the app it shows as
+ * The apps a record is found by, as the passage legs' app filter decides it (`filters.ts` `apps`): the app it shows as
  * (`source_revision.app`), its connector's type, and every app that connector shows as — exactly the apps A for which
  * `connector ∈ connectorsOfApp(A)` or the shown app is A, so the sidecar's term set and the SQL re-check agree.
  */

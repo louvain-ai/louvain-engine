@@ -29,7 +29,7 @@ export type Named = { orgId: string; value: Fragment; roles: string[] | null };
 export type ShownApp = { shown(): Fragment; filtered(): Fragment };
 
 /**
- * PREDICATES AN APPLICATION ADDS AFTER THE FENCE, handed to its reads in their context (`ReadHooks.filters`) and by a
+ * Predicates an application adds after the fence, handed to its reads in their context (`ReadHooks.filters`) and by a
  * read to each fragment it builds; a write that names a record's app reads `app` from its own hooks (`writes.ts`).
  * Each is a boolean expression the open filters AND (a participant: OR beside the record's actor) inside a statement
  * whose fence already holds, so it only narrows what the reader may read; what a page names beside its rows is read

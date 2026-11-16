@@ -8,7 +8,7 @@ import { openTestEngine } from "./open-engine.js";
 import { STAND_IN_CUTOFFS, standInReranker, startStandIns } from "./stand-ins.js";
 
 /**
- * THE ENGINE AS THESE TESTS SEE IT: the only file here that names the engine's modules. A refactor that moves or
+ * The engine as these tests see it: the only file here that names the engine's modules. A refactor that moves or
  * renames one changes this file, and nothing else; the cases and their recorded answers stay as they are, which is
  * what makes them a guard.
  *

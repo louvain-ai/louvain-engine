@@ -11,7 +11,7 @@ import { type KeywordIndex, OPEN_KEYWORD_INDEX } from "./keyword-index.js";
 import { ONE_SPACE, type VectorSpaces } from "./space.js";
 
 /**
- * WHAT A BUILD ADDS TO THE OPEN READS, carried by the read's context (`ReadContext.hooks`) and asked through `hooksOf`
+ * What a build adds to the open reads, carried by the read's context (`ReadContext.hooks`) and asked through `hooksOf`
  * alone. A member a build leaves out is the open build's own answer, so the open build passes none and no read branches
  * on a missing hook. A hook is here because a read asks it; what only a write asks is not. `fence()` never reads them:
  * a hook narrows or presents what the fence admitted, and none decides who may read what.

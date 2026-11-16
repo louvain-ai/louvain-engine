@@ -19,7 +19,7 @@ import { asOf, clamp, str, ToolInputError } from "./tool-helpers.js";
 const FULL_ASKED_MAX = 24;
 
 /**
- * ONE CONTAINER, AS A SCOPE (`container`): the caller's scope (a space's closure in the product, none in the open build)
+ * One container, as a scope (`container`): the caller's scope (whatever the build scopes by, none in the open build)
  * narrowed to that one id. `searchSources` intersects it with the reader's readable set, so a container they cannot
  * read is an empty page, never an error and never a second definition of the fence.
  */
@@ -29,7 +29,7 @@ function scopedTo(containers: string[] | undefined, container: string): string[]
 }
 
 /**
- * A LIST ENDS BY SAYING SO: on its last page "that is all N"; "at least N" whenever the listing's count is a floor (past
+ * A list ends by saying so: on its last page "that is all N"; "at least N" whenever the listing's count is a floor (past
  * `SOURCE_COUNT_CAP`, or a meaning search's bounded candidates); before the last page, how many there are in all.
  */
 export function endOf(page: {
@@ -44,8 +44,8 @@ export function endOf(page: {
 }
 
 /**
- * One search as asked: the ranked page or the list view, by its cursor (the product's app hint may call it twice). The
- * ranked page reads `pool`, the build's: the open build's retrievers, the product's own `candidates()`.
+ * One search as asked: the ranked page or the list view, by its cursor (a build's app hint may call it twice). The
+ * ranked page reads `pool`, the build's: the open build's retrievers, or another build's own candidates.
  */
 export async function searchOrList(
   context: ReadContext,

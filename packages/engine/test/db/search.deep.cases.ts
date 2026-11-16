@@ -1,7 +1,7 @@
 import type { Case } from "./search.cases.js";
 
 /**
- * A FACT DEEP IN A LONG DOCUMENT, ASKED IN OTHER WORDS, LEAVES THE FIRST TEN. An agent's search ranks a document by its
+ * A fact deep in a long document, asked in other words, leaves the first ten. An agent's search ranks a document by its
  * best passage (`LOUVAIN_AGENT_SEARCH_CHUNK_BONUS` 0); summed over its passages, the code of conduct (gifts from
  * suppliers, in its third) ranked third for "presents from vendors", and by its best passage it is past the tenth. The
  * stand-in embedder links neither word to the passage's, so that third place was its length alone: this corpus cannot

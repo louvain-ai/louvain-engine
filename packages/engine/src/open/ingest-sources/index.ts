@@ -1,5 +1,5 @@
 /**
- * THE ONE PLACE A SOURCE IS OPENED: the configuration's source of that name (`engine.config.ts` `sources`), its
+ * The one place a source is opened: the configuration's source of that name (`engine.config.ts` `sources`), its
  * request parsed by its own schema, and the guarded fetch handed to it as the only network it has. An unknown name or
  * a request the schema refuses stops the run before anything is read.
  */

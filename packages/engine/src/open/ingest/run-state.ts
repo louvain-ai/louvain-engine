@@ -19,13 +19,13 @@ export type Run = {
   onItem: ((o: ItemOutcome) => void) | undefined;
   now: () => Date;
   hold: Hold;
-  s: IngestSummary;
+  summary: IngestSummary;
   /** The keys a whole listing named, when removal by absence is on. */
   listed: Set<string> | null;
   moves: Moves | null;
   /** Sources that send changes rather than a whole listing: a replay or an older revision is refused, not taken. */
   sendsChanges: boolean;
-  /** A first run over documents an earlier loader wrote: each it replaces is withdrawn, never left beside it. */
+  /** A first run over path-keyed documents: each it replaces is withdrawn, never left beside it. */
   adopting: boolean;
 };
 

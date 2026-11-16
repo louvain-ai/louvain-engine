@@ -37,7 +37,7 @@ function andLeadsItsCopies({ sql, s, added }: Listing, shape: ContainerSetShape 
   return leads ? sql`and (${leads(s.orgId, s.containers, shape)})` : sql``;
 }
 /**
- * WHAT TYPE OF FILE A REVISION IS (`type:`), in the one order a client's icons follow too: a media type that
+ * What type of file a revision is (`type:`), in the one order a client's icons follow too: a media type that
  * names one type decides, then the last extension when the media type is generic or absent, then the reader's
  * format; a page, as the build declares one (`AddedFilters.page`), when none of those decided. One `case`, so a row is
  * one type.

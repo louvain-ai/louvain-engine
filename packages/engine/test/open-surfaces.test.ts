@@ -9,7 +9,7 @@ import { canonicalPath, type ServeSettings, serve } from "../src/open/serve.js";
 import { mcp } from "../src/plugins/surface-mcp/index.js";
 
 /**
- * THE SERVER SERVES WHAT THE CONFIGURATION'S SURFACES DECLARE, AND ITS OWN RULES COME FIRST: the read token before any
+ * The server serves what the configuration's surfaces declare, and its own rules come first: the read token before any
  * route that needs it (and before saying whether a path exists), one canonical path, a method the path does not take
  * refused with what it does, and the security headers on every answer. A browser signs in once for a cookie named for
  * this server, only at a host it is reached at and only from its own pages; a route never sees a credential; an answer

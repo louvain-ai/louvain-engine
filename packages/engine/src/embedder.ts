@@ -1,7 +1,7 @@
 import type { Embedder } from "@louvain/embeddings";
 
 /**
- * THE ENGINE'S EMBEDDER, as its reads and writes reach it: `createEngine` puts its own (`EngineParts.embedder`) among
+ * The engine's embedder, as its reads and writes reach it: `createEngine` puts its own (`EngineParts.embedder`) among
  * the hooks of the context and the writes it makes, and a read or a write that embeds asks `embedderOf`, never a
  * process binding. A build never passes one: it is the engine's part, not something a build adds.
  */

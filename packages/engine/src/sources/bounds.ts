@@ -1,7 +1,7 @@
 import { SOURCE_COUNT_CAP } from "@louvain/engine-core";
 
 /**
- * A LISTING'S COUNTS ARE BOUNDED, NOT ESTIMATED.
+ * A listing's counts are bounded, not estimated.
  *
  * A total and its facets are reads over the readable set — existence is
  * visibility — so every row is fenced before it is counted, and an exact
@@ -33,7 +33,7 @@ export const COUNT_LIMIT = SOURCE_COUNT_CAP + 1;
 export const WALK_LIMIT = SOURCE_COUNT_CAP;
 
 /**
- * A READER WHO READS ALMOST NOTHING IS LISTED FROM WHAT THEY READ, NOT FROM THE DATE INDEX.
+ * A reader who reads almost nothing is listed from what they read, not from the date index.
  *
  * The listing walks the scope's date index and stops at the page, which is right while the
  * reader's documents are dense among the newest. The planner estimates that density from how many containers the

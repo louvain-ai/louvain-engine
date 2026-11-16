@@ -23,7 +23,7 @@ type WriteHooks = {
 export type EngineHooks = ReadHooks & WriteHooks;
 
 /**
- * WHAT A WRITE RUNS ON, handed first to every write that asks a hook: the pool it writes through and the build's hooks,
+ * What a write runs on, handed first to every write that asks a hook: the pool it writes through and the build's hooks,
  * as the engine holds them (`Engine.writes`). The hooks are a required member, so a write is never handed a bare pool:
  * one handed none would write the open build's passages without a word.
  */

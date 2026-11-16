@@ -72,7 +72,7 @@ const legsOf = (
   Promise.all(retrievers.map(async ({ name, plugin }) => ({ name, got: await call(plugin) })));
 
 /**
- * A READING FENCED TO ONE SEARCH: the reader, the search's narrowing and its as-of, never the pool, and their
+ * A reading fenced to one search: the reader, the search's narrowing and its as-of, never the pool, and their
  * description (`scope`) for a retriever that asks an index of its own. A row it handed out is kept as handed (two legs
  * hand out the same passage with their own scores, so the row itself, not its id); any other a retriever returns is
  * its record, read again as the keyword index's hits are (`recordsAsPassages`). `recheck` then reads every

@@ -1,5 +1,5 @@
 /*
- * A NARROWING OF A LISTING (`SearchInput.narrow`): data only. What it keeps is the predicate an application binds
+ * A narrowing of a listing (`SearchInput.narrow`): data only. What it keeps is the predicate an application binds
  * (`filter-seam.ts` `narrowed`), AND-ed after the fence, so it only removes rows; the open build keeps nothing.
  */
 

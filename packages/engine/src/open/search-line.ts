@@ -1,7 +1,7 @@
 import { ITEM_FEED } from "./ingest/item-feed.js";
 
 /**
- * ONE LINE OF `./engine search`, as a person reads it in a terminal (and on a phone, in the README's picture):
+ * One line of `./engine search`, as a person reads it in a terminal (and on a phone, in the README's picture):
  * `<rank>. <title> · <date> · <id>`, with the source's app between title and date only when it names one. The engine's
  * own loader and its HTTP route record no app of their own (its feed, `ITEM_FEED`, or the older `http`), which would
  * say nothing on every line. The id is

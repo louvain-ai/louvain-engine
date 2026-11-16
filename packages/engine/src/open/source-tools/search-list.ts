@@ -11,7 +11,7 @@ import { encodeCursor, fillFromListing, type SearchCursor } from "./search-pagin
 import { type ClientNarrow, clientListing, connectionOf, ToolInputError } from "./tool-helpers.js";
 
 /**
- * THE LIST VIEW: for "every X about Y", every matching source by its title, date, app and author, NEWEST
+ * The list view: for "every X about Y", every matching source by its title, date, app and author, NEWEST
  * FIRST, in pages of up to 100 — the listing itself (`searchSources`, sort newest), which walks the tenant in page
  * order and stops, so its total is "at least" past its cap. No excerpts: a page is a list to choose from, and each
  * `id` opens with louvain_read_source. The same in every knowledge mode.

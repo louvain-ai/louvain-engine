@@ -18,7 +18,7 @@ export async function retireReplaced(run: Run, taken: Taken): Promise<void> {
   const replaced = replacedBy(taken);
   if (replaced.length > 0) await stage("ingest.retire", () => retire(run, replaced));
   // After the new revision's own index, so the document's entry ends as its current revision's, whichever that is.
-  run.s.keywordStale += await refreshDocuments(run.state, run.state.orgId, taken.moved);
+  run.summary.keywordStale += await refreshDocuments(run.state, run.state.orgId, taken.moved);
   const { change } = taken;
   if (change.kind === "added" && run.adopting)
     await adopt(run, { key: change.item.key, hash: textHash(change.version.text) });
@@ -45,7 +45,8 @@ export async function retire(
   const revisions = events.filter((e): e is HeldRevision => "revision" in e);
   if (run.sendsChanges && revisions.length > 0)
     await run.state.sql.begin((trx) => recordRetired(trx, run.collection, revisions));
-  run.s.keywordStale += (await withdrawOpen(run.state, run.state.orgId, events)).keywordMissed;
+  const { keywordMissed } = await withdrawOpen(run.state, run.state.orgId, events);
+  run.summary.keywordStale += keywordMissed;
 }
 
 /** The events a kept change leaves behind: none for an addition or a move, which withdrew its old place itself. */
@@ -56,10 +57,10 @@ function replacedBy({ change, id }: Extract<Taken, { change: unknown }>): HeldRe
   return [];
 }
 
-/** The earlier loader's copy of this path and these words is withdrawn, now that the collection holds its own. */
+/** The path-keyed copy of this path and these words is withdrawn, now that the collection holds its own. */
 async function adopt(run: Run, same: { key: string; hash: string }): Promise<void> {
   const earlier = await legacyOf(run.state.sql, run.state.orgId, same.key, same.hash);
   if (earlier.length === 0) return;
   await retire(run, earlier);
-  run.s.adopted += 1;
+  run.summary.adopted += 1;
 }

@@ -12,7 +12,7 @@ import type { Telemetry } from "./telemetry.js";
 import type { EngineHooks, Writes } from "./writes.js";
 
 /**
- * THE ENGINE: one value, built by its caller from parts it chose and handed to whatever serves, ingests or searches.
+ * The engine: one value, built by its caller from parts it chose and handed to whatever serves, ingests or searches.
  * Nothing here opens a pool, starts a plugin or reads the environment. A part the caller did not pass is a type
  * error, never a default, so what an engine runs on is whatever its builder wrote; but for telemetry, which reports
  * nowhere unless given, and a logger, its own unless given.

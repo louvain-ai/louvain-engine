@@ -60,8 +60,8 @@ export async function ingestFrom(
   try {
     const run = await startRun({ state, collection, source, options, hold });
     for await (const batch of batches(source.items())) await takeBatch(run, batch);
-    if (run.listed) run.s.removalsHeld = await settleListing(run, options.removeMany);
-    return run.s;
+    if (run.listed) run.summary.removalsHeld = await settleListing(run, options.removeMany);
+    return run.summary;
   } finally {
     await hold.release();
   }
@@ -77,7 +77,7 @@ type Start = {
 
 async function startRun({ state, collection, source, options, hold }: Start): Promise<Run> {
   const whole = source.lists === "all" && options.removals === "sync";
-  // Only a folder's first run replaces what an earlier folder loader wrote, and only when there is any.
+  // Only a folder's first run replaces path-keyed documents, and only when the store holds any.
   const first = source.lists === "all" && (await heldCount(state.sql, collection)) === 0;
   return {
     state,
@@ -88,7 +88,7 @@ async function startRun({ state, collection, source, options, hold }: Start): Pr
     onItem: options.onItem,
     now: options.now ?? (() => new Date()),
     hold,
-    s: emptySummary(collection.name),
+    summary: emptySummary(collection.name),
     listed: whole ? new Set() : null,
     moves: whole ? new Moves(await heldTexts(state.sql, collection)) : null,
     sendsChanges: source.lists === "some",

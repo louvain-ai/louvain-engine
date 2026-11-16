@@ -30,7 +30,7 @@ export type SearchRequest = {
 };
 
 /**
- * A SEARCH, STAGE BY STAGE. Each stage is one line here and one function elsewhere, timed under its name, returning what
+ * A search, stage by stage. Each stage is one line here and one function elsewhere, timed under its name, returning what
  * it found and what it could not do, so the order IS this function and the page's `degraded` is theirs, in order:
  *
  *   legs          the caller's pool: the legs under the reader's fence, fused (`SearchWith.pool`)

@@ -24,7 +24,7 @@ const sameContainer =
     q`${column} = ${e}.container`;
 
 /**
- * THE ONE RULE, as a predicate on a passage `p` and its version `e`: the READER'S version rule (`newerVersionHeld`,
+ * The one rule, as a predicate on a passage `p` and its version `e`: the READER'S version rule (`newerVersionHeld`,
  * `kg/read/passages-filter.ts`, the same fragment `newerVersionRead` asks) with "a container the viewer reads" replaced
  * by "the old version's own container", as of now, for a whole-record `record.change` passage in that container.
  */
@@ -35,7 +35,7 @@ export function superseded(q: Queryable, whole: readonly string[], e = q`e`): Pe
 }
 
 /**
- * THE WITNESS, for the read probe's pre-filter: the earliest-stated newer version that retires `e` (`valid_from`), and
+ * The witness, for the read probe's pre-filter: the earliest-stated newer version that retires `e` (`valid_from`), and
  * the first instant a read's `knownAt` sees both it and a version declaring the record whole (`known_from`). A read at
  * or after both is retired through that witness for every reader of the container; one before either may not be, and
  * the probe then asks the reader's own rule (`kg/read/passages-vector.ts`). The witness's removal marks the passage

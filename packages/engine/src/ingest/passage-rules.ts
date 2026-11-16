@@ -1,5 +1,5 @@
 /**
- * HOW A BUILD'S RECORDS BECOME PASSAGES, handed to a write in its hooks (`writes.ts` `WriteHooks.passageRules`): the
+ * How a build's records become passages, handed to a write in its hooks (`writes.ts` `WriteHooks.passageRules`): the
  * parts of a text cut on their own, the header a record's passages carry, which events may be indexed, which of an
  * event's passages its own text wrote, and whether a passage's context is also embedded. A write handed none reads
  * `openPassageRules`: a text is one part, headed by its title and section path, every event is indexable, every passage

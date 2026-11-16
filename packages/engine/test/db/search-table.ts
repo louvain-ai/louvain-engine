@@ -13,7 +13,7 @@ import { eventOf, inFolder } from "./events.js";
 import { freePort, keywordIndexForTests, noKeywordIndex } from "./keyword-index.js";
 
 /**
- * THE SEARCH RESULTS TABLE: what a search returns, end to end, stated as data (`search-table/table.json`) over a fixed
+ * The search results table: what a search returns, end to end, stated as data (`search-table/table.json`) over a fixed
  * invented corpus (`search-table/corpus.json`) and checked through the tool an agent calls, `louvain_search_sources`,
  * on a database of its own built from the baseline schema. A row is a query and what its page must hold; it is
  * `holds` (the engine does it, and a change that breaks it is red) or `pending` (a published rule the engine does

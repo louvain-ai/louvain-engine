@@ -4,7 +4,7 @@ import type { JSONValue } from "postgres";
 import type { Revision } from "../ingest/revision.js";
 
 /**
- * HOW A SOURCE'S PRESENTATION IS READ, which the build supplies: what a source shows is the build's to say, and a
+ * How a source's presentation is read, which the build supplies: what a source shows is the build's to say, and a
  * presentation its reader refuses is stored as none. A zod schema's `safeParse` is one.
  */
 type ReadPresentation<P extends Presented> = (
@@ -15,7 +15,7 @@ type ReadPresentation<P extends Presented> = (
 export type Presented = { [field: string]: JSONValue | undefined };
 
 /**
- * THE KEYS A DOCUMENT IS GROUPED BY: the original it is a copy of, and the series it belongs to. A build that groups
+ * The keys a document is grouped by: the original it is a copy of, and the series it belongs to. A build that groups
  * documents supplies them (`SourceOrigin.keys`); without one, every document stands alone.
  */
 export type SourceKeys = { originKey: string | null; seriesKey: string | null };
@@ -24,7 +24,7 @@ export type SourceKeys = { originKey: string | null; seriesKey: string | null };
 export type KeysRead<P extends Presented> = { text: string; presentation: unknown; read: P | null };
 
 /**
- * WHAT A BUILD KNOWS ABOUT ITS OWN CONNECTORS' SOURCES, asked before the generic rule: a provider id an older writer
+ * What a build knows about its own connectors' sources, asked before the generic rule: a provider id an older writer
  * kept only in the event's key (and the link it makes), a workspace whose collections share provider ids (the native id
  * is then scoped by the collection), the lead its writers put before a source's own words, and a kind by connector.
  * Without rules a source is what it states: its native id, its link, its first line, its kind by event kind.

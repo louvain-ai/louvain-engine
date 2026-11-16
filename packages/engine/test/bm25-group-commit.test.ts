@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 
 /**
- * THE BM25 GROUP COMMIT (`kg/read/bm25.ts`): a burst of index jobs shares a commit, a job never rides a
+ * The BM25 group commit (`kg/read/bm25.ts`): a burst of index jobs shares a commit, a job never rides a
  * commit that started before its document was added, and a failed commit fails only the jobs that were waiting on it.
  */
 test("a burst shares commits; a late arrival waits for the next; a failure is its own waiters'", async () => {

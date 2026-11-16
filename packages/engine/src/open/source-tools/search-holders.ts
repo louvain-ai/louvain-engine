@@ -35,7 +35,7 @@ type HoldersAsked = {
 };
 
 /**
- * THE PAGES OF A SEARCH THAT ONLY NAMES THINGS (rule 6, `namesOnlySearch`): every document holding what it names, and
+ * The pages of a search that only names things (rule 6, `namesOnlySearch`): every document holding what it names, and
  * nothing else, in the order a person can account for: the documents it names (the exact tier, then the documents
  * citing that key), then the keyword listing's order. Meaning takes no part, in the order or in what is shown, so a
  * look-alike never takes a place. The listing is walked past the first page, holders only, so walking to the end

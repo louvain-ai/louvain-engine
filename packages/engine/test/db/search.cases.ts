@@ -4,7 +4,7 @@ import { DEEP_FACT_LOST } from "./search.deep.cases.js";
 type Mode = "vector" | "keyword" | "hybrid";
 
 /**
- * WHAT IS ASKED OF THE ENGINE (over invented content: every name, company and figure is made up). Each case is a call through one of the engine's real entry points over
+ * What is asked of the engine (over invented content: every name, company and figure is made up). Each case is a call through one of the engine's real entry points over
  * the golden corpus (`corpus.ts`), named for what it asks. `search.golden.json` holds what each returns, and the
  * SQL snapshot test runs the same cases to see what each one sends.
  *
@@ -17,14 +17,14 @@ export type Case = {
   /** A reader who reads only part of the corpus. */
   partial?: Exclude<Reader, "everyone">;
   /**
-   * A KNOWN DEFECT this case records as it stands. Its answer is pinned so a refactor cannot move it unseen, and is
+   * A known defect this case records as it stands. Its answer is pinned so a refactor cannot move it unseen, and is
    * wrong: the fix re-records it on purpose, and drops this.
    */
   defect?: string;
 };
 
 /**
- * THE SUPERSEDED REVISION IS SHOWN. The open loader's events carry no record, so a file's revisions have no record key
+ * The superseded revision is shown. The open loader's events carry no record, so a file's revisions have no record key
  * and the version rule (`passages-filter.ts`, `record_has_newer`) never retires the earlier one's passages, while the
  * source groups both revisions as one document. Asked for words only the earlier revision holds, the ranked page
  * shows the document with the earlier date and the earlier text as its excerpt, and nothing says it is not current.
@@ -37,7 +37,7 @@ const SUPERSEDED_SHOWN: Case = {
 };
 
 /**
- * AN IDENTIFIER TYPED JOINED. "FIN-2207" is held by the text search as "fin-2207", "fin" and "2207", never "fin2207", so
+ * An identifier typed joined. "FIN-2207" is held by the text search as "fin-2207", "fin" and "2207", never "fin2207", so
  * the keyword leg meets no word of "fin2207". The exact tier reads a key
  * typed joined as the key (`search-exact.ts`), so the document titled by it leads; a passage that only mentions the
  * key is still found by the keyword leg only as written, until the tokeniser joins it on both paths (the showpiece).
@@ -48,7 +48,7 @@ const IDENTIFIER_JOINED: Case = {
 };
 
 /**
- * A FIGURE WRITTEN ANOTHER WAY, AND INSIDE A KEY, IS FOUND. "4,471" is the figure 4471 to the keyword index's analyzer (its
+ * A figure written another way, and inside a key, is found. "4,471" is the figure 4471 to the keyword index's analyzer (its
  * word-delimiter step, `analyzer-cases.json`), answered by the documents holding it (rule 6), and "PO-4471" is held as
  * `po`, `4471` and `po4471`.
  */
@@ -164,7 +164,7 @@ const listing =
     everyPage(reader, { query: "", container: e.container(collection), limit })(e);
 
 /**
- * THE LOOKUP: an identifier a source IS (its path), a key a title opens with, one nothing is, and an identifier only a
+ * The lookup: an identifier a source IS (its path), a key a title opens with, one nothing is, and an identifier only a
  * hidden document holds, which a partial reader must get exactly as one that does not exist.
  */
 const LOOKUPS: Case[] = [
@@ -206,7 +206,7 @@ const LOOKUPS: Case[] = [
 ];
 
 /**
- * THE CONTAINER LISTING: a collection listed to its end, as each reader; and the reviewed leak, a collection filed
+ * The container listing: a collection listed to its end, as each reader; and the reviewed leak, a collection filed
  * inside one the reader cannot read, which they may list and search but whose container is never named to them.
  */
 const LISTINGS: Case[] = [

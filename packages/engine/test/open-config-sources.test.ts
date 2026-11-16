@@ -7,7 +7,7 @@ import { IngestSourceRefused, openSource } from "../src/open/ingest-sources/inde
 import type { Writes } from "../src/writes.js";
 
 /**
- * THE SOURCES A CONFIGURATION NAMES, AS THE ENGINE OPENS THEM: two doors are refused, since the server has one; a
+ * The sources a configuration names, as the engine opens them: two doors are refused, since the server has one; a
  * source is opened by name with its request checked first; and the only network a source is handed is the guarded
  * fetch, which refuses an address inside the network. The shipped file's sources are the CLI's to load
  * (`packages/cli/test/engine.test.ts`).

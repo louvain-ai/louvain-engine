@@ -118,7 +118,7 @@ function tightenPunctuation(text: string): string {
  * cites. Block ends become newlines because that is what a reader sees; every
  * other tag becomes a space, because `a<b>c</b>d` is three words, not one.
  *
- * ONE PASS, LINEAR IN THE INPUT. It was four regular expressions, and three of
+ * One pass, linear in the input. It was four regular expressions, and three of
  * them backtracked on text a source controls: `<style[\s\S]*?<\/style>` with
  * no closing tag rescanned to the end from every `<style`, `<[^>]+>` did the
  * same from every `<` with no `>` after it, and the punctuation rule retried

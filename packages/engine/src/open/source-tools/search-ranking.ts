@@ -7,7 +7,7 @@ import { measured } from "./search-relevance.js";
 import { str } from "./tool-helpers.js";
 
 /**
- * THE RERANKER REORDERS A PAGE; IT NEVER ADDS TO ONE, AND IS NOT ASKED WHERE IT COULD DO NEITHER: a search that only
+ * The reranker reorders a page; it never adds to one, and is not asked where it could do neither: a search that only
  * names things, or holds nothing to mean, is its named documents alone, so the same pool reads it with no reranker.
  */
 export const unranked = (using: SearchWith): SearchWith => ({

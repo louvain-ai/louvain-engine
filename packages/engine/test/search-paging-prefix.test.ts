@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { fillFromListing, idPrefix } from "../src/open/source-tools/search-paging.js";
 
 /**
- * A LISTING CURSOR SKIPS BY ID PREFIX (`idPrefix`, 16 characters): a prefix only hides the rows it names. Two ids
+ * A listing cursor skips by ID prefix (`idPrefix`, 16 characters): a prefix only hides the rows it names. Two ids
  * that share their first 15 characters and differ at the 16th are two prefixes, so skipping one never hides the other.
  */
 test("a skipped id prefix hides exactly its own document, not one differing at the 16th character", async () => {
@@ -28,7 +28,7 @@ test("a skipped id prefix hides exactly its own document, not one differing at t
 });
 
 /**
- * MORE MEANS A ROW THE NEXT PAGE WILL SHOW. A matched search said `hasMore: true` and its next page came back empty:
+ * More means a row the next page will show. A matched search said `hasMore: true` and its next page came back empty:
  * the rows left were all ones the head had already shown, which the next page skips. `hasMore` counts only rows it
  * would show.
  */

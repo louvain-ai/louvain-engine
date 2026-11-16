@@ -15,7 +15,7 @@ import {
 import { capture, fenced, normalised, type Sent, senderOf } from "./statements.js";
 
 /**
- * WHAT THE ENGINE SENDS TO POSTGRES, PINNED AS TEXT. The cases of the search golden run again with every statement
+ * What the engine sends to Postgres, pinned as text. The cases of the search golden run again with every statement
  * captured, and each distinct statement must be one recorded under `sql/`: the same text once whitespace is folded
  * (`statements.ts` says how), with the same number of parameters, under the same `set local` settings. The comparison
  * is one set across every case and the load that builds the corpus (its writes among them). A refactor that only
@@ -111,7 +111,7 @@ test("a changed plan is said, and a fenced read's changed scans by name", {
 });
 
 /**
- * THE LOOKUP'S INDEXED READS, AS PLANNED. A title read by its whole text and a URL read by its digest each have an
+ * The lookup's indexed reads, as planned. A title read by its whole text and a URL read by its digest each have an
  * index of their own (`source_revision_org_title_key_idx`, `source_revision_org_url_key_idx`); whether the plan on
  * this corpus uses it is said here for each such statement, never failed, by the rule above.
  */

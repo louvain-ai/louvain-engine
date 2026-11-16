@@ -9,7 +9,7 @@ import { settingsOf } from "../src/config/settings.js";
 const TUNING = settingsOf(undefined).rerank;
 
 /**
- * THE RERANKER CONTRACT, AS THE SEARCH READS IT: a planted reranker's scores decide the order (blended with the
+ * The reranker contract, as the search reads it: a planted reranker's scores decide the order (blended with the
  * legs' own), each scored document carries its score, and a reranker that cannot answer is a named outcome
  * (`rerank:documents`) with the legs' order kept and no score shown, never an order that pretends to be ranked.
  */

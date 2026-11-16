@@ -7,7 +7,7 @@ import type { SearchInput } from "./search-input.js";
 type Fragment = PendingQuery<Row[]>;
 
 /**
- * A SECOND MATCHER'S WORDS OVER THE LISTING, where a build keeps one in its database: whether the listing's `r` (the
+ * A second matcher's words over the listing, where a build keeps one in its database: whether the listing's `r` (the
  * current revision) holds the words (`matches`, true where there are none), the row's excerpt for them (`excerpt`, a
  * column named `excerpt`), the column and the rank a page by relevance orders by (`column`, `rank`), and the whole
  * listing with words (`listing`: words and meaning). The open build has none: its keyword index answers a listing's

@@ -11,20 +11,20 @@ import { compactHit, fullHit, type ShownHit } from "./search-hits.js";
 import { type By, matchedBy, withFound } from "./search-reranked.js";
 
 /**
- * A SEARCH SAYS WHEN NOTHING MATCHES. A ranked list always has a first place, so without this a word that is in no
+ * A search says when nothing matches. A ranked list always has a first place, so without this a word that is in no
  * document ("highfield") came back with every document as a result. Each document on the page is a MATCH when it holds
  * one of the search's content words (or a figure it names, in any of its written forms), or when its nearest passage
  * is at least the embedder's floor in meaning. The rest are shown apart, as loosely related, and when nothing matches
  * the page says so in a sentence an agent can act on.
  *
- * THE FLOOR IS THE EMBEDDER'S, MEASURED, never one constant: cosine similarity means different things for different
+ * The floor is the embedder's, measured, never one constant: cosine similarity means different things for different
  * models. A model with no measured floor decides by words alone and says nothing about meaning it cannot stand behind.
  * A floor sits between the nearest passages of questions the documents answer and those of searches they do not.
  */
 const MEANING_FLOORS: Readonly<Record<string, number>> = { "Xenova/bge-base-en-v1.5": 0.57 };
 
 /**
- * A DOCUMENT MATCHES BY MEANING ONLY WHEN THE SEARCH HAS WORDS TO MEAN SOMETHING: a string neither the documents nor the
+ * A document matches by meaning only when the search has words to mean something: a string neither the documents nor the
  * language model knows as a word (a GUID, a keyboard run) lands near some document by chance, above the floor. A word
  * this embedder's tokeniser splits into this many pieces or more, and that no readable passage holds, carries no
  * meaning; with no word left, meaning is not measured. Recorded per model like the floor; a model with none recorded
@@ -62,7 +62,7 @@ async function meaningOf(
 }
 
 /**
- * A SEARCH THAT ONLY NAMES THINGS IS NOT MEASURED BY MEANING (rule 6): every word of it an identifier or a figure
+ * A search that only names things is not measured by meaning (rule 6): every word of it an identifier or a figure
  * ("SUP-1000", "2400"). To the embedder one ticket key is near every other, so look-alikes outranked the right one; the
  * page is the document it names, then the documents holding what it names, then nothing.
  */
@@ -216,7 +216,7 @@ export async function splitHead<D extends Placed & { relevance?: number; ranks?:
 }
 
 /**
- * THE RANKED PAGE'S HITS: each full or compact by its place, then (where the split is on) told apart into the
+ * The ranked page's hits: each full or compact by its place, then (where the split is on) told apart into the
  * documents that match the search and the ones only loosely related. Whether the SEARCH matched is the head's, decided
  * before paging (`splitHead`); a document the listing filled in past the head is read here. A container's listing (no
  * query) has nothing to match and is shown whole.
@@ -268,7 +268,7 @@ export async function rankedHits<D extends ShownHit>(
 }
 
 /**
- * THE OPEN PAGE SHOWS AN EXCERPT AS IT WAS WRITTEN. A stored passage is flattened to one line for indexing, so a
+ * The open page shows an excerpt as it was written. A stored passage is flattened to one line for indexing, so a
  * heading, a list dash or a table bar after its first block read as noise mid-sentence. Where this page splits
  * (`relevanceSplit`), each ranked document's excerpt is cut from its record's own text at the span its passage was
  * located at (`spanTexts`), line breaks intact; a document with no span keeps the flattened excerpt. What is stored,

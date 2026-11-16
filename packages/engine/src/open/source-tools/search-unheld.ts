@@ -6,7 +6,7 @@ import { hooksOf } from "../../kg/read/hooks.js";
 import { bm25Tiers, type Tiers } from "../../kg/read/keyword/tiers.js";
 
 /**
- * A WORD NO READABLE DOCUMENT HOLDS IS SEARCHED ANOTHER WAY, AND THE PAGE SAYS SO. The keyword index asks such a word
+ * A word no readable document holds is searched another way, and the page says so. The keyword index asks such a word
  * as a clause of the search itself (`kg/read/keyword/tiers.ts`): the last word as the start of a longer one, as Meilisearch and
  * Elasticsearch's `match_bool_prefix` read it, and a word as the held words a typo away from it; one that finds
  * nothing readable even so is left out. The search runs as typed; this names the words, never what they matched, so
@@ -80,7 +80,7 @@ const INDEX_DOWN =
   "Nothing was found, and the search is incomplete: the keyword index could not be read, so no document was searched by its words.";
 
 /**
- * A PAGE THAT FOUND NOTHING WHILE ITS KEYWORD INDEX WAS DOWN SAYS SO (`degraded` `keyword:index`), never that no
+ * A page that found nothing while its keyword index was down says so (`degraded` `keyword:index`), never that no
  * document holds the search's words or what it names: nothing was asked of them.
  */
 const indexDown = <P extends Page>(page: P): P =>

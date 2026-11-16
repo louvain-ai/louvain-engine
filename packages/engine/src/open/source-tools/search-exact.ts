@@ -9,7 +9,7 @@ import { exactCandidates } from "./lookup-reads.js";
 import type { ClientNarrow } from "./tool-helpers.js";
 
 /**
- * AN IDENTIFIED THING OUTRANKS AN UNIDENTIFIED REFERENCE TO IT. A search for "SUP-1042" among eighty tickets put the
+ * An identified thing outranks an unidentified reference to it. A search for "SUP-1042" among eighty tickets put the
  * ticket 18th: the keyword leg ranked it first, but an identifier means nothing to the embedder, whose nearest passages
  * were the other tickets (cosine 0.58 to 0.59 against the ticket's own 0.53), and fusion preferred "decent in both" to
  * "first in one". So the documents that ARE what the search names lead the page, in a tier of their own: the lookup's

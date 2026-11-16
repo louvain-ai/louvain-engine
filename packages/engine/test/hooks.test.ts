@@ -11,7 +11,7 @@ import { plainDetail } from "../src/sources/detail-seam.js";
 import { noAddedFilters } from "../src/sources/filter-seam.js";
 
 /**
- * WHAT A BUILD ADDS TO A READ TRAVELS IN ITS CONTEXT, AND A HOOK IT LEAVES OUT IS THE OPEN BUILD'S OWN (`hooks.ts`).
+ * What a build adds to a read travels in its context, and a hook it leaves out is the open build's own (`hooks.ts`).
  * An engine built with no hooks, as the open build's is, answers each read hook with the open constant itself, not a
  * copy, but for its presentation, which is the open build's made for that engine, so its cursor key is that engine's
  * and no other's; an engine built with some answers with those, and with the open build's for the rest. No process

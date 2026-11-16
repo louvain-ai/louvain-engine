@@ -1,12 +1,12 @@
 /**
- * THE HOST: who may read what and how sidecars are reached, a deployment's answers in one type (what a search reads is
+ * The host: who may read what and how sidecars are reached, a deployment's answers in one type (what a search reads is
  * a plugin, `search/retriever.ts`). A deployment hands it to the engine it builds (`createEngine`), whose reads ask its
  * resolver through their context. The readable set is REQUIRED, because a default would be a wider read; the sidecars
  * fall back to plain ones.
  */
 
 /**
- * WHO MAY READ WHAT. FAIL CLOSED: a store it cannot reach is a throw, never `[]` (a reader of nothing) and never a
+ * Who may read what. Fail closed: a store it cannot reach is a throw, never `[]` (a reader of nothing) and never a
  * default (a wider read than the deployment's). A read's context is made with one resolver and never swaps it.
  */
 export type ReadableSetResolver = {
@@ -17,7 +17,7 @@ export type ReadableSetResolver = {
 };
 
 /**
- * HOW A DEPLOYMENT REACHES A SIDECAR IT DOES NOT KEEP AS A PLAIN, ALWAYS-UP HTTP SERVICE. OPTIONAL: unbound, every
+ * How a deployment reaches a sidecar it does not keep as a plain, always-up HTTP service. Optional: unbound, every
  * sidecar is one, which is what the engine's own Compose file runs: probed for readiness, sent ordinary HTTP, used at
  * the address it was given.
  */

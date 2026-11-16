@@ -7,7 +7,7 @@ import { forgetRecentQueryVectors } from "../src/kg/read/recent-vectors.js";
 import { openTestEngine } from "./db/open-engine.js";
 
 /**
- * ONE EMBEDDING PER DISTINCT TEXT ACROSS CALLS, WITHIN A WORKSPACE, FOR A MINUTE (`kg/read/recent-vectors.ts`). An
+ * One embedding per distinct text across calls, within a workspace, for a minute (`kg/read/recent-vectors.ts`). An
  * agent's tool call has no memo scope: `louvain_search_sources` runs the answer path's legs beside the listing for the
  * same words, and its ranked head again on every page, so each leg asked the sidecar itself (two or three embeddings
  * a search, a second each). Legs started together now wait on one embedding, and a page asked

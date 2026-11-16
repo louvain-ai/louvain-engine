@@ -36,7 +36,7 @@ export function summaryLines(s: IngestSummary): string[] {
     ...(skipped ? [`skipped ${skipped}: ${skipSummary(s.skipped)}`] : []),
     ...(s.removalsHeld ? [`nothing removed: ${s.removalsHeld}.`] : []),
     ...(s.adopted
-      ? [`replaced ${counted(s.adopted, "document")} an earlier version of the loader wrote`]
+      ? [`replaced ${counted(s.adopted, "path-keyed document")} with the collection's own`]
       : []),
     ...(keyword.length > 0 ? [`keyword index: ${keyword.join(", ")}`] : []),
   ];

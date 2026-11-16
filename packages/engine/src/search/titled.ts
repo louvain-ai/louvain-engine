@@ -10,7 +10,7 @@ import type { Staged } from "./stage.js";
 type Ranked = Awaited<ReturnType<typeof documentOrder>>["order"];
 
 /**
- * WHERE A TITLED DOCUMENT GOES, AND HOW MANY: a search's 24-deep head is paged by the caller's `limit`, so a share of
+ * Where a titled document goes, and how many: a search's 24-deep head is paged by the caller's `limit`, so a share of
  * `limit`'s last places can be past the first page an agent reads. Titled documents take FIXED places instead, 7 to 9,
  * among the full hits of the default page, whatever `limit` the caller paged with, so every page of one search builds
  * the same head. The head grows by as many as were added.
@@ -21,7 +21,7 @@ const TITLED_PLACES = 3;
 const TITLED_READ = TITLED_PLACES * 3;
 
 /**
- * A DOCUMENT THE SEARCH NAMES IS FOUND BY ITS TITLE, where the build keeps a second matcher's title read
+ * A document the search names is found by its title, where the build keeps a second matcher's title read
  * (`keyword-index.ts` `titles`; the open build's index holds a title as its document's header, and has none): readable
  * documents whose title shares the search's stemmed words, fenced and bounded, ties to the newer current revision,
  * each shown by its opening passage. The legs rank passages by words and meaning, and a title is in neither, so a named

@@ -70,7 +70,7 @@ export type SourceRow = Omit<
   seriesKey: string | null;
 };
 /**
- * THE APP A SOURCE SHOWS AS, by the build's expression (`AddedFilters.app`, handed by the read); else the service its
+ * The app a source shows as, by the build's expression (`AddedFilters.app`, handed by the read); else the service its
  * presentation names, else the ONE app its connector declares (`connector-apps.ts`), else the connector itself. Read
  * at query time, so a connector's variant is filed under its app in a listing and an app filter, stored records too.
  */
@@ -81,7 +81,7 @@ export const displayApp = (sql: Queryable, app: ShownApp | null) => app?.shown()
 export const filterApp = (sql: Queryable, app: ShownApp | null) =>
   app?.filtered() ?? displayApp(sql, app);
 /**
- * THE CONNECTION A SOURCE CAME THROUGH, AS THIS VIEWER MAY NAME IT: an id a client names a source by, and a facet
+ * The connection a source came through, as this viewer may name it: an id a client names a source by, and a facet
  * groups by. A container filed under another (`container_parent`) may be read without its parent, and its reader must
  * not learn the parent through the connection: where this viewer does NOT read the parent, there is no connection to
  * name (null, grouped with none). A reader of the parent sees the connection.

@@ -4,7 +4,7 @@ import { EmbeddingFailed, EmbeddingUnavailable } from "@louvain/embeddings";
 import { isUnreachable } from "../src/unreachable.js";
 
 /**
- * A LANE THAT IS DOWN IS NOT WORK THAT IS WRONG: an embedding sidecar that could not answer is known by its type, also
+ * A lane that is down is not work that is wrong: an embedding sidecar that could not answer is known by its type, also
  * when another error wraps it, and a socket that could not connect by the platform's own codes. Anything else is the
  * work's fault.
  */

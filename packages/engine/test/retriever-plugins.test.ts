@@ -5,7 +5,7 @@ import { figuresRetriever } from "../src/plugins/retriever-figures/index.js";
 import { vectorRetriever } from "../src/plugins/retriever-vector/index.js";
 
 /**
- * THE SHIPPED RETRIEVERS NEED ONLY THE CONTRACT: what they read arrives on the fenced reading, and whether recall is
+ * The shipped retrievers need only the contract: what they read arrives on the fenced reading, and whether recall is
  * bounded arrives on the ask. A failed read comes back empty and named by the reading, and a retriever hands that on.
  */
 const ask = (query: string, bounded = false): RetrieverAsk => ({

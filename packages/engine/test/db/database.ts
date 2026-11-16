@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import postgres from "postgres";
 
 /**
- * A DATABASE OF THE TEST'S OWN, BUILT FROM THE ENGINE'S BASELINE SCHEMA AND NOTHING ELSE.
+ * A database of the test's own, built from the engine's baseline schema and nothing else.
  *
  * `TEST_AUTH_DATABASE_URL` names a Postgres server (with pgvector) where the test may create a database. The test makes
  * one named `engine_<purpose>_<random>_test`, loads the baseline schema into it, points `DATABASE_URL` at it before the

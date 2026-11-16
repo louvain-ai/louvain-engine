@@ -5,7 +5,7 @@ import { hooksOf } from "./hooks.js";
 import { queryIn, vectorSpaceFor } from "./space.js";
 
 /**
- * HOW WELL EACH SHOWN DOCUMENT MATCHES THE SEARCH, in two facts a person can check:
+ * How well each shown document matches the search, in two facts a person can check:
  *
  *   `words`   it holds the search's words, by the build's words test (`keyword-index.ts` `words`): the open build's
  *             index holds every word searched in its first tier, a word no readable document holds read as a prefix or
@@ -53,7 +53,7 @@ export async function relevanceOf(
   );
 }
 
-/** WHICH OF THESE WORDS A READABLE PASSAGE HOLDS, by the build's words test, under the reader's fence. */
+/** Which of these words a readable passage holds, by the build's words test, under the reader's fence. */
 export async function heldWords(
   context: ReadContext,
   viewer: Viewer,
@@ -65,7 +65,7 @@ export async function heldWords(
 }
 
 /**
- * THE LITERALS A SEARCH NAMES, each compared whole: a figure as bare digits ("2400", "2,400", "2.400", "2 400" and
+ * The literals a search names, each compared whole: a figure as bare digits ("2400", "2,400", "2.400", "2 400" and
  * "£2,400" are one number, and "2,400" never matches a bare "400"), and an IDENTIFIER, a token of letters and digits
  * together however hyphenated ("SUP-1042", "sup1042", a GUID), as its letters and digits alone; lower case, without
  * accents. A passage holds a figure when its text, its separators removed (`joined`), has it as a whole word, and an
@@ -80,7 +80,7 @@ export function literalsOf(query: string): string[] {
 }
 
 /**
- * THE SEARCH'S WORDS, no literal's pieces among them: the text search holds "SUP-1042" as "sup-1042", "sup" and "1042",
+ * The search's words, no literal's pieces among them: the text search holds "SUP-1042" as "sup-1042", "sup" and "1042",
  * so as words a search for one ticket matched every "SUP-" ticket, and a GUID's fragments matched any document holding
  * one of them; it holds "2,400" as "2" and "400", so "2,400" matched "400 units" and "2400" did not. Identifiers and
  * figures are literals (`literalsOf`); the words are the rest, folded.

@@ -4,7 +4,7 @@ import type { Engine } from "../../src/engine.js";
 import { openStore, type Store, storeOf } from "../../src/store.js";
 
 /**
- * THE OPEN BUILD'S ENGINE AS A TEST BUILDS IT, as an open entry does (`packages/cli/src/engine.ts`): over a store it
+ * The open build's engine as a test builds it, as an open entry does (`packages/cli/src/engine.ts`): over a store it
  * opens on the test's database (`openStore`), on the open host, with no plugins and the default settings, and the
  * embedder made for that host, which its reads and writes ask (`embedderOf`). Made once per process, on first use, after the test has set
  * the environment the pool and the embedder read; a case that searches through plugins hands its own beside it

@@ -5,7 +5,7 @@ import { type Engine, openEngine } from "./engine.js";
 import { eventOf, inFolder } from "./events.js";
 
 /**
- * AN IDENTIFIED THING OUTRANKS AN UNIDENTIFIED REFERENCE TO IT, among look-alikes. The golden corpus beside eighty
+ * An identified thing outranks an unidentified reference to it, among look-alikes. The golden corpus beside eighty
  * support tickets, each a document titled by its key ("SUP-1042: …") and written alike, and two documents that cite
  * one of them. Searched for by its key, the ticket that IS it leads the page, marked `match.exact`, and the documents
  * citing it come next; a key no document is changes nothing. Without the exact tier the ticket ranks far down: the
@@ -148,7 +148,7 @@ test("a search as of a date puts nothing in from today's exact reads", {
 });
 
 /**
- * AN IDENTIFIER IS ONE LITERAL (`relevance.ts` `literalsOf`, `wordsOf`): its pieces are not words. The text search
+ * An identifier is one literal (`relevance.ts` `literalsOf`, `wordsOf`): its pieces are not words. The text search
  * holds "SUP-1042" as "sup-1042", "sup" and "1042", so "sup" alone had marked all eighty look-alike tickets as holding
  * the search's words; a key no ticket is, and a GUID-like key sharing a ticket's digits, match no document by words.
  */
@@ -173,7 +173,7 @@ for (const query of ["SUP-1000", "7c2e-1042-a9f3-4b10"])
   });
 
 /**
- * A SEARCH THAT ONLY NAMES THINGS IS NOT MEASURED BY MEANING (rule 6, `search-relevance.ts` `namesOnly`). To the
+ * A search that only names things is not measured by meaning (rule 6, `search-relevance.ts` `namesOnly`). To the
  * embedder one ticket key is near every other, so look-alikes followed the ticket as "loosely related". The page is
  * the ticket, then the documents citing it, then nothing; a key no document holds is the note alone.
  */

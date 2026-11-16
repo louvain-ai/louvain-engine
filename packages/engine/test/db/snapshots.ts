@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { normalised, type Sent } from "./statements.js";
 
 /**
- * ONE FILE A STATEMENT. A snapshot is a header of `--` lines, an empty line, and the statement's raw text exactly as
+ * One file a statement. A snapshot is a header of `--` lines, an empty line, and the statement's raw text exactly as
  * it was sent. The header names where the text was found in the source (for a reader), how many parameters it takes,
  * the `set local` settings it runs under, which cases send it, and the shape of its plan on the corpus.
  *

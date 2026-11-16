@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 /**
- * THE SAME TOKEN WRITTEN SEVERAL WAYS IS ONE (`relevance.ts` `literalsOf`, `fold`): a figure with or without its
+ * The same token written several ways is one (`relevance.ts` `literalsOf`, `fold`): a figure with or without its
  * separators, an identifier joined, hyphenated or spaced, a word with or without its accents. No database: the
  * extraction and the fold only; the SQL side folds and joins the passage's text the same way.
  */

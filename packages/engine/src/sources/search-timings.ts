@@ -17,7 +17,7 @@ export const timed = <T>(name: string, run: () => Promise<T>): Promise<T> =>
   });
 
 /**
- * ONE REQUEST'S STAGES, FOR ITS OWN `Server-Timing` (`routes.ts`): the same stage names and milliseconds the shared
+ * One request's stages, for its own `Server-Timing` (`routes.ts`): the same stage names and milliseconds the shared
  * series counts, collected only inside `withSearchTimings`, so a browser can see where its own search went. Names and
  * numbers only: no query, no id, nothing a reader wrote.
  */

@@ -2,16 +2,16 @@ import type { Sql } from "postgres";
 import type { HeldEvent } from "./held-types.js";
 
 /**
- * Documents an earlier folder loader wrote: one feed for every folder, keyed by path, with no record key, so they
- * could never be updated or withdrawn. A folder's first run into a collection replaces each one of the same path AND
+ * Path-keyed documents: the `http`/`folder` feed, one for every folder, keyed by path with no record key, so no run
+ * can update or withdraw them. A folder's first run into a collection replaces each one of the same path AND
  * the same words, and withdraws it, so nothing is held twice; any other is another folder's, or not this file, and stays.
  */
 const LEGACY = { connector: "http", workspace: "folder" } as const;
 
-/** Whether the store holds any document the earlier loader wrote: one seek of its feed's idempotency index. */
+/** Whether the store holds any path-keyed document: one seek of its feed's idempotency index. */
 export async function legacyHeld(sql: Sql, orgId: string): Promise<boolean> {
   const [row] = await sql<{ one: number }[]>`
-    -- fence-ok: the earlier loader's own feed, found to be replaced; it serves no reader
+    -- fence-ok: the path-keyed feed, found to be replaced; it serves no reader
     select 1 as one from event_log
      where org_id = ${orgId} and connector = ${LEGACY.connector} and workspace = ${LEGACY.workspace}
      limit 1`;

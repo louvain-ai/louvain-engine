@@ -1,5 +1,5 @@
 /**
- * THE ENGINE'S OWN SMOKE TEST: the open accept and index path against the engine's Compose services and a database
+ * The engine's own smoke test: the open accept and index path against the engine's Compose services and a database
  * made from the generated schema alone, as a public reader would run it.
  *
  *   ./engine up                      # the services, this install's secrets in .engine/, and the schema

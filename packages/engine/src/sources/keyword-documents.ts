@@ -1,5 +1,5 @@
 /**
- * THE KEYWORD INDEX'S DOCUMENT ENTRIES, where the build's index holds them (`keyword-index.ts` `documents`): one per
+ * The keyword index's document entries, where the build's index holds them (`keyword-index.ts` `documents`): one per
  * document beside its records' entries, so a listing read from the index pages, counts and facets DOCUMENTS, under the
  * same fence as every read. An entry is its document's CURRENT revision: written with that revision's own entry, in
  * the same durable batch and from the same text and header, under one id per document, so a new revision replaces it.

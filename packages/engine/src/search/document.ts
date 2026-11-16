@@ -9,7 +9,7 @@ import type { SpeakerNamer } from "../kg/read/passages-around.js";
 import type { RecordSummary } from "../kg/read/record-read.js";
 
 /**
- * THE ONE DOCUMENT SHAPE A SEARCH RETURNS, and what it is asked with. Every stage of `search.ts` reads or writes these,
+ * The one document shape a search returns, and what it is asked with. Every stage of `search.ts` reads or writes these,
  * and nothing else: a pool of fused rows in, a page of documents out.
  */
 
@@ -92,8 +92,8 @@ export type SearchWith = {
 export type Pooled = { evidence: WithIds; score: number; legs: string[] };
 
 /**
- * WHERE THE ROWS COME FROM: the query's legs (and the question's, when there is one), fused into one ranking under the
- * reader's fence. The open build's reads its retriever plugins (`pool.ts`); the product passes its own, `candidates()`.
+ * Where the rows come from: the query's legs (and the question's, when there is one), fused into one ranking under the
+ * reader's fence. The open build reads its retriever plugins (`pool.ts`); another build may pass its own.
  * The reranker that orders what it found travels with it, `null` for none; left out, the bound one (`rerank-seam.ts`).
  */
 export type SearchPool = ((

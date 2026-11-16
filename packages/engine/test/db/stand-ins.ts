@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 
 /**
- * THE MODELS, STOOD IN FOR: an embedding sidecar and a reranker that answer the engine's own wire protocols over HTTP
+ * The models, stood in for: an embedding sidecar and a reranker that answer the engine's own wire protocols over HTTP
  * on the loopback address, so the real loader and the real search call them exactly as they call the services, and
  * every answer is a pure function of the text.
  *

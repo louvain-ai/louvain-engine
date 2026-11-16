@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * THE FILES A MODULE LOADS BESIDE ITSELF GO WITH IT INTO THE BUILD. `tsc` emits JavaScript only, so a JSON a module
+ * The files a module loads beside itself go with it into the build. `tsc` emits JavaScript only, so a JSON a module
  * reads by a path next to its own (`createRequire(import.meta.url)` of a file beside it) exists under `src` and never under
  * `dist`, and a built process silently runs without it. A package names such files in its `package.json`
  * `runtimeAssets` (paths under `src/`); its build runs this after `tsc` to copy each to the same place under `dist/`.

@@ -5,7 +5,7 @@ import type { SearchRequest } from "./search.js";
 const QUESTION_CHARS = 2_000;
 
 /**
- * THE PERSON'S QUESTION IS SEARCHED TOO, where the engine's settings say so (`retrieval.searchQuestion`, `on`): an
+ * The person's question is searched too, where the engine's settings say so (`retrieval.searchQuestion`, `on`): an
  * agent searches with its own rewrite of what was asked, and a rewrite drops words the question had. A question that is
  * not the query itself is read beside it under the same fence, fused into one pool, and ranks the page; otherwise null.
  */

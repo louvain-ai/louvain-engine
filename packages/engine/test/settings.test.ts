@@ -5,7 +5,7 @@ import { departures, settingsOf } from "../src/config/settings.js";
 import { keywordRetriever } from "../src/plugins/retriever-keyword/index.js";
 
 /**
- * THE SEARCH'S SETTINGS ARE THE CONFIGURATION'S: `settings` in `engine.config.ts`, one schema, each setting at its default
+ * The search's settings are the configuration's: `settings` in `engine.config.ts`, one schema, each setting at its default
  * when left out, a value out of range refused by its path, and the start told which settings depart from their defaults.
  */
 

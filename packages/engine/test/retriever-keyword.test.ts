@@ -4,7 +4,7 @@ import type { FencedReading, RetrieverAsk } from "@louvain/engine-core";
 import { keywordRetriever } from "../src/plugins/retriever-keyword/index.js";
 
 /**
- * THE KEYWORD RETRIEVER READS THE KEYWORD LEG ALONE, through the contract: one `keyword` read of the fenced reading,
+ * The keyword retriever reads the keyword leg alone, through the contract: one `keyword` read of the fenced reading,
  * at the ask's depth, its rows handed on in the index's order as the leg `keyword`.
  */
 const ask: RetrieverAsk = { query: "SUP-1042 export", limit: 12, mode: "hybrid", bounded: false };

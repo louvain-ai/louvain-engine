@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 /**
- * AGE LOWERS A PASSAGE'S RELEVANCE INSIDE EACH LEG, BOUNDED (`@louvain/engine-core` `decayed`), AND ONLY FOR A
- * QUESTION NOT ABOUT THE PAST (the caller decides which questions decay). The sole
+ * Age lowers a passage's relevance inside each leg, bounded (`@louvain/engine-core` `decayed`), and only for a
+ * question not about the past (the caller decides which questions decay). The sole
  * old source against fresh rows, against a real Postgres, is `recency-decay-db.test.ts`.
  */
 const DAY = 86_400_000;

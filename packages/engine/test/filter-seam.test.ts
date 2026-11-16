@@ -15,7 +15,7 @@ import {
 const sql = postgres("postgres://fragments@127.0.0.1:1/none", { onnotice: () => {} });
 
 /**
- * THE OPEN BUILD'S FILTERS AFTER THE FENCE (`noAddedFilters`, what a read handed no hook reads) refuse a mark, an
+ * The open build's filters after the fence (`noAddedFilters`, what a read handed no hook reads) refuse a mark, an
  * arrivals view, a participant and a genre with a sentence rather than answering unfiltered, match a sender by the
  * actor alone and keep nothing of a narrowing.
  */

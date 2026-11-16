@@ -53,7 +53,7 @@ async function relocate(run: Run, change: Updated): Promise<Taken> {
     const withdrawn = await withdrawWithin(trx, orgId, old);
     return { result: await acceptOpen(sql, orgId, change.event, trx), withdrawn };
   });
-  run.s.keywordStale += await forgetKeywords(
+  run.summary.keywordStale += await forgetKeywords(
     run.state,
     old.map((e) => e.id),
   );

@@ -4,7 +4,7 @@ import { displayApp } from "../sources/read-core.js";
 import { type Writes, writeHooksOf } from "../writes.js";
 
 /**
- * A DOCUMENT'S KEYWORD ENTRY, WRITTEN WITH ITS CURRENT REVISION'S (`sources/keyword-documents.ts` says what the entries
+ * A document's keyword entry, written with its current revision's (`sources/keyword-documents.ts` says what the entries
  * are): where the build's index holds them (`KeywordIndex.documents`), named by the build's app rule
  * (`AddedFilters.app`), both from the write's own hooks.
  */

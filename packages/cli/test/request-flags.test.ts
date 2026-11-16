@@ -5,7 +5,7 @@ import { z } from "zod";
 import { fieldsOf, helpOf, optionsOf, requestOf } from "../src/request-flags.js";
 
 /**
- * A SOURCE'S REQUEST IS ITS COMMAND LINE: the shipped sources' fields as flags, with their descriptions; a numeric or
+ * A source's request is its command line: the shipped sources' fields as flags, with their descriptions; a numeric or
  * repeated field read as the schema types it; and a request that is not an object has no flags.
  */
 const requestOfSource = async (plugin: typeof folder | typeof records) =>

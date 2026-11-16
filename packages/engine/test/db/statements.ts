@@ -3,11 +3,11 @@ import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * THE STATEMENTS A READ SENDS, AS TEXT. Captured with the driver's `debug` hook, which hears every statement on every
+ * The statements a read sends, as text. Captured with the driver's `debug` hook, which hears every statement on every
  * connection with its parameters; transaction control and the driver's own catalogue lookups are dropped, and a
  * `set local` is kept as a statement of its own, since it changes the plan of what follows it.
  *
- * TWO TEXTS. A statement is compared by its NORMALISED text: each run of whitespace outside a string literal or a
+ * Two texts. A statement is compared by its NORMALISED text: each run of whitespace outside a string literal or a
  * comment becomes one space, and a `--` comment keeps its line end, so a template re-indented passes and one whose
  * words change fails. The RAW text is what the snapshot shows and what a re-indent changes; a difference only there is
  * reported, not failed.
@@ -86,7 +86,7 @@ function readSource(file: string): Source {
 }
 
 /**
- * WHERE A STATEMENT COMES FROM, found by its text. The statement is cut into stretches between its values (a parameter
+ * Where a statement comes from, found by its text. The statement is cut into stretches between its values (a parameter
  * or a quoted name). From the opening stretch on, the engine source files holding each stretch narrow the candidates
  * until one is left (a stretch none of them holds is a fragment from elsewhere); failing that, the first stretch only
  * one file holds decides. The sender is the function around the opening stretch in that file. For a reader of the

@@ -1,5 +1,5 @@
 /**
- * THE GOLDEN CORPUS: the papers of an invented company, in five collections. Every name, figure and date is made up.
+ * The golden corpus: the papers of an invented company, in five collections. Every name, figure and date is made up.
  *
  * It is written so each thing a search can do is exercised by something here:
  * - near-duplicates: the two expenses policies differ by a year and a figure;
@@ -301,7 +301,7 @@ export const REVISIONS: readonly Revision[] = [
 ];
 
 /**
- * WHO READS WHAT. The open build's own reader reads everything it loaded; these two read part of it, through the same
+ * Who reads what. The open build's own reader reads everything it loaded; these two read part of it, through the same
  * projection the loader writes.
  */
 export const READERS = {

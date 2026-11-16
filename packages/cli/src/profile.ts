@@ -1,5 +1,5 @@
 /**
- * THE PROFILE A COMMAND RUNS: a folder under `profiles/` with its own engine.config.ts, chosen with
+ * The profile a command runs: a folder under `profiles/` with its own engine.config.ts, chosen with
  * `./engine profile set <name>`, which remembers the name in `.engine/profile`; with none, the root's engine.config.ts
  * runs. A profile keeps its own state (its token, its secrets) in a folder named for it beside the install's, and the
  * wrapper gives it its own Compose project, so switching profile switches corpus and index together. Its settings go

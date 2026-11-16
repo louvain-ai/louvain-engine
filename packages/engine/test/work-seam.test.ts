@@ -4,7 +4,7 @@ import type { WorkHooks } from "../src/memory/work-seam.js";
 import { type Writes, writeHooksOf } from "../src/writes.js";
 
 /**
- * THE INDEXER'S WORK IS A WRITE HOOK (`writes.ts` `WriteHooks.work`). A build that hands none owns nothing: nothing to
+ * The indexer's work is a write hook (`writes.ts` `WriteHooks.work`). A build that hands none owns nothing: nothing to
  * check, nothing durable, and a plain transaction on the pool its writes write through. A build that hands its queue's
  * has its writes check that claim and commit through it.
  */

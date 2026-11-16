@@ -40,7 +40,7 @@ export type QuestionReading = {
    */
   window: { from: string; to: string; text: string } | null;
   /**
-   * WHAT KIND of question it is, from the shape model (`memory/shape-model.ts`)
+   * What kind of question it is, from the shape model (`memory/shape-model.ts`)
    * when one is configured, else null — the half of the job a part-of-speech
    * tagger cannot do. `enumerate` says a complete answer lists more than one
    * item; `multiDocument` that answering plausibly takes several sources;

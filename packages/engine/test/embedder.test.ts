@@ -6,7 +6,7 @@ import { createEngine, type EngineParts } from "../src/engine.js";
 import type { EngineHooks } from "../src/writes.js";
 
 /**
- * THE ENGINE'S EMBEDDER RIDES ON ITS CONTEXT AND ITS WRITES. `createEngine` puts its own among the hooks of each, and a
+ * The engine's embedder rides on its context and its writes. `createEngine` puts its own among the hooks of each, and a
  * read or a write that embeds asks `embedderOf`: nothing binds one per process, and hooks without one embed nothing.
  */
 const parts = (embedder: EngineParts["embedder"], hooks?: EngineHooks): EngineParts => ({

@@ -7,7 +7,7 @@ export type By = "exact" | "words" | "relevance" | "meaning";
 type Signals = { words: boolean; meaning: number | null; exact?: true; relevance?: number };
 
 /**
- * A DOCUMENT MATCHES WHEN ANY SIGNAL SAYS SO, and `by` names the strongest: it is what the search names, it holds the
+ * A document matches when any signal says so, and `by` names the strongest: it is what the search names, it holds the
  * search's words, the reranker scores it at or above its model's measured cut-off, or its meaning reaches the
  * embedder's floor. A low score hides nothing: a cross-encoder scores an answer worded differently from its question
  * near zero, as low as it scores a word no document holds, so the rest are listed apart as loosely related.

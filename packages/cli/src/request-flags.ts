@@ -1,5 +1,5 @@
 /**
- * A SOURCE'S REQUEST IS ITS COMMAND LINE: each field of its schema is a `--flag`, typed as the schema types it (read from
+ * A source's request is its command line: each field of its schema is a `--flag`, typed as the schema types it (read from
  * zod's own JSON Schema) and described in `--help` by its `.describe()`. The values go to the schema whole, so a wrong
  * one is refused in zod's words, by the one rule for a source that ships and a source a person wrote.
  */

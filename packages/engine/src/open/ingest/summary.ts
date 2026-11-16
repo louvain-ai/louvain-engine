@@ -17,7 +17,7 @@ export type IngestSummary = {
   removalsHeld: string | null;
   /** Keyword entries a withdrawal could not delete; never shown, since every hit is read again from the store. */
   keywordStale: number;
-  /** Documents an earlier folder loader wrote, replaced by this run's own. */
+  /** Path-keyed documents (`legacy.ts`), replaced by this run's own. */
   adopted: number;
 };
 

@@ -5,7 +5,7 @@ import { type Engine, openEngine } from "./engine.js";
 import { eventOf, inFolder } from "./events.js";
 
 /**
- * A FIGURE IS ONE FIGURE HOWEVER IT IS WRITTEN (the keyword index's analyzer, its word-delimiter step: `analyzer-cases.json`). A price
+ * A figure is one figure however it is written (the keyword index's analyzer, its word-delimiter step: `analyzer-cases.json`). A price
  * list states "GBP 2,400"; nobody writes "2400". Searched as "2400", "2,400" or "2.400", it is one search and
  * one page, the same documents in the same order, the price list matching by its figure. The figure's pieces are not
  * words, so "400 units" does not match "2,400": the analyzer indexes "2,400" as `2400` too, and a search takes it
@@ -110,7 +110,7 @@ test("a figure of five digits written bare finds it written grouped", {
 });
 
 /**
- * A KEY'S NUMBER IS A NUMBER, AND A KEY'S TAIL IS FOUND (the owner's cases): "note-05" is found, and leads, for
+ * A key's number is a number, and a key's tail is found (the owner's cases): "note-05" is found, and leads, for
  * "NOTE5", "note5", "note-5" and "note05" (a digit part loses its leading zeros), and "notes-5" finds the key that ends
  * with it (a search's key matches as the phrase of its parts).
  */

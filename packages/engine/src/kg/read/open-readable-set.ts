@@ -19,7 +19,7 @@ export const openReadableSet = (sql: Sql): ReadableSetResolver => ({
 });
 
 /**
- * THE OPEN BUILD'S HOST over a pool, which an open entry hands `createEngine`: whose set a fence reads, and no work
+ * The open build's host over a pool, which an open entry hands `createEngine`: whose set a fence reads, and no work
  * queue (a plain transaction).
  */
 export const openHost = (sql: Sql): Host => ({ readableSet: openReadableSet(sql) });

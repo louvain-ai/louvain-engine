@@ -8,7 +8,7 @@ import { noAddedFilters } from "../src/sources/filter-seam.js";
 import { type Writes, writeHooksOf } from "../src/writes.js";
 
 /**
- * WHAT A BUILD ADDS TO A WRITE TRAVELS IN THE WRITE'S OWN VALUE (`writes.ts`), and a hook it leaves out is the open
+ * What a build adds to a write travels in the write's own value (`writes.ts`), and a hook it leaves out is the open
  * build's own constant. A write handed no hooks cuts a text as one part, does nothing after it writes, names an app by
  * the open rule and keeps document entries; one handed some writes by those. No process binding is read.
  */

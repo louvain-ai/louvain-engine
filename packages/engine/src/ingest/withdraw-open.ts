@@ -113,7 +113,7 @@ export async function forgetKeywords(writes: Writes, ids: string[]): Promise<num
 }
 
 /**
- * THE DOCUMENT ENTRIES A WITHDRAWAL MOVED, after its commit, where the build's index holds them (`keyword-index.ts`
+ * The document entries a withdrawal moved, after its commit, where the build's index holds them (`keyword-index.ts`
  * `documents`): a document left with a revision is indexed again from the one now current, which writes its entry
  * (`keyword-documents.ts`); one left with none has its entry deleted. How many the index did not take.
  */

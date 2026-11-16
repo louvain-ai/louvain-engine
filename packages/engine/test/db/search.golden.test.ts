@@ -7,7 +7,7 @@ import { normalise, readGolden, writeGolden, writing } from "./golden.js";
 import { CASES } from "./search.cases.js";
 
 /**
- * WHAT THE ENGINE ANSWERS, PINNED. Every case in `search.cases.ts` runs against the golden corpus on a database built
+ * What the engine answers, pinned. Every case in `search.cases.ts` runs against the golden corpus on a database built
  * from the baseline schema, and its answer must equal the one recorded in `search.golden.json`: the same documents,
  * in the same order, with the same fields, the same paging and the same degradations. A refactor that changes none of
  * these passes; one that changes any of them fails, naming the case and showing the difference.
@@ -77,7 +77,7 @@ test("an identifier typed joined finds the documents that write it hyphenated", 
 });
 
 /**
- * A PAGE THAT SAYS MORE IS FOLLOWED BY ONE THAT SHOWS IT: paged until `hasMore` is false, no page before the last is
+ * A page that says more is followed by one that shows it: paged until `hasMore` is false, no page before the last is
  * empty, the last says it is the last, and no document is shown twice (the app's "plan" came back empty on page 2).
  */
 test("a ranked search pages to its end with no empty page", { skip: skipWithoutDatabase }, () => {

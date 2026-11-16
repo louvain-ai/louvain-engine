@@ -4,7 +4,7 @@ import type { ReadContext } from "./fence.js";
 import { queryVectorWith } from "./question.js";
 
 /**
- * WHICH VECTOR SPACE A WORKSPACE IS SEARCHED IN. Every search that compares a query vector with stored vectors takes
+ * Which vector space a workspace is searched in. Every search that compares a query vector with stored vectors takes
  * its columns and its query embedder from here together, so a query from one model is never ranked against another
  * model's column. The engine has one space, the current one: a change of model is a re-index. A build that keeps a
  * second space beside it while a workspace moves hands it to its reads (`ReadHooks.spaces`); a read handed none reads
@@ -31,7 +31,7 @@ export type OtherSpace = {
 };
 
 /**
- * WHAT A BUILD'S VECTOR SPACES ARE:
+ * What a build's vector spaces are:
  *
  *   `spaceFor`    the space a workspace is searched in when it is not the current one, else null; none in a build
  *                 with one space.

@@ -3,7 +3,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
 /**
  * PAGING `louvain_search_sources`: an opaque cursor, and the walk that fills a page from the listing.
  *
- * A RANKED order has no key to resume from — it is recomputed per call (the legs fused, the cross-encoder) — so the
+ * A ranked order has no key to resume from — it is recomputed per call (the legs fused, the cross-encoder) — so the
  * cursor records WHERE in the order it stopped, and the order is made reproducible instead: the answer path's head is
  * always ranked at its full depth, whatever page is asked for, and the listing's documents follow it in the listing's
  * own deterministic order. Once a page has passed the head, the cursor carries the head's document ids, so the later
@@ -13,10 +13,10 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
  * different search is refused rather than read as a position in it. It names documents the caller was already shown
  * and a position; it grants nothing, and every page is read through the same fenced functions as the first.
  *
- * SEALED, NOT ENCODED: a cursor is text an agent logs, shares or pastes into another agent, and the head's document
+ * Sealed, not encoded: a cursor is text an agent logs, shares or pastes into another agent, and the head's document
  * ids inside it are a list of what the original viewer could see. So it is AES-256-GCM under a key derived for this
- * purpose alone, which the build binds (`presentation-seam.ts` `cursorKey`: the product derives it from its credentials
- * key, the open engine from its bearer token): nobody holding a cursor reads it, and one altered by a byte fails its
+ * purpose alone, which the build binds (`presentation-seam.ts` `cursorKey`: the open engine derives it from its bearer
+ * token, another build from a secret of its own): nobody holding a cursor reads it, and one altered by a byte fails its
  * tag and is refused.
  */
 
@@ -37,7 +37,7 @@ export type SearchCursor =
   | { v: 1; k: string; p: "list"; j: number; w?: true };
 
 /**
- * HOW MUCH OF A DOCUMENT ID A LISTING CURSOR KEEPS: its first 16 characters. The ids the listing returns are
+ * How much of a document ID a listing cursor keeps: its first 16 characters. The ids the listing returns are
  * `source_document` ids, 64 lower-case hex characters of a digest, so 16 of them are 64 random bits (a UUID v4, as a
  * space file's id is, keeps 13 random hex digits in its first 16 characters: 52 bits). A prefix only ever HIDES a row
  * (it is the skip set, matched against the listing's rows), never shows one: two distinct documents sharing a prefix
@@ -131,7 +131,7 @@ export function decodeCursor(text: string, key: string, seal: Buffer): SearchCur
 export type ListingPage<T> = { rows: T[]; hasMore: boolean };
 
 /**
- * FILL A PAGE FROM THE LISTING: `want` rows from raw index `from`, skipping the ids in `skip`, reading the listing's
+ * Fill a page from the listing: `want` rows from raw index `from`, skipping the ids in `skip`, reading the listing's
  * own pages in order. Returns the rows, the raw index to resume from, and whether the listing holds more past it.
  * Bounded: at most enough listing pages for `want` rows plus two, so a page of skips cannot walk the tenant.
  */
@@ -141,7 +141,7 @@ export async function fillFromListing<T extends { id: string }>(
 ): Promise<{ rows: T[]; next: number; hasMore: boolean }> {
   const rows: T[] = [];
   let next = opts.from;
-  // MORE MEANS A ROW THE NEXT PAGE WILL SHOW: a row it would skip (already shown) is passed over, never counted, so a
+  // More means a row the next page will show: a row it would skip (already shown) is passed over, never counted, so a
   // page never says there is more and leaves the next one empty. Past `want`, the walk looks ahead for one such row.
   let hasMore = false;
   const calls = Math.ceil(opts.want / opts.pageSize) + 2;

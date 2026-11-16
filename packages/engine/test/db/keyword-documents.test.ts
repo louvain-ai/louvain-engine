@@ -7,7 +7,7 @@ import { type Engine, openEngine } from "./engine.js";
 import { eventOf, inFolder } from "./events.js";
 
 /**
- * THE KEYWORD INDEX'S DOCUMENT ENTRIES (`sources/keyword-documents.ts`), as the open build writes them: one per
+ * The keyword index's document entries (`sources/keyword-documents.ts`), as the open build writes them: one per
  * document, its current revision's, replaced by a newer revision, written again from the revision a withdrawal leaves
  * current, and deleted with the document. Read from a stand-in index that keeps what it is sent, upserts and deletes
  * in order. Its own database and corpus, every document invented.

@@ -7,7 +7,7 @@ import { openPassageRules } from "../src/ingest/passage-rules.js";
 import { openTestEngine } from "./db/open-engine.js";
 
 /**
- * ONE EMBEDDING PER CHUNK IN THE OPEN BUILD (`PassageRules.contextVector`, null in `openPassageRules`). Its vector leg
+ * One embedding per chunk in the open build (`PassageRules.contextVector`, null in `openPassageRules`). Its vector leg
  * ranks by the bare vector alone, so a chunk's context is written as text (its `context`) and never
  * embedded: N chunks with contexts send N texts to the embedder, not 2N, and no row carries a context vector. No model
  * runs: the open build's embedder talks to a local stub that counts what it is sent.

@@ -45,7 +45,7 @@ export type SearchInput = {
    */
   semanticFloor?: number | undefined;
   /**
-   * A SCOPE (an agent's "this space"): these containers only, INTERSECTED with the owner's readable set —
+   * A scope (an agent's "this space"): these containers only, INTERSECTED with the owner's readable set —
    * a narrowing, never the fence. A container outside it contributes nothing, so a scope the person cannot
    * read is an empty page, never an error.
    */
@@ -53,7 +53,7 @@ export type SearchInput = {
 };
 
 /**
- * ONE LISTING: what was asked, the reader's scope, the build's predicates after the fence (`AddedFilters`) and the handle
+ * One listing: what was asked, the reader's scope, the build's predicates after the fence (`AddedFilters`) and the handle
  * of the read it serves (`sql`), which every fragment of it is written with. A listing's statements and filters take it
  * whole (`read-filter.ts`, `read-listing.ts`).
  */

@@ -5,7 +5,7 @@ import { type Engine, openEngine } from "./engine.js";
 import { eventOf, inFolder } from "./events.js";
 
 /**
- * THE OPEN PAGE SHOWS AN EXCERPT AS IT WAS WRITTEN (`search-relevance.ts` `asWritten`). A post-incident review in
+ * The open page shows an excerpt as it was written (`search-relevance.ts` `asWritten`). A post-incident review in
  * Markdown is stored as passages flattened to one line for indexing; on the open page its excerpt is cut from the
  * record's own text at the passage's span, so its headings and list items keep their line breaks. A page that does not
  * split (`LOUVAIN_SEARCH_RELEVANCE=off`) keeps the flattened excerpt.

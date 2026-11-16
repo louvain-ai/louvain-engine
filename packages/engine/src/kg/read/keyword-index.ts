@@ -42,7 +42,7 @@ type BestPassage = (
 type KeywordPasses = (context: ReadContext, leg: KeywordLegRead) => Promise<Row[]>;
 
 /**
- * WHICH RECORDS AND WORDS THE SEARCH'S WORDS ARE HELD BY, under a reader's fence: `holders` of these records (`ids`),
+ * Which records and words the search's words are held by, under a reader's fence: `holders` of these records (`ids`),
  * those holding the search's words; `held` of these words, those a readable passage holds. A page says with it which of
  * its documents match by their words (`relevance.ts`); ranking never reads it.
  */
@@ -56,7 +56,7 @@ export type WordsTest = {
 };
 
 /**
- * WHAT A BUILD'S KEYWORD INDEX IS, handed to its reads in their context (`ReadHooks.keyword`) and to its writes in
+ * What a build's keyword index is, handed to its reads in their context (`ReadHooks.keyword`) and to its writes in
  * theirs (`writes.ts`), which ask whether it holds document entries:
  *
  *   `passes`     what answers a keyword read the index does not: a build that keeps a second matcher hands its own
@@ -93,7 +93,7 @@ export type KeywordIndex = {
 };
 
 /**
- * THE OPEN BUILD'S BEST PASSAGE: the one holding the index's snippet for its record, the fragment where the search's
+ * The open build's best passage: the one holding the index's snippet for its record, the fragment where the search's
  * words fell (`apps/nlp/bm25_query.py` `_highlight`), compared with runs of whitespace as one space, since a passage is
  * stored on one line and the record keeps its breaks. Measured on the search table and the engine's cases: every
  * snippet lies whole in one passage. A record with no snippet (its words only in its title) shows its first.

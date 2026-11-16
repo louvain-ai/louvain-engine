@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * WHAT THE BUILT ENGINE WAS BUILT FROM: a sha256 over the sources of every package the workspace builds under
+ * What the built engine was built from: a sha256 over the sources of every package the workspace builds under
  * `packages/` (each one's `src`, and `web` where it has one, its tsconfig files and its manifest), the compiler settings
  * they extend and the root lockfile, each by path and bytes in path order. A package is one the workspace file
  * (`pnpm-workspace.yaml`) names and whose manifest has a `build` script, so adding one needs no list here. The build

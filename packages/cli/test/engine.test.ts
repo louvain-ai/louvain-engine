@@ -7,7 +7,7 @@ import { fileReaderLane, IngestDoorRefused, ingestDoor, openHost, poolOf } from 
 import { openEngine } from "../src/engine.js";
 
 /**
- * THE CONFIGURATION, LOADED AS `./engine` LOADS IT: engine.config.ts in a root whose `packages` is this checkout's.
+ * The configuration, as `./engine` loads it: engine.config.ts in a root whose `packages` is this checkout's.
  * No file runs the defaults; a file's kinds replace the defaults' and its settings reach the engine; the shipped file
  * runs no reranker until its sidecar line is uncommented, no ingest door until its sources line is, and the app beside
  * the tools until its surfaces line is; two rerankers are refused in one sentence; and its answerer, the agent, says

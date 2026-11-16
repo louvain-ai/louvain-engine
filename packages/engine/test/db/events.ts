@@ -1,7 +1,7 @@
 import { CORPUS, type CorpusDocument, REVISIONS } from "./corpus.js";
 
 /**
- * THE CORPUS AS THE LOADER TAKES IT: one ingest event a document, then one a revision, each with a fixed id (the same
+ * The corpus as the loader takes it: one ingest event a document, then one a revision, each with a fixed id (the same
  * in every database) and a fixed date. A document is a file of a loaded folder, filed under its collection.
  */
 const eventId = (n: number) => `01JG${String(n).padStart(22, "0")}`;

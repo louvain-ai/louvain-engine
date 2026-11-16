@@ -16,7 +16,7 @@ import { timed } from "./search-timings.js";
 
 /** Search: the reader's reach, its stage timings, and the hybrid listing (meaning and words) over it. */
 /**
- * THE READER'S WHOLE REACH, WHEN IT IS SMALL (`bounds.ts`): the current documents of at most `REACH_EVENTS`
+ * The reader's whole reach, when it is small (`bounds.ts`): the current documents of at most `REACH_EVENTS`
  * events of their containers, or null when the containers hold more events than that, or more than `REACH_DOCS`
  * documents. Read by the `(org_id, container)` index and, per event, the current-event index (`limit 1` in a lateral
  * keeps the planner from hashing the whole document table on its container estimate). Every id it returns is still
@@ -43,7 +43,7 @@ export async function reachOf(context: ReadContext, s: Scope): Promise<string[] 
 }
 
 /**
- * WHAT A SEARCH WALKS: the reader's readable set, narrowed to the containers the input names, with their reach
+ * What a search walks: the reader's readable set, narrowed to the containers the input names, with their reach
  * (`reachOf`) and a narrowing's documents (`narrowedReach`, bound) where those are few; null when nothing is readable.
  * `searchSources` and any count of what a search would list read through this one preparation, so a count is of what
  * the search walks.
@@ -72,7 +72,7 @@ export async function searchScope(
 }
 
 /**
- * THE LISTING, with words or without. Words are the build's keyword index's where it holds documents
+ * The listing, with words or without. Words are the build's keyword index's where it holds documents
  * (`indexListingOrNone`, the open build's) and else a second matcher's (`ListingWords.listing`, words and meaning); a
  * build with neither has no listing with words, and says so. Without words, the date-ordered keyword page.
  */

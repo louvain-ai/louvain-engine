@@ -1,7 +1,7 @@
 import type { ReadingScope } from "./scope.js";
 
 /**
- * A RETRIEVER: one way a search finds candidates, a plugin of the `retriever` kind. The engine ships three (vector,
+ * A retriever: one way a search finds candidates, a plugin of the `retriever` kind. The engine ships three (vector,
  * keyword, figures) and a deployment may add its own; every one is read the same way and fused by the engine.
  *
  * A retriever is handed a `FencedReading`, never the pool: every read on it is already narrowed to the asker's scope,

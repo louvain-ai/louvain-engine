@@ -4,7 +4,7 @@ import { skipWithoutDatabase } from "./database.js";
 import { type Engine, openEngine } from "./engine.js";
 
 /**
- * A DOCUMENT MATCHES BY MEANING ONLY WHEN THE SEARCH HAS WORDS TO MEAN SOMETHING (`search-relevance.ts`
+ * A document matches by meaning only when the search has words to mean something (`search-relevance.ts`
  * `SHATTERED_AT`). A string neither the documents nor the language model know as a word has no meaning to compare:
  * the page is the note alone, with no documents under it and no further page. A real word no document holds is
  * measured, falls short, and keeps the nearest documents as loosely related. A search sharing no word with its answer

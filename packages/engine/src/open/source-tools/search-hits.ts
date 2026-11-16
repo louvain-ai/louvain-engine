@@ -7,7 +7,7 @@ import type { LinkTo } from "./presentation-seam.js";
 import { connectionOf } from "./tool-helpers.js";
 
 /**
- * WHO WROTE A SOURCE, for a model. A person's source names its author. An agent's is flagged
+ * Who wrote a source, for a model. A person's source names its author. An agent's is flagged
  * `writtenByAgent` and names which agent and on whose behalf (`generatedBy`) — never its record's author,
  * which for a saved file is Louvain's uploader and never the person, and never the person alone as though
  * they wrote it. `generatedBy` is absent on a file read before it was stamped.
@@ -85,7 +85,7 @@ export function fullHit(
   };
 }
 
-/** A COMPACT hit (past `FULL_HITS` on a default page): what opens it, what it is, what fences it, a short excerpt. */
+/** A compact hit (past `FULL_HITS` on a default page): what opens it, what it is, what fences it, a short excerpt. */
 export function compactHit({ recordId, summary, excerpt }: ShownHit, linkTo: LinkTo) {
   return {
     id: summary.id,

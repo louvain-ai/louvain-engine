@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * THE KEYWORD INDEX THE DATABASE TESTS READ, as the open build requires one, ONE PER TEST FILE: the index's ranking
+ * The keyword index the database tests read, as the open build requires one, ONE PER TEST FILE: the index's ranking
  * statistics are its whole content's, so an index another file's corpus shares would move this file's recorded order.
  * Where no Python has its binding, a container of an image built from `apps/nlp/Dockerfile.bm25`
  * (`LOUVAIN_TEST_BM25_IMAGE`); else a Python with its binding (`LOUVAIN_TEST_BM25_PYTHON`, else `apps/nlp/.venv` in this
@@ -23,7 +23,8 @@ const IMAGE = process.env.LOUVAIN_TEST_BM25_IMAGE;
 export type Index = { url: string; stop: () => void };
 
 const NONE =
-  "no keyword index: neither LOUVAIN_TEST_BM25_URL, LOUVAIN_TEST_BM25_IMAGE nor a Python with its binding (LOUVAIN_TEST_BM25_PYTHON, apps/nlp/.venv)";
+  "no keyword index for the database tests: set LOUVAIN_TEST_BM25_IMAGE=$(docker build -q -f apps/nlp/Dockerfile.bm25 .) " +
+  "from the repository root (or LOUVAIN_TEST_BM25_URL, or a Python with its binding: LOUVAIN_TEST_BM25_PYTHON, apps/nlp/.venv)";
 
 /** Why this run can start no keyword index, or undefined when it can (a URL, an image or a Python). */
 export const noKeywordIndex = (): string | undefined =>

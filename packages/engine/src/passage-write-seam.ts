@@ -1,5 +1,5 @@
 /**
- * WHAT A BUILD DOES AFTER PASSAGES ARE WRITTEN, handed to a write in its hooks (`writes.ts` `WriteHooks.passageWrites`):
+ * What a build does after passages are written, handed to a write in its hooks (`writes.ts` `WriteHooks.passageWrites`):
  * given the kind of vector (`passage` or `context`) and the passages' ids, it does its own work on them, best effort,
  * never a condition of the write. A write handed none reads `plainPassageWrites`, which does nothing.
  */

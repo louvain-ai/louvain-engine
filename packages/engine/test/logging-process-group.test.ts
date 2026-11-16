@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 /**
- * THE PROCESS GROUP IS READ WHEN THE FIRST LINE IS WRITTEN, NOT WHEN THE LOGGER LOADS. A deployment sets
+ * The process group is read when the first line is written, not when the logger loads. A deployment sets
  * `LOUVAIN_PROCESS_GROUP` from its platform's own name in a module its entry point may load after the logger; a value
  * read at import would leave every line without its `process` field, which the log shipper's label is read from.
  */

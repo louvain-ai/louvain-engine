@@ -7,7 +7,7 @@ import { stage } from "../question.js";
 import { bm25Narrowing, bm25Rows } from "./rows.js";
 
 /**
- * THE KEYWORD LEG: the keyword index first, where it can carry the read's filters (`bm25Narrowing`); otherwise, or when
+ * The keyword leg: the keyword index first, where it can carry the read's filters (`bm25Narrowing`); otherwise, or when
  * it cannot answer, the passes the build binds (`keyword-index.ts`). Its rows, and what it could not do (`degraded`),
  * returned beside them.
  */

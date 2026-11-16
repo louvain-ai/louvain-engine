@@ -4,7 +4,7 @@ import type { Revision } from "../src/ingest/revision.js";
 import { type SourceRules, sourceMetadata } from "../src/sources/metadata.js";
 
 /**
- * THE OPEN WRITER IS GENERIC; A BUILD'S RULES ARE ASKED FIRST (`SourceOrigin.rules`). Without rules a source is what it
+ * The open writer is generic; a build's rules are asked first (`SourceOrigin.rules`). Without rules a source is what it
  * states: its native id (else its event), its link, its first line, its kind by event kind. Rules may recover an id from
  * the event's key, scope a native id by its collection, skip a lead before the title, and name a kind; what the source
  * itself states still wins.

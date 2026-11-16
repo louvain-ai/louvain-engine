@@ -1,7 +1,7 @@
 import type { Sent } from "./statements.js";
 
 /**
- * THE SHAPE OF A PLAN: `EXPLAIN (FORMAT JSON)` of a statement as it was sent (its values, under the `set local`
+ * The shape of a plan: `EXPLAIN (FORMAT JSON)` of a statement as it was sent (its values, under the `set local`
  * settings that were in force), reduced to its node types and the relations and indexes they read, without a cost or
  * a row count. On a corpus of a few dozen rows a planner's choice is a weak signal, so a changed shape is reported,
  * and a fenced read whose scan of some table changes kind is named (`scansOf`); neither fails.

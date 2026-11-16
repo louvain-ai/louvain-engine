@@ -7,7 +7,7 @@ import type { Scope } from "../../sources/read-core.js";
 import type { Identifier, Stored } from "./identifier.js";
 
 /**
- * WHAT A BUILD THAT KEEPS A SECOND MATCHER ADDS TO THE EXACT TIER (`search-exact.ts`, `lookup.ts`), handed to their
+ * What a build that keeps a second matcher adds to the exact tier (`search-exact.ts`, `lookup.ts`), handed to their
  * reads in their context (`ReadHooks.exact`): how a word typed as a key is spelled (`spelled`, "sup1042" as
  * "sup-1042"), which documents' titles OPEN with a key (`titleKey`: a read of their ids for `exactCandidates`, and
  * the test `matchedOn`'s rule reads, `keyed`), and which documents hold an identifier as a whole token (`holding`, a
@@ -31,7 +31,7 @@ export type ExactTier = {
 const TITLE_KEY_LISTED = 200;
 
 /**
- * THE OPEN BUILD'S TITLE KEYS: of the readable documents its keyword index lists for the identifier (the one matcher,
+ * The open build's title keys: of the readable documents its keyword index lists for the identifier (the one matcher,
  * best first: a title holding the key ranks by its header), those whose current title opens with it as the index's
  * analyzer reads a key (`bm25Leads`: "SUP-1042", "sup1042" and "Sup-1042" are one key), so a document that only
  * mentions it is never one and never counts toward the lookup's cap. None for an identifier of more than one word, or

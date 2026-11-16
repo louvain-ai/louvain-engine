@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 /**
- * A RECORDED ANSWER, AND HOW IT IS COMPARED. Ids differ between databases (a source id is derived from the org's
+ * A recorded answer, and how it is compared. Ids differ between databases (a source id is derived from the org's
  * own id), so before anything is recorded or compared every id the engine hands back becomes the key of the document
  * it names (`@finance/po-4471`), every version id its key and date (`@handbook/remote-working@2024-04-02`), and every
  * cursor `<cursor>`: a cursor is sealed with a fresh nonce, and the cases follow it rather than read it.
