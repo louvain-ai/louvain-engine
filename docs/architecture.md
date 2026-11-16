@@ -80,7 +80,7 @@ it.
 **`apps/app`**: the app at `/app/` (the `app()` surface): Search and Ask in a browser, and the answerers
 Ask writes with (`agent`, `scripted`).
 
-**`apps/nlp`**: the Python sidecars: `embed.py` (embeddings), `bm25.py` (the keyword index) and `rerank.py` (the
+**`services`**: the Python sidecars: `embed.py` (embeddings), `bm25.py` (the keyword index) and `rerank.py` (the
 local reranker). Each takes the install's sidecar token.
 
 **`db/`**: `baseline.sql`, the schema an empty database is loaded with, and `upgrades/`, what `./engine reindex`

@@ -38,7 +38,7 @@ command that links the package (`pnpm add -w @louvain/reader-csv@workspace:*`) a
 
 | Plugin | Settings | Notes |
 | --- | --- | --- |
-| `sidecar` | `url`, `model` (`BAAI/bge-reranker-v2-m3`), `timeoutMs` (4000), `blend` (the model's own: 1), `token` (the sidecars' token, from the environment) | The local sidecar (`apps/nlp/rerank.py`). A sidecar running another model is a failure |
+| `sidecar` | `url`, `model` (`BAAI/bge-reranker-v2-m3`), `timeoutMs` (4000), `blend` (the model's own: 1), `token` (the sidecars' token, from the environment) | The local sidecar (`services/rerank/rerank.py`). A sidecar running another model is a failure |
 | `cohere` | `model` (`rerank-v3.5`), `url` (`https://api.cohere.com`), `timeoutMs` (4000), `apiKey` (from `COHERE_API_KEY`) | Cohere's Rerank API, or a gateway with its shape by full URL. No key stops the start |
 
 One reranker runs at most; `reranker: null` runs none. [Configuration](configuration.md) has what the

@@ -8,7 +8,7 @@ import { keywordIndexForTests, noKeywordIndex } from "./keyword-index.js";
 /**
  * Words no readable document holds (`search-unheld.ts`): searched as a prefix (the last word) or a typo of held words by
  * the keyword index's own tiers, or left out, and the page names each word. The golden corpus beside a few
- * documents of its own, all invented, read through the real keyword index (`apps/nlp/bm25.py`), started as every
+ * documents of its own, all invented, read through the real keyword index (`services/keyword-index/bm25.py`), started as every
  * database test starts one (`keyword-index.ts`): a container of `LOUVAIN_TEST_BM25_IMAGE`, else a Python with its binding.
  *
  * Its own database, so the shared golden corpus's recorded answers never see these documents.

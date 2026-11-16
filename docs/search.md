@@ -68,7 +68,7 @@ as the index's analyzer joins it, so a key typed joined, hyphenated or in anothe
 
 The analyzer is the keyword index's, the one matcher: English stemming with Lucene's word-delimiter and shingle filters
 (preserve original, catenate all, catenate numbers, split on numerics; runs of up to 8 parts that begin with a letter),
-after case and accent folding (`apps/nlp/analyzer.py`, held to `packages/engine/test/analyzer-cases.json`). Catenating
+after case and accent folding (`services/keyword-index/analyzer.py`, held to `packages/engine/test/analyzer-cases.json`). Catenating
 numbers holds a chain of digits separated by delimiters joined too, so `2.3.1` finds a document that wrote `v2.3.1`; a
 date inside a key gives only its whole chain (`2029031407`), so no short number such as `314` finds it. The open
 database runs no analyzer of its own. An index built before this needs `./engine reindex`.
@@ -264,7 +264,7 @@ invented corpus of about 150 documents (`corpus.json`), one row per search (`tab
 `louvain_search_sources` itself.
 
 1. Install the keyword index's Python:
-   **`python3 -m venv apps/nlp/.venv && apps/nlp/.venv/bin/pip install -r apps/nlp/requirements-bm25.txt`**.
+   **`python3 -m venv services/keyword-index/.venv && services/keyword-index/.venv/bin/pip install -r services/keyword-index/requirements.txt`**.
 2. Run it against a test database server:
    **`TEST_AUTH_DATABASE_URL=postgres://… pnpm --filter @louvain/engine test:table`**.
 

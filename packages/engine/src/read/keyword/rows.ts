@@ -12,7 +12,7 @@ import { bm25Tiers, type TierHit } from "./tiers.js";
 import type { KeywordIndex } from "./titled.js";
 
 /**
- * WHAT THE BM25 SIDECAR MAY NARROW BY, beside the fence it always applies (`apps/nlp/bm25.py`): nothing, as before,
+ * WHAT THE BM25 SIDECAR MAY NARROW BY, beside the fence it always applies (`services/keyword-index/bm25.py`): nothing, as before,
  * or — under `LOUVAIN_BM25_FILTERED=on` (default OFF until a judged arm) — an app set (`apps`, its `app`
  * field) and a time range (`window`, or `since`/`until`). A filtered keyword search on a large workspace otherwise gets
  * only Postgres's narrow AND, and the OR pass that would tolerate a missing word is cut by its timeout.

@@ -12,7 +12,7 @@ ask us not to.
 ## Scope
 
 In scope: the code in this repository, its database schema (`db/baseline.sql`) and the sidecar images built from
-`apps/nlp`. A problem in a third-party dependency is in scope when the engine's use of it makes it exploitable.
+`services`. A problem in a third-party dependency is in scope when the engine's use of it makes it exploitable.
 
 The engine reads through one readable-set resolver, and this build's resolver lets the one reader it serves read every
 collection: it serves one reader by design. Running it for several people who must not see each other's data is outside

@@ -20,7 +20,7 @@ export type Variant = {
 
 /**
  * The other two profiles' reranker: the self-tuned Qwen3 reranker, public on the hub, served by the rerank sidecar
- * (`apps/nlp/rerank.py`, kind `qwen3-reranker`; the README names the commit to start it at). Their engine.config.ts
+ * (`services/rerank/rerank.py`, kind `qwen3-reranker`; the README names the commit to start it at). Their engine.config.ts
  * names the same model.
  */
 const OWN_RERANK_MODEL = "Louvain/rerank-4b-erb";

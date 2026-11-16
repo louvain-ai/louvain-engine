@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 /**
  * The keyword index the database tests read, as the open build requires one, ONE PER TEST FILE: the index's ranking
  * statistics are its whole content's, so an index another file's corpus shares would move this file's recorded order.
- * Where no Python has its binding, a container of an image built from `apps/nlp/Dockerfile.bm25`
- * (`LOUVAIN_TEST_BM25_IMAGE`); else a Python with its binding (`LOUVAIN_TEST_BM25_PYTHON`, else `apps/nlp/.venv` in this
+ * Where no Python has its binding, a container of an image built from `services/keyword-index/Dockerfile`
+ * (`LOUVAIN_TEST_BM25_IMAGE`); else a Python with its binding (`LOUVAIN_TEST_BM25_PYTHON`, else `services/keyword-index/.venv` in this
  * checkout or one above). Either runs with
  * the analyzer on, as the open build's compose starts it. `LOUVAIN_TEST_BM25_URL` names one already running instead,
  * for a single file.
@@ -23,8 +23,8 @@ const IMAGE = process.env.LOUVAIN_TEST_BM25_IMAGE;
 export type Index = { url: string; stop: () => void };
 
 const NONE =
-  "no keyword index for the database tests: set LOUVAIN_TEST_BM25_IMAGE=$(docker build -q -f apps/nlp/Dockerfile.bm25 .) " +
-  "from the repository root (or LOUVAIN_TEST_BM25_URL, or a Python with its binding: LOUVAIN_TEST_BM25_PYTHON, apps/nlp/.venv)";
+  "no keyword index for the database tests: set LOUVAIN_TEST_BM25_IMAGE=$(docker build -q -f services/keyword-index/Dockerfile .) " +
+  "from the repository root (or LOUVAIN_TEST_BM25_URL, or a Python with its binding: LOUVAIN_TEST_BM25_PYTHON, services/keyword-index/.venv)";
 
 /** Why this run can start no keyword index, or undefined when it can (a URL, an image or a Python). */
 export const noKeywordIndex = (): string | undefined =>
@@ -43,7 +43,7 @@ export async function keywordIndexForTests(): Promise<Index | string> {
 export function python(): string | undefined {
   if (PYTHON) return PYTHON;
   for (let dir = here; dir !== dirname(dir); dir = dirname(dir)) {
-    const venv = join(dir, "apps", "nlp", ".venv", "bin", "python");
+    const venv = join(dir, "services/keyword-index/.venv/bin/python");
     if (existsSync(venv)) return venv;
   }
   return undefined;
@@ -70,7 +70,7 @@ export async function startIndex(py: string): Promise<{ url: string; stop: () =>
     LOUVAIN_BM25_DIR: dir,
     LOUVAIN_BM25_ANALYZER: "on",
   };
-  const child: ChildProcess = spawn(py, [join(root, "apps", "nlp", "bm25.py")], {
+  const child: ChildProcess = spawn(py, [join(root, "services/keyword-index/bm25.py")], {
     env,
     stdio: "ignore",
   });

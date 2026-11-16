@@ -20,7 +20,7 @@ import { freePort, keywordIndexForTests, noKeywordIndex } from "./keyword-index.
  * not meet yet: a pending row that starts to pass is red too, until it is promoted, so progress is never silent).
  *
  * A row runs on one stack (`stack`):
- * - `keyword-index` (the default): the keyword index (`apps/nlp/bm25.py`) running, as the open stack runs it;
+ * - `keyword-index` (the default): the keyword index (`services/keyword-index/bm25.py`) running, as the open stack runs it;
  * - `keyword-index-down`: `LOUVAIN_BM25_URL` names a port nothing answers on, as when the index has stopped;
  * - `no-keyword-index`: `LOUVAIN_BM25_URL` unset, the keyword leg Postgres's own full-text search;
  * - `meaning`: a real embedding sidecar, named by `LOUVAIN_TEST_EMBEDDINGS_URL` (and `LOUVAIN_TEST_SIDECAR_TOKEN`).
@@ -29,8 +29,8 @@ import { freePort, keywordIndexForTests, noKeywordIndex } from "./keyword-index.
  *
  * The keyword index is started here as every database test starts one (`keyword-index.ts`): a container of
  * `LOUVAIN_TEST_BM25_IMAGE`, as the exported CI builds it, else a Python that has its binding (`LOUVAIN_TEST_BM25_PYTHON`,
- * else `apps/nlp/.venv` in this checkout or one above). Or `LOUVAIN_TEST_BM25_URL` names one already running, which must be
- * EMPTY and this run's alone (a container started for it from `apps/nlp/Dockerfile.bm25`): the index answers by org
+ * else `services/keyword-index/.venv` in this checkout or one above). Or `LOUVAIN_TEST_BM25_URL` names one already running, which must be
+ * EMPTY and this run's alone (a container started for it from `services/keyword-index/Dockerfile`): the index answers by org
  * and folder, and another corpus in it would offer its own words as near words. Without one, or without a database, or without an embedding sidecar for the meaning rows, those rows
  * are skipped and the skip names why; `LOUVAIN_TEST_TABLE_REQUIRE=1` makes a missing keyword index a failure instead.
  * `LOUVAIN_TEST_TABLE_PRINT=1` prints each row's page, the way a new row's expectation is read off before it is written.

@@ -43,7 +43,7 @@ repository, and its README lists every known difference; the figure does not rep
   - **How it is served:** at 768 dimensions (Matryoshka), with last-token pooling.
   - **The query instruction:** `Instruct: Given a question about a company's work, retrieve the passages that answer it\nQuery: `.
   - **Its model card** says how it was trained.
-- **Keyword leg:** the BM25 sidecar (`apps/nlp/bm25.py`). These options are on: best passage per document, titles
+- **Keyword leg:** the BM25 sidecar (`services/keyword-index/bm25.py`). These options are on: best passage per document, titles
   indexed, and the lexical ladder.
 
 ## Search

@@ -219,7 +219,7 @@ COHERE_API_KEY, or pass apiKey`). If Cohere refuses, each search keeps the legs'
 
 ## Change the embedding model
 
-1. Set the build arguments in **`apps/nlp/Dockerfile.embed`** (`EMBEDDING_MODEL`, `EMBEDDING_POOLING`, `EMBEDDING_DIM`,
+1. Set the build arguments in **`services/embed/Dockerfile`** (`EMBEDDING_MODEL`, `EMBEDDING_POOLING`, `EMBEDDING_DIM`,
    `EMBEDDING_MATRYOSHKA`, and the archive and checksum arguments). The default is `Xenova/bge-base-en-v1.5`.
 2. Run **`./engine down --volumes`**, then **`./engine up`**, and load your documents again. Vectors from different
    models cannot be compared.

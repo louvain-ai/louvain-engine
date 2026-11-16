@@ -5,7 +5,7 @@ import type { Place } from "./steps.js";
 
 /**
  * The scored embedder, which every profile of this run indexes and queries with: `Louvain/embed-4b-erb` at commit
- * 7b9a14bf, served by the embedding sidecar (`apps/nlp/embed.py`, torch backend) you start yourself (README.md). Its
+ * 7b9a14bf, served by the embedding sidecar (`services/embed/embed.py`, torch backend) you start yourself (README.md). Its
  * conventions go to `./engine` from the environment, since the engine applies the query instruction and records the
  * model with every vector; `check` and `load` refuse an embedding service that is not this model, so a run can never
  * index with the default embedder unnoticed.

@@ -189,7 +189,7 @@ configuration ships as one ([Profiles](docs/configuration.md#profiles)).
 | `packages/cli` | `./engine`'s commands: loads `engine.config.ts` and starts the engine |
 | `packages/plugins` | `reader-documents` (PDF, Word, Excel, PowerPoint, OpenDocument, EPUB, RTF, HTML, CSV, mail), `reader-text` (text, Markdown), `reranker-sidecar` (`BAAI/bge-reranker-v2-m3` on your machine, a 2.3 GB download, best with a GPU), `reranker-cohere` (Cohere's Rerank API), `source-http` (an ingest door, off unless configured) |
 | `apps/app` | Search and Ask in a browser, at `/app/` |
-| `apps/nlp` | The embedding sidecar (`Xenova/bge-base-en-v1.5`) and the BM25 keyword sidecar |
+| `services` | The embedding sidecar (`Xenova/bge-base-en-v1.5`) and the BM25 keyword sidecar |
 | `examples/` | `sample-corpus` (four invented documents), `agent` (an agent's side of the tools), `an-ingest-source` |
 
 The engine starts with the two readers, the `folder` and `records` sources, the tools at `/mcp` and the app at

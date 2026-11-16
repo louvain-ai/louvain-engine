@@ -13,7 +13,7 @@ updates:
         patterns: ["*"]
         update-types: ["minor", "patch"]
   - package-ecosystem: pip
-    directory: /apps/nlp
+    directories: ["/services/*"]
     schedule: { interval: weekly }
     ignore:
       - dependency-name: "*"
@@ -23,7 +23,7 @@ updates:
         patterns: ["*"]
         update-types: ["minor", "patch"]
   - package-ecosystem: docker
-    directory: /apps/nlp
+    directories: ["/services/*"]
     schedule: { interval: weekly }
     ignore:
       - dependency-name: "*"

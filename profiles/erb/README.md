@@ -60,10 +60,10 @@ LOUVAIN_EMBEDDING_TORCH_MODEL="$PWD/embed-4b-erb" LOUVAIN_EMBEDDING_MODEL_DIR="$
 LOUVAIN_EMBEDDING_POOLING=last LOUVAIN_EMBEDDING_MATRYOSHKA=true LOUVAIN_EMBEDDING_DIM=768 \
 LOUVAIN_EMBEDDING_MODEL_SHA256=771b1d5b1419e49b588febfc655e469e27ebd3d72031a5a00624f711cade530b \
 LOUVAIN_SIDECAR_TOKEN="$(cat .engine/profiles/erb/sidecar-token)" PORT=8098 \
-python apps/nlp/embed.py   # from the engine's root
+python services/embed/embed.py   # from the engine's root
 ```
 
-Its Python needs what `apps/nlp/Dockerfile.gpu` installs for it: `requirements-embed.txt`'s onnxruntime, torch, and
+Its Python needs what `apps/nlp/Dockerfile.gpu` installs for it: `services/embed/requirements.txt`'s onnxruntime, torch, and
 `transformers==5.17.0`, the version its card names (it brings its own tokenizers and hub client; a 4.x reader embeds
 this checkpoint wrong without an error).
 
@@ -103,7 +103,7 @@ Each keeps its own state and stack, so `prepare` and `load` run once per profile
 (`cd profiles/erb-louvain`, then the same steps as above).
 
 **The reranker** is [`Louvain/rerank-4b-erb`](https://huggingface.co/Louvain/rerank-4b-erb) at revision
-`d64b19e32cd36c4a055a88d4c7e226e736a4751e`, Qwen3-Reranker-4B with a merged adapter, served by `apps/nlp/rerank.py` with its model card's prompt and scored as logit("yes") − logit("no").
+`d64b19e32cd36c4a055a88d4c7e226e736a4751e`, Qwen3-Reranker-4B with a merged adapter, served by `services/rerank/rerank.py` with its model card's prompt and scored as logit("yes") − logit("no").
 `./engine up` does not build it (its image is CPU-only) and says the reranker is not running. Start it yourself after
 `up`, on a GPU, with the token `up` made for the profile (`erb-oss` reads its own folder), on a port of its own: `up`
 refuses to start while anything holds the port it keeps for its own reranker (`LOUVAIN_RERANK_HOST_PORT`, 8096). Put
@@ -114,7 +114,7 @@ silicon serves it for `check` and a try, but one search's 150 whole documents to
 LOUVAIN_RERANK_KIND=qwen3-reranker LOUVAIN_RERANK_MODEL=Louvain/rerank-4b-erb \
 LOUVAIN_RERANK_MODEL_REVISION=d64b19e32cd36c4a055a88d4c7e226e736a4751e LOUVAIN_RERANK_DTYPE=bfloat16 \
 LOUVAIN_SIDECAR_TOKEN="$(cat .engine/profiles/erb-louvain/sidecar-token)" PORT=8097 \
-python apps/nlp/rerank.py     # from the engine's root, with apps/nlp/requirements-rerank.txt installed
+python services/rerank/rerank.py     # from the engine's root, with services/rerank/requirements.txt installed
 ```
 
 The engine refuses its scores if it names another model. Each document goes to it whole up to 8,000 characters, the
@@ -152,7 +152,7 @@ op run --env-file=../erb-oss.env -- npx tsx run.ts judge
 | What | Scored | This build |
 |---|---|---|
 | The search | our build at `fb9af3c97` | this build's search: its fusion, and keyword tiers on |
-| The keyword service | `apps/nlp/bm25.py` at `e3816ceeac` (the `exact` field, `EXACT_BOOST=2`, `VARIANTS=on`, the English stemmer) | this build's analyzer; the Compose file sets neither boost nor variants |
+| The keyword service | `services/keyword-index/bm25.py` at `e3816ceeac` (the `exact` field, `EXACT_BOOST=2`, `VARIANTS=on`, the English stemmer) | this build's analyzer; the Compose file sets neither boost nor variants |
 | Search results | our build's fields (`louvainUrl`, `app`, `url`) | this server's fields (`container`, `kind`); the relevance split turned off |
 | Arguments | the scored schema's `app`, `space`, `client`, `knownAt` | not taken: `run.ts` removes and counts them. In v4b `app` was a no-op (every listed document had the same app) and `client` came once |
 | Index vectors | the passage's text only | the passage's text searched; its context's vector also written, and not read |

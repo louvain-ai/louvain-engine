@@ -51,7 +51,7 @@ jobs:
       - run: docker compose up -d --wait postgres
       # The open engine reads through its keyword index, so each test file starts its own container of the index's
       # image (packages/engine/test/db/keyword-index.ts), built here from the tree's own Dockerfile, by its id.
-      - run: echo "LOUVAIN_TEST_BM25_IMAGE=$(docker build -q -f apps/nlp/Dockerfile.bm25 .)" >> "$GITHUB_ENV"
+      - run: echo "LOUVAIN_TEST_BM25_IMAGE=$(docker build -q -f services/keyword-index/Dockerfile .)" >> "$GITHUB_ENV"
       - run: pnpm --filter @louvain/engine test:db
       - if: always()
         run: docker compose down -v

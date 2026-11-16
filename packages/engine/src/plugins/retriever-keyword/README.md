@@ -5,7 +5,7 @@ leg beside it and joins the two.
 
 **How it reads.** It asks the reading for passages in `keyword` mode, as `retriever-vector` asks in `vector` mode. The
 reading runs the engine's keyword read (`read/keyword/`) under its fence, filters and decay: the keyword index, the
-tantivy sidecar (`apps/nlp/bm25.py`), carries the fence as must clauses and the read's narrowings where it can hold
+tantivy sidecar (`services/keyword-index/bm25.py`), carries the fence as must clauses and the read's narrowings where it can hold
 them, and every hit is re-read as a passage row under the fence. The engine requires its keyword index: a read the
 index cannot answer (down, or a filter it does not carry) has no keyword leg and says so in `degraded`.
 

@@ -3,7 +3,7 @@ import { bm25Settings } from "../../store/keyword-index.js";
 import type { Scope } from "./core.js";
 import { documentEntryId, documentOfEntry } from "./keyword-documents.js";
 
-/** A listed entry's snippet (`apps/nlp/bm25_query.py` `_snippet`): the fragment where the search's words fell. */
+/** A listed entry's snippet (`services/keyword-index/bm25_query.py` `_snippet`): the fragment where the search's words fell. */
 type Snippet = { text: string; marks: [number, number][] } | null;
 
 /**
@@ -39,7 +39,7 @@ export async function documentsListedFor(
   return listed.ids.map(documentOfEntry);
 }
 
-/** One `/list` call (`apps/nlp/bm25_listing.py` `listing`), the body as the caller built it. */
+/** One `/list` call (`services/keyword-index/bm25_listing.py` `listing`), the body as the caller built it. */
 export async function postList(body: Record<string, unknown>): Promise<Listed> {
   const { endpoint, timeoutMs } = bm25Settings();
   if (!endpoint) throw new Error("index listing: LOUVAIN_BM25_URL is not configured");
@@ -54,7 +54,7 @@ export async function postList(body: Record<string, unknown>): Promise<Listed> {
 }
 
 /**
- * The key each text opens with, in the keyword index's own analyzed form (`apps/nlp/analyzer.py` `lead`: a key's parts
+ * The key each text opens with, in the keyword index's own analyzed form (`services/keyword-index/analyzer.py` `lead`: a key's parts
  * joined, after at most one bracket), or null where it opens with none. Keys are compared in that one form, never in a
  * second implementation of the analyzer's step. No document is read.
  */

@@ -4,7 +4,7 @@ import type { Bm25Endpoint } from "../../store/keyword-index.js";
 import type { Bm25Narrowing } from "./rows.js";
 
 /**
- * THE KEYWORD INDEX'S TIERS (`apps/nlp/bm25_last.py` `search_last`, `strategy: "last"`): Meilisearch's matching strategy
+ * THE KEYWORD INDEX'S TIERS (`services/keyword-index/bm25_last.py` `search_last`, `strategy: "last"`): Meilisearch's matching strategy
  * under the reader's fence. Every word of the search first, then the words less the last, each tier ranked by its own
  * BM25. A word no readable document holds is asked as a clause of the same query (the term suggester's
  * `suggest_mode: missing` gate): the last word as a prefix and, unless it is a key, a typo; any other word as a typo

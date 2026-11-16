@@ -1,5 +1,5 @@
 /**
- * The BM25 sidecar's client (`apps/nlp/bm25.py`), used by the passage keyword
+ * The BM25 sidecar's client (`services/keyword-index/bm25.py`), used by the passage keyword
  * leg (`read/keyword/`) and the reindex loader.
  *
  * Each endpoint (`bm25Endpoint`, one per engine's keyword index) reads its

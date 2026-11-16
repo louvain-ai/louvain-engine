@@ -1,4 +1,4 @@
-# The engine's services on one machine: Postgres with pgvector, and the Python sidecars built from apps/nlp.
+# The engine's services on one machine: Postgres with pgvector, and the Python sidecars built from services.
 #
 #   ./engine up                                  # makes this install's secrets, then starts and readies the stack
 #
@@ -33,11 +33,11 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   # The embedding sidecar, query lane (LOUVAIN_EMBEDDINGS_URL). The image takes its weights at build time:
-  # by default a public model from the Hugging Face hub (apps/nlp/Dockerfile.embed's EMBEDDING_MODEL argument).
+  # by default a public model from the Hugging Face hub (services/embed/Dockerfile's EMBEDDING_MODEL argument).
   embeddings:
     build:
       context: .
-      dockerfile: apps/nlp/Dockerfile.embed
+      dockerfile: services/embed/Dockerfile
     environment:
       PORT: 8090
       LOUVAIN_EMBEDDINGS_CONCURRENCY: ${LOUVAIN_EMBEDDINGS_CONCURRENCY:-1}
@@ -58,7 +58,7 @@ services:
     profiles: ["bulk"]
     build:
       context: .
-      dockerfile: apps/nlp/Dockerfile.embed
+      dockerfile: services/embed/Dockerfile
     environment:
       PORT: 8090
       LOUVAIN_EMBEDDINGS_CONCURRENCY: ${LOUVAIN_EMBEDDINGS_CONCURRENCY:-1}
@@ -77,11 +77,11 @@ services:
   bm25:
     build:
       context: .
-      dockerfile: apps/nlp/Dockerfile.bm25
+      dockerfile: services/keyword-index/Dockerfile
     environment:
       PORT: 8095
       LOUVAIN_BM25_DIR: /index
-      # Documents and searches pass through the same analyzer (the word-delimiter step, `apps/nlp/analyzer.py`).
+      # Documents and searches pass through the same analyzer (the word-delimiter step, `services/keyword-index/analyzer.py`).
       LOUVAIN_BM25_ANALYZER: "on"
       LOUVAIN_SIDECAR_TOKEN: ${LOUVAIN_SIDECAR_TOKEN:?run ./engine up, which makes the sidecar token in .engine/sidecar-token}
     volumes:
@@ -102,7 +102,7 @@ services:
     profiles: ["rerank"]
     build:
       context: .
-      dockerfile: apps/nlp/Dockerfile.rerank
+      dockerfile: services/rerank/Dockerfile
       # The shipped default; `./engine up` builds with the model engine.config.ts names (`--build-arg`).
       args:
         RERANK_MODEL: BAAI/bge-reranker-v2-m3

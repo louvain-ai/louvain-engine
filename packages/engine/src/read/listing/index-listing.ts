@@ -22,7 +22,7 @@ import { sourceSort } from "./order.js";
 /**
  * A listing with words, read from the keyword index, where the build's index holds document entries
  * (`keyword-documents.ts`): the one matcher decides which documents a listing holds, as it decides a search's.
- * The index pages, counts and facets the readable document entries that match (`apps/nlp/bm25_listing.py` `listing`); each
+ * The index pages, counts and facets the readable document entries that match (`services/keyword-index/bm25_listing.py` `listing`); each
  * page is read again here by document id under the same fence, in the index's order, so an entry the store no
  * longer holds is never shown. Facets come back by app and collection; a collection is named by the connection this
  * reader may name (`namedConnection`), so a reader of a child collection never learns its parent's.

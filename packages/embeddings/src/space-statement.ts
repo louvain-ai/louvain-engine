@@ -70,7 +70,7 @@ const REQUIRED = ["model", "pooling", "dimensions", "matryoshka"] as const;
 /**
  * The space a model embeds in by these settings: its conventions, `EMBEDDING_DIM` and transformers.js's truncation.
  * The in-process path records it, and the Node sidecar (`apps/embeddings`), which embeds with the same `embedLocal`,
- * states it on `/healthz` and beside its vectors, as `apps/nlp` states its own.
+ * states it on `/healthz` and beside its vectors, as `services` states its own.
  */
 export function localSpaceStatement(mine: EmbeddingSettings): {
   model: string;
