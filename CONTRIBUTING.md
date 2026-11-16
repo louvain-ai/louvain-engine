@@ -24,6 +24,20 @@ carries it. Credit goes in the release notes.
   than editing the generated file by hand: the file is regenerated from the source repository's schema.
 - Never include credentials, real personal data or a real customer's text in code, tests or fixtures.
 
+## Sign your commits (DCO)
+
+Every commit in a pull request must be signed off under the Developer Certificate of Origin
+(<https://developercertificate.org/>). By signing off you certify that you wrote the change, or otherwise have the
+right to submit it under this repository's license. A sign-off is one line at the end of the commit message:
+
+```
+Signed-off-by: Your Name <you@example.com>
+```
+
+`git commit -s` adds it from your `user.name` and `user.email`. The name and address must be the commit's author: the
+`dco` check fails a pull request with any commit that lacks a matching line. To sign commits you have already made,
+`git rebase --signoff main`, then push again with `git push --force-with-lease`.
+
 ## The README's diagrams
 
 The diagrams in `README.md` are images, `assets/flow.svg` and `assets/architecture.svg`, so they show in every viewer.

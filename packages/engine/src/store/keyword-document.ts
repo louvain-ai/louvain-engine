@@ -9,7 +9,7 @@ export type Bm25Doc = {
   occurredAt: string;
   text: string;
   /**
-   * The record's header (the build's `PassageRules.recordHeader`, `ingest/passage-rules.ts`: the open build's is the
+   * The record's header (the build's `PassageRules.documentHeader`, `ingest/passage-rules.ts`: the open build's is the
    * record's title), indexed as its own field and scored with a modest boost. Built from the record's own presentation
    * and listing row only. Absent means none.
    */

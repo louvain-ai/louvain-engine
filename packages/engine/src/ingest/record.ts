@@ -6,28 +6,28 @@
 import { CONTENT_EVENT_KINDS, MAX_ITEM_TEXT_CHARS } from "@louvain/engine-core";
 import type { Sql } from "postgres";
 import { config } from "../config/engine.js";
-import type { HeaderRecord } from "./passage-context.js";
+import type { HeaderDocument } from "./passage-context.js";
 import { type PlannedContext, plannedContexts } from "./passage-context-write.js";
-import { indexableEvent } from "./passage-rules.js";
+import { indexableRevision } from "./passage-rules.js";
 import type { MemoryWriteContext } from "./passages.js";
 import { type Writes, writeHooksOf } from "./writes.js";
 
 /** A record to index: where its passages go, its text and header, and the context each chunk is written with. */
-export type IndexedRecord = {
+export type IndexedRevision = {
   ctx: MemoryWriteContext;
-  header: HeaderRecord;
+  header: HeaderDocument;
   planned: PlannedContext[] | null;
 };
 
 /** The stored record `eventId` names, ready to index, or null when there is nothing to index. */
-export async function recordToIndex(
+export async function revisionToIndex(
   writes: Writes,
   eventId: string,
-): Promise<IndexedRecord | null> {
+): Promise<IndexedRevision | null> {
   const { sql } = writes;
   const [row] = await sql`
     select id, workspace, container, connector, occurred_at, actor_id, body, org_id, actor_relays
-    from event_log where id = ${eventId} ${indexableEvent(writeHooksOf(writes).passageRules, sql)}
+    from event_log where id = ${eventId} ${indexableRevision(writeHooksOf(writes).passageRules, sql)}
       and kind = any(${[...CONTENT_EVENT_KINDS]}::text[])`;
   if (!row) return null;
   const text = (row.body as { text?: string }).text;
@@ -65,7 +65,7 @@ async function headerRecordOf(
   memCtx: { eventId: string; orgId: string; occurredAt: string },
   row: Record<string, unknown>,
   text: string,
-): Promise<HeaderRecord> {
+): Promise<HeaderDocument> {
   const body = row.body as { presentation?: unknown } | null;
   const presentation =
     body?.presentation && typeof body.presentation === "object" && !Array.isArray(body.presentation)

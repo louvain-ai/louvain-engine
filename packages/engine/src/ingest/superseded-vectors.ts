@@ -111,7 +111,7 @@ function versionsIn(sql: Sql, orgId: string, scope: Parameters<typeof dropSupers
  * the passages are written whatever happens here, and a version left with its vectors is only what every version was
  * before; that script and the next write of the record catch it.
  */
-export async function dropRecordSupersededVectors(
+export async function dropDocumentSupersededVectors(
   writes: Writes,
   orgId: string,
   eventId: string,

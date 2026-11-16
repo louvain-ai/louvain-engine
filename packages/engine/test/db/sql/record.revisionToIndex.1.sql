@@ -1,4 +1,4 @@
--- record.recordToIndex, found by its text
+-- record.revisionToIndex, found by its text
 -- parameters: 2
 -- read by: loading the corpus
 -- plan on Postgres 17: Seq Scan on event_log

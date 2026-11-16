@@ -56,7 +56,7 @@ export function revisionOf(item: ContentItem, text: string): string {
 export const textHash = (text: string): string => createHash("sha256").update(text).digest("hex");
 
 /** An item's revision: the one form the engine's accept takes, minted once so its id is the same wherever it goes. */
-export function itemEvent(
+export function itemRevision(
   collection: string,
   item: ContentItem,
   version: { text: string; revision: string; at: Date },

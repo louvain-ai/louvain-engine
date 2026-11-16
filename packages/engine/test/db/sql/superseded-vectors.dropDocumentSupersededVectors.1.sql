@@ -1,4 +1,4 @@
--- superseded-vectors.dropRecordSupersededVectors, found by its text
+-- superseded-vectors.dropDocumentSupersededVectors, found by its text
 -- parameters: 2
 -- read by: loading the corpus
 -- plan on Postgres 17: Seq Scan on event_log

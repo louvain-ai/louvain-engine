@@ -1,6 +1,6 @@
 import type { Sql } from "postgres";
 import { heldCount, heldExcept } from "./holdings.js";
-import type { Collection, HeldEvent } from "./holdings-types.js";
+import type { Collection, HeldRevisionRef } from "./holdings-types.js";
 
 /**
  * What a whole listing may remove. A key it left out is gone from the source, and that is believed only when the
@@ -10,7 +10,7 @@ import type { Collection, HeldEvent } from "./holdings-types.js";
 /** A run removes more than this many items, and more than half its collection, only when confirmed. */
 const REMOVAL_LIMIT = 10;
 
-export type Absent = { key: string; events: HeldEvent[]; textHash: string | null };
+export type Absent = { key: string; events: HeldRevisionRef[]; textHash: string | null };
 
 export async function absentItems(
   sql: Sql,

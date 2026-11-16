@@ -1,6 +1,6 @@
 import type { Sql, TransactionSql } from "postgres";
 import { documentEntryId } from "../read/listing/keyword-documents.js";
-import { recordLockName } from "./event-row.js";
+import { documentLockName } from "./event-row.js";
 import { indexOpen } from "./indexer.js";
 import { dropRevisionless, repointDocuments } from "./repair.js";
 import { forgetVectorsOf } from "./withdrawn-vectors.js";
@@ -60,7 +60,7 @@ async function lockRecords(
   const names = events.flatMap((e) =>
     e.recordKey
       ? [
-          recordLockName(orgId, {
+          documentLockName(orgId, {
             connector: e.connector,
             workspace: e.workspace,
             recordKey: e.recordKey,

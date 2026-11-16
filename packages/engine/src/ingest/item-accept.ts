@@ -4,10 +4,10 @@
  * record lives in one place. A refusal writes nothing and is said as a skip.
  */
 import { acceptOpen, OpenAcceptRefused } from "./accept.js";
-import { everyEvent } from "./holdings-types.js";
+import { everyRevision } from "./holdings-types.js";
 import type { Change, Changed, Updated } from "./item-decide.js";
 import { acceptInto, project } from "./load.js";
-import { recordRetired } from "./retired.js";
+import { noteRetired } from "./retired.js";
 import type { Run } from "./run-state.js";
 import { stage } from "./stage.js";
 import { forgetKeywords, withdrawWithin } from "./withdraw.js";
@@ -46,10 +46,10 @@ async function accept(
  * documents the withdrawal moved off their current revision are refreshed once the new one is indexed (`retire.ts`).
  */
 async function relocate(run: Run, change: Updated): Promise<Taken> {
-  const old = everyEvent(change.held);
+  const old = everyRevision(change.held);
   const { sql, orgId } = run.state;
   const { result, withdrawn } = await sql.begin(async (trx) => {
-    if (run.sendsChanges) await recordRetired(trx, run.collection, old);
+    if (run.sendsChanges) await noteRetired(trx, run.collection, old);
     const withdrawn = await withdrawWithin(trx, orgId, old);
     return { result: await acceptOpen(sql, orgId, change.event, trx), withdrawn };
   });

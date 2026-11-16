@@ -1,7 +1,12 @@
 import { keyOfDocument } from "@louvain/engine-core";
 import type { Sql } from "postgres";
 import { bm25Configured } from "../store/keyword-index.js";
-import { type Collection, everyEvent, type Held, type HeldEvent } from "./holdings-types.js";
+import {
+  type Collection,
+  everyRevision,
+  type Held,
+  type HeldRevisionRef,
+} from "./holdings-types.js";
 import { ITEM_FEED, ITEM_RECORD_TYPE } from "./item-feed.js";
 
 type HeldRow = {
@@ -17,7 +22,7 @@ type HeldRow = {
 const recordKeyOfItem = (key: string): string =>
   keyOfDocument({ objectType: ITEM_RECORD_TYPE, nativeId: key });
 const keyOfRecordKey = (recordKey: string): string => recordKey.slice(ITEM_RECORD_TYPE.length + 1);
-const eventOf = (collection: Collection, id: string, recordKey: string): HeldEvent => ({
+const eventOf = (collection: Collection, id: string, recordKey: string): HeldRevisionRef => ({
   id,
   connector: ITEM_FEED,
   workspace: collection.name,
@@ -45,7 +50,7 @@ export async function heldOf(
   for (const row of rows) {
     const key = keyOfRecordKey(row.record_key);
     const before = out.get(key);
-    out.set(key, { latest: latestOf(collection, row), older: before ? everyEvent(before) : [] });
+    out.set(key, { latest: latestOf(collection, row), older: before ? everyRevision(before) : [] });
   }
   return out;
 }
@@ -89,7 +94,7 @@ export async function* heldExcept(
   sql: Sql,
   collection: Collection,
   listed: ReadonlySet<string>,
-): AsyncGenerator<{ key: string; events: HeldEvent[]; textHash: string | null }> {
+): AsyncGenerator<{ key: string; events: HeldRevisionRef[]; textHash: string | null }> {
   for (let after = ""; ; ) {
     const page = await sql<{ record_key: string; ids: string[]; hash: string | null }[]>`
       -- fence-ok: the loader's own records in one collection, paged by key, to find what a whole listing left out

@@ -253,6 +253,7 @@ agent and its guidance, each listed in [docs/benchmark-method.md](docs/benchmark
 | [Permissions and threat model](docs/permissions.md) | The fence, the host, what is defended and what is trusted |
 | [Security model](docs/security-model.md) | What the fence guarantees and what it does not, the tokens, what an operator must do, and how each is checked |
 | [Limits and known defects](docs/limits.md) | Every bound, and the defects the tests record |
+| [At scale](docs/scale.md) | Load speed, search latency, disk and memory at 10,000 and 100,000 passages, measured |
 | [The app](docs/app.md) | Search and Ask in a browser: turning it on, the model key, what each page does |
 | [How the figure was produced](docs/benchmark-method.md) | The benchmark run, part by part |
 

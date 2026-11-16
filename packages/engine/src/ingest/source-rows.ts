@@ -9,7 +9,7 @@ import type { Revision } from "./revision.js";
  * document's current revision by the version rule, each revision row carries its event's own collection, and a stored
  * origin key is never rewritten. The keys are the build's (`SourceOrigin.keys`); the open accept has none.
  */
-export type SourceEntry<P extends Presented = Presented> = {
+export type DocumentEntry<P extends Presented = Presented> = {
   event: Revision;
   workspace: string;
   m: NonNullable<ReturnType<typeof sourceMetadata<P>>>;
@@ -19,11 +19,11 @@ export type SourceEntry<P extends Presented = Presented> = {
  * Each event's source metadata, under its sanitised workspace, its presentation read by the build's reader
  * (`origin.presentation`); an event with none (not a source) is left out.
  */
-export function sourceEntries<P extends Presented>(
+export function documentEntries<P extends Presented>(
   events: Revision[],
   orgId: string,
   origin: SourceOrigin<P>,
-): SourceEntry<P>[] {
+): DocumentEntry<P>[] {
   return events.flatMap((event) => {
     const workspace = sanitizeId(event.source.workspace);
     const m = sourceMetadata({ ...event, source: { ...event.source, workspace } }, orgId, origin);
@@ -32,9 +32,9 @@ export function sourceEntries<P extends Presented>(
 }
 
 /** Upsert each document once (its newest revision by the version rule) and insert every revision. */
-export async function writeSourceRows(
+export async function writeDocumentRows(
   trx: postgres.TransactionSql,
-  { entries, orgId }: { entries: SourceEntry[]; orgId: string },
+  { entries, orgId }: { entries: DocumentEntry[]; orgId: string },
 ): Promise<{ revisions: { event_id: string; source_id: string }[] }> {
   const documents = documentRows(entries, orgId);
   await upsertDocuments(trx, documents);
@@ -48,7 +48,7 @@ type DocumentRow = ReturnType<typeof documentRows>[number];
 type RevisionRow = ReturnType<typeof revisionRows>[number];
 
 /** One document row per entry, carrying its newest-known revision as the pointer. */
-function documentRows(entries: SourceEntry[], orgId: string) {
+function documentRows(entries: DocumentEntry[], orgId: string) {
   return entries.map(({ event, workspace, m }) => ({
     id: m.id,
     org_id: orgId,
@@ -115,7 +115,7 @@ const identity = (connector: string, workspace: string, nativeId: string) =>
   JSON.stringify([connector, workspace, nativeId]);
 
 /** One revision row per entry, under its document's stored id. */
-function revisionRows(entries: SourceEntry[], ids: Map<string, string>) {
+function revisionRows(entries: DocumentEntry[], ids: Map<string, string>) {
   return entries.map(({ event, workspace, m }) => {
     const sourceId = ids.get(identity(event.source.connector, workspace, m.nativeId));
     if (!sourceId) throw new Error("Source identity was not persisted");

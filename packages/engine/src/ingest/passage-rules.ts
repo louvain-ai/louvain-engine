@@ -7,7 +7,7 @@
  */
 import type { PendingQuery, Row } from "postgres";
 import type { Queryable } from "../store/sql.js";
-import { type HeaderRecord, passageHeaders, recordHeader } from "./passage-context.js";
+import { documentHeader, type HeaderDocument, passageHeaders } from "./passage-context.js";
 
 type Fragment = PendingQuery<Row[]>;
 
@@ -15,9 +15,9 @@ export type PassageRules = {
   /** The parts of a text cut on their own, in order. */
   parts(text: string): string[];
   /** The header every passage of a record shares, which its keyword entry carries too; null when it says nothing. */
-  recordHeader(record: HeaderRecord): string | null;
+  documentHeader(record: HeaderDocument): string | null;
   /** Each chunk's header, by where it falls in its record. */
-  passageHeaders(record: HeaderRecord, chunks: readonly string[]): (string | null)[];
+  passageHeaders(record: HeaderDocument, chunks: readonly string[]): (string | null)[];
   /** What an `event_log` row must satisfy to be indexed; null: every event is. */
   indexable: ((q: Queryable) => Fragment) | null;
   /** Which of an event's passages its own text wrote, when the build writes others beside them; null: all of them. */
@@ -42,7 +42,7 @@ export type PassageRules = {
 
 export const openPassageRules: PassageRules = {
   parts: (text) => [text],
-  recordHeader,
+  documentHeader: documentHeader,
   passageHeaders,
   indexable: null,
   textRows: null,
@@ -51,7 +51,7 @@ export const openPassageRules: PassageRules = {
 };
 
 /** An index's condition on the event row (`and …`), or nothing where every event is indexable. */
-export function indexableEvent(rules: PassageRules, q: Queryable): Fragment {
+export function indexableRevision(rules: PassageRules, q: Queryable): Fragment {
   const rule = rules.indexable;
   return rule ? q`and ${rule(q)}` : q``;
 }

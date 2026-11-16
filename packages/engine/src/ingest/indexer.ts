@@ -1,8 +1,8 @@
-import { indexRecords } from "./index-record.js";
+import { indexRevisions } from "./index-record.js";
 import { inOneTransaction, type Writes, writeHooksOf } from "./writes.js";
 
 /**
- * The engine's indexer: accepted records made findable by `indexRecords`, a batch at a time (their passages with their
+ * The engine's indexer: accepted records made findable by `indexRevisions`, a batch at a time (their passages with their
  * header contexts, then their keyword entries in one durable write). The loader calls it after `acceptOpen`; a keyword entry or context the embedding service
  * misses is counted and returned as `missed`, so a loader can report it and run again. Idempotent: a second run writes
  * nothing and answers the same.
@@ -31,11 +31,11 @@ export async function indexOpen(
   eventIds: readonly string[],
 ): Promise<OpenIndexResult[]> {
   const { sql } = writes;
-  // The org first: `indexRecords` reads by id, and a record of another org is not this caller's to index.
+  // The org first: `indexRevisions` reads by id, and a record of another org is not this caller's to index.
   const held = await sql<{ id: string }[]>`
     select id from event_log where id = any(${[...eventIds]}::text[]) and org_id = ${orgId}::uuid`;
   if (held.length !== new Set(eventIds).size) throw new OpenIndexMissing();
-  const written = await indexRecords(writes, eventIds);
+  const written = await indexRevisions(writes, eventIds);
   return inOneTransaction(writes, async (batch) => {
     const out: OpenIndexResult[] = [];
     for (const [i, eventId] of eventIds.entries())

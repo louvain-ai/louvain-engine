@@ -3,12 +3,17 @@
  * changes, each retired revision is kept as a tombstone, so a replay of it is refused rather than taken.
  */
 
-import { everyEvent, type Held, type HeldEvent, type HeldRevision } from "./holdings-types.js";
+import {
+  everyRevision,
+  type Held,
+  type HeldRevision,
+  type HeldRevisionRef,
+} from "./holdings-types.js";
 import type { Taken } from "./item-accept.js";
 import { textHash } from "./item-event.js";
 import { legacyOf } from "./legacy.js";
 import { report, skip } from "./outcome.js";
-import { recordRetired } from "./retired.js";
+import { noteRetired } from "./retired.js";
 import type { Run } from "./run-state.js";
 import { stage } from "./stage.js";
 import { refreshDocuments, withdrawOpen } from "./withdraw.js";
@@ -28,11 +33,15 @@ export async function retireReplaced(run: Run, taken: Taken): Promise<void> {
 /** A removed item: every event of it withdrawn and said, or a skip when the collection never held it. */
 export async function removeItem(run: Run, key: string, held: Held | undefined): Promise<void> {
   if (!held) return skip(run, { key, why: "not held" });
-  await remove(run, key, everyEvent(held));
+  await remove(run, key, everyRevision(held));
 }
 
 /** An item gone: every event of it withdrawn, and said. */
-export async function remove(run: Run, key: string, events: readonly HeldEvent[]): Promise<void> {
+export async function remove(
+  run: Run,
+  key: string,
+  events: readonly HeldRevisionRef[],
+): Promise<void> {
   await retire(run, events);
   report(run, { key, change: "removed" });
 }
@@ -40,12 +49,12 @@ export async function remove(run: Run, key: string, events: readonly HeldEvent[]
 /** Withdraws events; for a source that sends changes, each that names its revision is kept as a tombstone. */
 export async function retire(
   run: Run,
-  events: readonly (HeldEvent | HeldRevision)[],
+  events: readonly (HeldRevisionRef | HeldRevision)[],
 ): Promise<void> {
   if (events.length === 0) return;
   const revisions = events.filter((e): e is HeldRevision => "revision" in e);
   if (run.sendsChanges && revisions.length > 0)
-    await run.state.sql.begin((trx) => recordRetired(trx, run.collection, revisions));
+    await run.state.sql.begin((trx) => noteRetired(trx, run.collection, revisions));
   const { keywordMissed } = await withdrawOpen(run.state, run.state.orgId, events);
   run.summary.keywordStale += keywordMissed;
 }
@@ -54,7 +63,7 @@ export async function retire(
 function replacedBy({ change, id }: Extract<Taken, { change: unknown }>): HeldRevision[] {
   if (change.kind === "unchanged") return change.held.older;
   if (change.kind === "updated" && !change.moved)
-    return everyEvent(change.held).filter((e) => e.id !== id);
+    return everyRevision(change.held).filter((e) => e.id !== id);
   return [];
 }
 

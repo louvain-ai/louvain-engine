@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { test } from "node:test";
-import { embedRecords } from "../src/ingest/embed.js";
+import { embedRevisions } from "../src/ingest/embed.js";
 import { openPassageRules } from "../src/ingest/passage-rules.js";
 import { openTestEngine } from "./db/open-engine.js";
 
@@ -41,7 +41,7 @@ test("N chunks with contexts send N texts, and none carries a context vector", a
       key: "k",
       embedText: `Harbour Street lease\n\n${body}`,
     }));
-    const [rows = []] = await embedRecords(writes, [{ missing: pieces, planned }]);
+    const [rows = []] = await embedRevisions(writes, [{ missing: pieces, planned }]);
     assert.deepEqual(
       sent,
       pieces.map((p) => p.body),

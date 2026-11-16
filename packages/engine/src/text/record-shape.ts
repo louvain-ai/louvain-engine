@@ -41,7 +41,7 @@ const TICKET_KINDS: ReadonlySet<string> = new Set([
   "record",
 ]);
 
-export function recordShape(record: {
+export function documentShape(record: {
   /** `event_log.body.presentation`. */
   presentation: Record<string, unknown>;
   /** `event_log.connector`. */

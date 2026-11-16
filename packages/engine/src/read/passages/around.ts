@@ -1,7 +1,7 @@
 import type { Viewer } from "@louvain/engine-core";
 import { telemetryOf } from "../../host/given.js";
 import type { Queryable } from "../../store/sql.js";
-import { recordShape } from "../../text/record-shape.js";
+import { documentShape } from "../../text/record-shape.js";
 import { bounded, fence, type ReadContext } from "../fence.js";
 import { agentWritten, instructionLikeRevisions, labelOf } from "../generated.js";
 import { hooksOf } from "../hooks.js";
@@ -35,7 +35,7 @@ export type Neighbour = {
 const NEIGHBOUR_CHARS = 600;
 
 /**
- * A chat hit's neighbours, read at query time: for each hit that is a chat message (`recordShape`), the `k` messages
+ * A chat hit's neighbours, read at query time: for each hit that is a chat message (`documentShape`), the `k` messages
  * either side of it in the same collection, by the time they were said (`walkFrom`), bounded by count. Every neighbour
  * passes the search's own fence, filters, as-of and version rule (`passageFilter`), and one collection has one set of
  * readers, so a neighbour never shows what the hit did not. Linked messages (`opts.ancestry`) fill what the window
@@ -165,7 +165,7 @@ function chatAnchorsInRank<
   return anchors
     .filter(
       (a) =>
-        recordShape({
+        documentShape({
           presentation: a.presentation ?? {},
           connector: a.connector,
           kind: a.kind,
