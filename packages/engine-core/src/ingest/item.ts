@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * One item as every ingest source emits it: a key, then its text or a file to read, or the removal of the key. An
  * unknown field is refused rather than ignored, so a misspelt `tilte` is said, not loaded untitled. What the engine
- * then accepts of it is the engine's to decide (`open/ingest/check-item.ts`).
+ * then accepts of it is the engine's to decide (`ingest/check-item.ts`).
  */
 
 const KINDS = ["document", "message", "record"] as const;

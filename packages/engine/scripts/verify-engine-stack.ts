@@ -29,14 +29,14 @@ const grammar = createServer((_req, res) => {
 await new Promise<void>((r) => grammar.listen(0, "127.0.0.1", r));
 process.env.LOUVAIN_NLP_URL = `http://127.0.0.1:${(grammar.address() as AddressInfo).port}`;
 
-const { sanitizeId } = await import("../src/db-ids.js");
+const { sanitizeId } = await import("../src/store/ids.js");
 const { config, storeSettings } = await import("../src/config/engine.js");
-const { openStore } = await import("../src/store.js");
+const { openStore } = await import("../src/store/pool.js");
 const store = openStore(config.databaseUrl, storeSettings);
 const { createEngine } = await import("../src/engine.js");
-const { embedderFor } = await import("../src/open/embedder.js");
+const { embedderFor } = await import("../src/host/embedder.js");
 const { settingsOf } = await import("../src/config/settings.js");
-const { openHost } = await import("../src/kg/read/open-readable-set.js");
+const { openHost } = await import("../src/host/standalone.js");
 // The open build's engine over the process pool, as an open entry builds it; its embedder is the one the writes ask.
 const host = openHost(store.sql);
 const engine = createEngine({
@@ -48,11 +48,11 @@ const engine = createEngine({
 });
 const { sql } = store;
 const { context: readContext, writes } = engine;
-const { acceptOpen } = await import("../src/ingest/accept-open.js");
-const { indexOpen } = await import("../src/ingest/index-open.js");
-const { writeProjection } = await import("../src/kg/read/projection-rows.js");
-const { searchPassages } = await import("../src/kg/read/passages.js");
-const { readSourcePage } = await import("../src/open/source-tools/read-page.js");
+const { acceptOpen } = await import("../src/ingest/accept.js");
+const { indexOpen } = await import("../src/ingest/indexer.js");
+const { writeProjection } = await import("../src/store/readable-rows.js");
+const { searchPassages } = await import("../src/read/passages/search.js");
+const { readSourcePage } = await import("../src/server/tools/read-page.js");
 
 /** A ULID for this run's document: its time, then randomness, in Crockford's base 32. */
 function ulid(now = Date.now()): string {

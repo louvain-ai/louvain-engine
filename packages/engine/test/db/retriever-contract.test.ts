@@ -5,7 +5,7 @@ import { type Engine, openEngine } from "./engine.js";
 
 /**
  * A retriever's records are read again as the keyword index's hits are (`search/pool.ts`,
- * `kg/read/records-as-passages.ts`): a retriever with an index of its own hands back record ids, and the engine keeps
+ * `read/records/as-passages.ts`): a retriever with an index of its own hands back record ids, and the engine keeps
  * only those this reader may read, in their version current as of the search, inside every narrowing, each shown by
  * the engine's own passage. Here a planted retriever, reading as staff, returns ids its reading never handed it: a
  * readable record survives with the engine's own text; a hidden one, a garbage id, one dated after the as-of and one
@@ -38,7 +38,7 @@ async function planted(
   opts: { asOf?: string; narrow?: { containers?: string[]; window?: { from?: string } } } = {},
 ) {
   const { retrieverPool } = await import("../../src/search/pool.js");
-  const { registerTelemetry } = await import("../../src/telemetry.js");
+  const { registerTelemetry } = await import("../../src/observability/telemetry.js");
   const dropped: number[] = [];
   registerTelemetry("contract", {
     count: (name, n) => {

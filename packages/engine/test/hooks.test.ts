@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createEngine, type EngineParts } from "../src/engine.js";
-import { hooksOf, type ReadHooks } from "../src/kg/read/hooks.js";
-import { OPEN_KEYWORD_INDEX } from "../src/kg/read/keyword-index.js";
-import { ONE_SPACE } from "../src/kg/read/space.js";
-import { openExactTier } from "../src/open/source-tools/exact-seam.js";
-import { unkeyedPresentation } from "../src/open/source-tools/presentation-seam.js";
-import { plainReading } from "../src/reading-effective.js";
-import { plainDetail } from "../src/sources/detail-seam.js";
-import { noAddedFilters } from "../src/sources/filter-seam.js";
+import { hooksOf, type ReadHooks } from "../src/read/hooks.js";
+import { OPEN_KEYWORD_INDEX } from "../src/read/keyword/titled.js";
+import { plainDetail } from "../src/read/listing/detail-seam.js";
+import { noAddedFilters } from "../src/read/listing/filter-seam.js";
+import { plainReading } from "../src/read/reading.js";
+import { ONE_SPACE } from "../src/read/vector-space.js";
+import { openExactTier } from "../src/server/tools/exact-seam.js";
+import { unkeyedPresentation } from "../src/server/tools/presentation.js";
 
 /**
  * What a build adds to a read travels in its context, and a hook it leaves out is the open build's own (`hooks.ts`).

@@ -6,7 +6,7 @@ import { test } from "node:test";
  * separators, an identifier joined, hyphenated or spaced, a word with or without its accents. No database: the
  * extraction and the fold only; the SQL side folds and joins the passage's text the same way.
  */
-const { fold, literalsOf, wordsOf } = await import("../src/kg/read/relevance.js");
+const { fold, literalsOf, wordsOf } = await import("../src/read/relevance.js");
 
 test("every written form of a figure is the same bare digits", () => {
   for (const q of ["2400", "2,400", "2.400", "2 400", "£2,400", "a fee of GBP 2,400 a month"])

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 /**
  * The keyword retriever: passages by the search's words alone, as one leg. The reading runs the keyword leg under its
- * own fence, filters and decay (the engine's keyword read, `kg/read/keyword/leg.ts`: the build's keyword index, or a build's own passes),
+ * own fence, filters and decay (the engine's keyword read, `read/keyword/leg.ts`: the build's keyword index, or a build's own passes),
  * and this retriever hands its rows on in their rank order, for the engine to fuse with the other legs. A read that
  * fails comes back empty and named by the reading, never costing the search.
  */

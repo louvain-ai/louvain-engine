@@ -6,7 +6,7 @@
  * defines its own settings onto this object rather than copying it, so a value assigned through either is the value
  * both see.
  */
-import type { openStore } from "../store.js";
+import type { openStore } from "../store/pool.js";
 import { environment } from "./environment.js";
 
 /**
@@ -50,13 +50,13 @@ const processSettings = () => ({
   /** Names this process on every log line, so a stuck one is found. */
   workerId:
     environment("LOUVAIN_WORKER_ID") ?? `${process.pid}@${environment("HOSTNAME") ?? "local"}`,
-  /** Concurrent keyword writes share one sidecar commit (`kg/read/bm25.ts`): fewer commits for the same index. */
+  /** Concurrent keyword writes share one sidecar commit (`store/keyword-index.ts`): fewer commits for the same index. */
   bm25GroupCommit: BM25_GROUP_COMMIT,
-  /** A new record's passages are written once, each with its header context (`ingest/index-core.ts`). */
+  /** A new record's passages are written once, each with its header context (`ingest/index-record.ts`). */
   passageWriteOnce: PASSAGE_WRITE_ONCE,
   /**
    * A record held as instruction-like stays searchable and citable, labelled wherever its passages go so a reader
-   * quotes it and never follows it (`ingest/quarantine.ts`); `off` gives it no passage and no keyword entry.
+   * quotes it and never follows it (`store/quarantine.ts`); `off` gives it no passage and no keyword entry.
    */
   quarantineRecall: environment("LOUVAIN_QUARANTINE_RECALL"),
 });

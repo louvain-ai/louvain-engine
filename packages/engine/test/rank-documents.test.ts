@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { rankDocuments } from "../src/kg/read/documents.js";
-import type { Evidence } from "../src/memory/evidence.js";
+import { rankDocuments } from "../src/read/documents/page-row.js";
+import type { Evidence } from "../src/search/evidence-row.js";
 
 /**
  * A document's rank is its BEST chunk plus a share of the rest — not the sum,

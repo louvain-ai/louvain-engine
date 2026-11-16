@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Reranked, Reranker } from "@louvain/engine-core";
-import type { AskRow } from "../src/ask/evidence.js";
-import { rerankedDocuments } from "../src/ask/rerank-documents.js";
 import { settingsOf } from "../src/config/settings.js";
+import type { AskRow } from "../src/search/evidence.js";
+import { rerankedDocuments } from "../src/search/rerank-documents.js";
 
 /** The default engine's reranking settings: its window, feed and blend. */
 const TUNING = settingsOf(undefined).rerank;

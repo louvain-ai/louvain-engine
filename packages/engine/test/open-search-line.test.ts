@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SHORT_ID, searchLine } from "../src/open/search-line.js";
+import { SHORT_ID, searchLine } from "../src/cli/search-line.js";
 
 const id = "0224df6dec534010b14f387530e331eef45bc455df741e30e54fc544e6dea4e8";
 

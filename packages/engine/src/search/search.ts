@@ -1,12 +1,9 @@
 import type { Reranker, Viewer } from "@louvain/engine-core";
-import { AGENT_SEARCH_CHUNK_BONUS, documentOrder } from "../ask/document-order.js";
-import { pageOf } from "../ask/evidence.js";
-import { oneOfEachOriginal } from "../ask/original.js";
-import { searchHeadDepth, withoutShown } from "../ask/search-wide.js";
-import type { ReadContext } from "../kg/read/fence.js";
-import { documentRanks } from "../kg/read/leg-ranks.js";
-import { records } from "../kg/read/records-plain.js";
+import type { ReadContext } from "../read/fence.js";
+import { documentRanks } from "../read/passages/leg-ranks.js";
+import { records } from "../read/records/index.js";
 import { withConversations } from "./conversation.js";
+import { searchHeadDepth, withoutShown } from "./depth.js";
 import type {
   DocumentSearch,
   SearchedDocument,
@@ -14,7 +11,10 @@ import type {
   SearchPool,
   SearchWith,
 } from "./document.js";
+import { AGENT_SEARCH_CHUNK_BONUS, documentOrder } from "./document-order.js";
+import { pageOf } from "./evidence.js";
 import { excerptOf } from "./excerpt.js";
+import { oneOfEachOriginal } from "./original.js";
 import { poolDepth } from "./pool-depth.js";
 import { questionFor } from "./question.js";
 import { rerankQueryOf } from "./rerank-query.js";

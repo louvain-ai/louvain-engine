@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { HNSW_EF_SEARCH, isStatementTimeout, VECTOR_LEG_SETTINGS } from "../src/kg/read/legs.js";
+import { HNSW_EF_SEARCH, isStatementTimeout, VECTOR_LEG_SETTINGS } from "../src/read/legs.js";
 
 /**
  * The pure halves of the read's search legs: what the vector legs run

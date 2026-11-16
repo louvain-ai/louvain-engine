@@ -1,7 +1,7 @@
 import { fuse } from "@louvain/engine-core";
-import type { WithIds } from "../ask/evidence.js";
-import { joinLegRanks } from "../kg/read/leg-ranks.js";
+import { joinLegRanks } from "../read/passages/leg-ranks.js";
 import type { Pooled } from "./document.js";
+import type { WithIds } from "./evidence.js";
 
 /**
  * One page from the legs (`fuse`): a row two legs found outranks one only one found; ties keep the legs' order. The

@@ -34,7 +34,7 @@ passes whole: the store, the embedder, the started plugins, the host and the set
 open reads and writes, its hooks (`hooks`, none here). Every read runs on its context (`engine.context`: the store and
 the handle the read runs on, the host's resolver of who may read what, the hooks) and every write on its writes
 (`engine.writes`), so neither who may read what nor what a build adds is bound per process. It opens nothing of its
-own: an entry opens its store (`src/store.ts` `openStore`: the pool, its plan and JIT settings, and the bounds every
+own: an entry opens its store (`src/store/pool.ts` `openStore`: the pool, its plan and JIT settings, and the bounds every
 bounded read keeps) and the engine ends it (`close`). It depends on no plugin: the CLI chooses the defaults, and the two
 shipped readers are only its tests' devDependencies. Where its counts, timings and lines go are parts too (`telemetry`,
 nowhere unless given; `logger`, its own unless given), carried by its context and writes. A search cursor's key, the
@@ -43,14 +43,17 @@ engine's own, not its modules', so two engines in one process do not share them;
 process are listed in the [security model](security-model.md). Everything is imported by one name, `@louvain/engine` (`src/index.ts`, the only export of the published
 package), and nothing it reaches opens a socket, a file or a timer while it loads. What each of these guarantees for who may read
 what, what none of them does, and how each is checked is the [security model](security-model.md).
-- `src/ingest/` and `src/open/ingest/`: one ingest for every source. It adds a new key, leaves an unchanged one alone,
-  replaces an updated one and withdraws a removed one.
-- `src/kg/read/`: the fenced reads. Every read resolves the reader's readable set once and applies it inside each
-  statement it sends.
+- `src/ingest/`: one ingest for every source (its sources in `src/ingest/sources/`). It adds a new key, leaves an
+  unchanged one alone, replaces an updated one and withdraws a removed one.
+- `src/read/`: the fenced reads. Every read resolves the reader's readable set once and applies it inside each
+  statement it sends. Listing and reading documents, by collection and folder, are `src/read/listing/`.
 - `src/search/`: the search as stages: the pool, the fused legs, the rerank, the documents.
-- `src/sources/`: listing and reading documents, by collection and folder.
-- `src/open/`: the tool server's MCP tools (`mcp-*.ts`), the HTTP ingest door, and the bounds every file reader is
-  held to (`file-readers/bounded.ts`).
+- `src/server/`: the tool server: its routes, the MCP tools (`src/server/tools/`) and the HTTP ingest door.
+- `src/cli/`: what `./engine` prints and parses; `src/host/`: how an entry builds its engine (the standalone reader,
+  the embedder).
+- `src/store/`: the pool, its settings and ids, and the clients of the keyword index and the embedder.
+- `src/readers/`: the bounds every file reader is held to (`src/readers/bounded.ts`) and their registry.
+- `src/text/`: pure text helpers.
 - `src/plugins/`: the built-in plugins that live with the engine: the `vector`, `keyword` and `figures` retrievers,
   the `folder` and `records` sources, and the `mcp()` surface.
 - `src/config/`: every setting, declared once, with its default and its bounds.

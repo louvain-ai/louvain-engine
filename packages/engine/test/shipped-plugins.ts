@@ -23,6 +23,6 @@ export async function shippedPlugins(): Promise<PluginRegistry> {
 
 /** The shipped readers' lane, for an ingest run that reads files. */
 export async function shippedLane() {
-  const { fileReaderLane } = await import("../src/open/file-readers/index.js");
+  const { fileReaderLane } = await import("../src/readers/index.js");
   return fileReaderLane(await shippedPlugins());
 }

@@ -15,7 +15,7 @@ text helpers (HTML stripping, decoding character references) are the file reader
 
 `ingest/source.ts` and `ingest/item.ts` are the contract every way into the engine is written against: an ingest
 source names a collection and yields items, each with a key and either text or a file to read. What the engine then
-accepts of an item is the engine's (`packages/engine/src/open/ingest/check-item.ts`). `readers/contract.ts` is the
+accepts of an item is the engine's (`packages/engine/src/ingest/check-item.ts`). `readers/contract.ts` is the
 contract a file reader is written against.
 
 `host.ts` is the one type a deployment binds: every seam (who may read what, how a record is shown, how a paid call is

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { askSettings } from "../src/memory/modes.js";
+import { askSettings } from "../src/search/modes.js";
 
 /**
  * A mode is what a search may spend, on the request: `normal` is the deployment's environment, `fast` reads the first

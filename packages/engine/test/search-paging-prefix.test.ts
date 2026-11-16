@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { fillFromListing, idPrefix } from "../src/open/source-tools/search-paging.js";
+import { fillFromListing, idPrefix } from "../src/server/tools/search-paging.js";
 
 /**
  * A listing cursor skips by ID prefix (`idPrefix`, 16 characters): a prefix only hides the rows it names. Two ids

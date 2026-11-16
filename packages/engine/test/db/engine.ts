@@ -1,5 +1,5 @@
 import type { Engine as OpenedEngine } from "../../src/engine.js";
-import type { Writes } from "../../src/writes.js";
+import type { Writes } from "../../src/ingest/writes.js";
 import { type COLLECTIONS, NESTED, READERS } from "./corpus.js";
 import { createBaselineDatabase } from "./database.js";
 import { EVENTS } from "./events.js";
@@ -76,7 +76,7 @@ export async function openEngine(purpose: string, opening: Opening = {}) {
     await prepare();
     const opened = await openTestEngine();
     // The cursors a recording holds are sealed under this token, as the server keys its engine's from its own.
-    const { hooksOf } = await import("../../src/kg/read/hooks.js");
+    const { hooksOf } = await import("../../src/read/hooks.js");
     hooksOf(opened.context).presentation.keyCursorsFrom?.("golden".repeat(11));
     const engine = await surface(await load(opened, around, events));
     const close = async () => {
@@ -100,10 +100,10 @@ async function load(
 ) {
   const golden = events === EVENTS;
   const { sql } = engine.store;
-  const { containerId } = await import("../../src/db-ids.js");
+  const { containerId } = await import("../../src/store/ids.js");
   const { loadEvents } = await import("../load-events.js");
-  const { openOrgId } = await import("../../src/open/org.js");
-  const { writeProjection } = await import("../../src/kg/read/projection-rows.js");
+  const { openOrgId } = await import("../../src/store/tenant.js");
+  const { writeProjection } = await import("../../src/store/readable-rows.js");
   let loaded: Awaited<ReturnType<typeof loadEvents>> | undefined;
   await around(engine.writes, async () => {
     loaded = await loadEvents(engine.writes, events);
@@ -135,16 +135,16 @@ async function load(
 
 /** The entry points the cases call, each as any reader. */
 async function surface({ engine, sql, readContext, orgId, ids }: Awaited<ReturnType<typeof load>>) {
-  const { containerId } = await import("../../src/db-ids.js");
-  const { OPEN_PRINCIPAL } = await import("../../src/open/org.js");
-  const { openTools } = await import("../../src/open/mcp-tools.js");
+  const { containerId } = await import("../../src/store/ids.js");
+  const { OPEN_PRINCIPAL } = await import("../../src/store/tenant.js");
+  const { openTools } = await import("../../src/server/tools/run.js");
   const { shippedPlugins } = await import("../shipped-plugins.js");
   const { retrieverPool } = await import("../../src/search/pool.js");
   const { search } = await import("../../src/search/search.js");
-  const { searchOrList } = await import("../../src/open/source-tools/search-apps.js");
-  const { readSourcePage } = await import("../../src/open/source-tools/read-page.js");
-  const { searchPassages } = await import("../../src/kg/read/passages.js");
-  const { lookupSource } = await import("../../src/open/source-tools/lookup.js");
+  const { searchOrList } = await import("../../src/server/tools/search-apps.js");
+  const { readSourcePage } = await import("../../src/server/tools/read-page.js");
+  const { searchPassages } = await import("../../src/read/passages/search.js");
+  const { lookupSource } = await import("../../src/server/tools/lookup.js");
   // The open build's plugins, as its entries start them: the search reads their retrievers.
   const plugins = await shippedPlugins();
   const runOpenTool = openTools({ ...engine, plugins });

@@ -1,7 +1,7 @@
 import type { Viewer } from "@louvain/engine-core";
 import { environment } from "../config/environment.js";
-import type { ReadContext } from "../kg/read/fence.js";
-import { passages } from "../kg/read/passages-api.js";
+import type { ReadContext } from "../read/fence.js";
+import { passages } from "../read/passages/index.js";
 import type { ConversationOptions, SearchedDocument, SearchOptions } from "./document.js";
 
 /**

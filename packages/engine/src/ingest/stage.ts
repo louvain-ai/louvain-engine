@@ -2,8 +2,9 @@
  * An ingest's stages, each timed under its own bounded name (`ingest.<stage>`, labelled with its outcome and nothing
  * else). A critical stage's failure is its caller's; a best-effort stage's failure costs only what that stage adds.
  */
-import type { WorkHooks } from "../memory/work-seam.js";
+
 import { stage as timedStage } from "../observability/stage.js";
+import type { WorkHooks } from "./work.js";
 
 /** One stage, timed whichever way it ends; what it throws is thrown on, and counted by its caller, not reported. */
 export const stage = <T>(name: StageName, run: () => Promise<T>): Promise<T> =>

@@ -1,4 +1,4 @@
-import { type Tags, telemetry } from "../telemetry.js";
+import { type Tags, telemetry } from "./telemetry.js";
 
 /**
  * How a stage is recorded: the tags its timing carries beside its outcome, whether a throw is reported (`report`,

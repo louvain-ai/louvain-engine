@@ -1,11 +1,11 @@
 import type { Reading } from "@louvain/engine-core";
 import { settingsOf } from "../src/config/settings.js";
-import { browserSessions } from "../src/open/browser-session.js";
-import type { ToolRun } from "../src/open/mcp-protocol.js";
-import { admit, respond } from "../src/open/respond.js";
-import { routeTable } from "../src/open/routes.js";
-import { listedTools } from "../src/open/source-tools/open-tool-schema.js";
 import { mcp } from "../src/plugins/surface-mcp/index.js";
+import { browserSessions } from "../src/server/browser-session.js";
+import type { ToolRun } from "../src/server/protocol.js";
+import { admit, respond } from "../src/server/respond.js";
+import { routeTable } from "../src/server/routes.js";
+import { listedTools } from "../src/server/tools/schema.js";
 
 /** A request as a test writes it: its method, path, headers and body text. */
 export type Asked = {

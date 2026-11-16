@@ -1,5 +1,5 @@
 /**
- * How much a read may spend (the engine's mode table, `memory/modes.ts`). `normal` is the deployment's configured
+ * How much a read may spend (the engine's mode table, `search/modes.ts`). `normal` is the deployment's configured
  * defaults; `fast` reads the first page once; `thorough` reads more documents whole and their neighbours. Every mode
  * reads the same fenced corpus: a mode changes cost and completeness, never what the reader may see.
  */

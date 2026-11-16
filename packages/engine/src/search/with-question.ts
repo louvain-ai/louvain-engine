@@ -1,6 +1,6 @@
 import { fuse } from "@louvain/engine-core";
-import { rowKeyOf } from "../ask/evidence.js";
 import type { Pooled } from "./document.js";
+import { rowKeyOf } from "./evidence.js";
 
 /**
  * The query's pool alone, or with the question's: fused by reciprocal rank on the row's key, so a passage both found

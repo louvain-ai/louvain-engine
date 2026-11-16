@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createEmbedder, EmbeddingsSettings } from "@louvain/embeddings";
-import { EmbedderUnbound, embedderOf } from "../src/embedder.js";
 import { createEngine, type EngineParts } from "../src/engine.js";
-import type { EngineHooks } from "../src/writes.js";
+import type { EngineHooks } from "../src/ingest/writes.js";
+import { EmbedderUnbound, embedderOf } from "../src/store/embedder.js";
 
 /**
  * The engine's embedder rides on its context and its writes. `createEngine` puts its own among the hooks of each, and a

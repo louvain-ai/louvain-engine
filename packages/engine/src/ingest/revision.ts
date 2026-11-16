@@ -2,8 +2,8 @@ import type { ItemPrecision } from "@louvain/engine-core";
 
 /**
  * A revision: one accepted version of a document, as the engine's writers read it for its row (`event-row.ts`), its
- * two stamps and its source document (`sources/metadata.ts`), and nothing else. The loader makes one from an item
- * (`open/ingest/item-event.ts`); any richer event carrying these fields is one as it stands, so every accept path
+ * two stamps and its source document (`read/originals/metadata.ts`), and nothing else. The loader makes one from an item
+ * (`ingest/item-event.ts`); any richer event carrying these fields is one as it stands, so every accept path
  * writes through the same statements.
  */
 export type Revision = {

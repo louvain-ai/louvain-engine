@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { chunk } from "../src/ingest/cut.js";
 import { openPassageRules, type PassageRules } from "../src/ingest/passage-rules.js";
-import { OPEN_KEYWORD_INDEX } from "../src/kg/read/keyword-index.js";
-import { afterPassagesWritten, plainPassageWrites } from "../src/passage-write-seam.js";
-import { noAddedFilters } from "../src/sources/filter-seam.js";
-import { type Writes, writeHooksOf } from "../src/writes.js";
+import { afterPassagesWritten, plainPassageWrites } from "../src/ingest/passage-writes.js";
+import { type Writes, writeHooksOf } from "../src/ingest/writes.js";
+import { OPEN_KEYWORD_INDEX } from "../src/read/keyword/titled.js";
+import { noAddedFilters } from "../src/read/listing/filter-seam.js";
 
 /**
  * What a build adds to a write travels in the write's own value (`writes.ts`), and a hook it leaves out is the open

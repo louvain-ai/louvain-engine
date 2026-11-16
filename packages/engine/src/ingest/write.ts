@@ -3,16 +3,16 @@
  * stops it; each slice commits on its own. Once the record is whole, its older versions are settled.
  */
 import type { Sql } from "postgres";
-import { embedderOf } from "../embedder.js";
-import { recordEmbeddingSpace } from "../embedding-space.js";
-import { telemetryOf } from "../given.js";
-import { laterVersion } from "../kg/core/version.js";
-import type { MemoryWriteContext } from "../memory/store.js";
-import { dropRecordSupersededVectors } from "../memory/superseded-vectors.js";
-import { afterPassagesWritten } from "../passage-write-seam.js";
-import { type Writes, writeHooksOf } from "../writes.js";
+import { telemetryOf } from "../host/given.js";
+import { embedderOf } from "../store/embedder.js";
+import { recordEmbeddingSpace } from "../store/embedding-space.js";
+import { laterVersion } from "../store/version.js";
 import type { SliceRow } from "./embed.js";
 import { indexableEvent } from "./passage-rules.js";
+import { afterPassagesWritten } from "./passage-writes.js";
+import type { MemoryWriteContext } from "./passages.js";
+import { dropRecordSupersededVectors } from "./superseded-vectors.js";
+import { type Writes, writeHooksOf } from "./writes.js";
 
 /** One slice's rows written: how many, or null when the event is no longer there to write them for. */
 export async function writeSlice(

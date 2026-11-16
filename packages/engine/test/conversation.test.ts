@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { conversationOf } from "../src/kg/core/conversation.js";
+import { conversationOf } from "../src/read/records/conversation.js";
 
 /**
- * A message is read in its conversation (`kg/core/conversation.ts`): the pure
+ * A message is read in its conversation (`read/records/conversation.ts`): the pure
  * half — which conversation a body names. `CONVERSATION_KEY_SQL` is its SQL twin.
  */
 

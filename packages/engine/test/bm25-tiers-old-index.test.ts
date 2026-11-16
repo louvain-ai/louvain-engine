@@ -17,8 +17,8 @@ test("an index that answers without tiers fails the call and says so once", asyn
   });
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
   process.env.LOUVAIN_BM25_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const { bm25Tiers } = await import("../src/kg/read/keyword/tiers.js");
-  const { bm25Endpoint } = await import("../src/kg/read/bm25.js");
+  const { bm25Tiers } = await import("../src/read/keyword/tiers.js");
+  const { bm25Endpoint } = await import("../src/store/keyword-index.js");
   const index = bm25Endpoint();
   const ask = { orgId: "o", containers: ["c"], query: "leese", limit: 1 };
   const said: string[] = [];

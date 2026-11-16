@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { displayAuthor } from "../src/sources/metadata.js";
+import { displayAuthor } from "../src/read/originals/metadata.js";
 
 /**
  * A connector that cannot tell who wrote a record says `actor: "unknown"`, and the viewer printed it as a

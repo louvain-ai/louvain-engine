@@ -35,7 +35,15 @@
       }
     },
     {
-      "includes": ["packages/engine/src/ask/**"],
+      "includes": [
+        "packages/engine/src/search/degraded.ts",
+        "packages/engine/src/search/depth.ts",
+        "packages/engine/src/search/document-order.ts",
+        "packages/engine/src/search/evidence.ts",
+        "packages/engine/src/search/original.ts",
+        "packages/engine/src/search/rerank-documents.ts",
+        "packages/engine/src/search/row-key.ts"
+      ],
       "linter": {
         "rules": {
           "complexity": {

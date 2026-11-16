@@ -6,11 +6,11 @@
 import { CONTENT_EVENT_KINDS, MAX_ITEM_TEXT_CHARS } from "@louvain/engine-core";
 import type { Sql } from "postgres";
 import { config } from "../config/engine.js";
-import type { HeaderRecord } from "../memory/passage-context.js";
-import { type PlannedContext, plannedContexts } from "../memory/passage-context-write.js";
-import type { MemoryWriteContext } from "../memory/store.js";
-import { type Writes, writeHooksOf } from "../writes.js";
+import type { HeaderRecord } from "./passage-context.js";
+import { type PlannedContext, plannedContexts } from "./passage-context-write.js";
 import { indexableEvent } from "./passage-rules.js";
+import type { MemoryWriteContext } from "./passages.js";
+import { type Writes, writeHooksOf } from "./writes.js";
 
 /** A record to index: where its passages go, its text and header, and the context each chunk is written with. */
 export type IndexedRecord = {

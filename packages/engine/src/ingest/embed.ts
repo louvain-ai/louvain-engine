@@ -4,10 +4,10 @@
  * from one call and are written together.
  */
 import { toPgVector } from "@louvain/embeddings";
-import { embedderOf } from "../embedder.js";
-import type { PlannedContext } from "../memory/passage-context-write.js";
-import type { Piece } from "../memory/store.js";
-import { type Writes, writeHooksOf } from "../writes.js";
+import { embedderOf } from "../store/embedder.js";
+import type { PlannedContext } from "./passage-context-write.js";
+import type { Piece } from "./passages.js";
+import { type Writes, writeHooksOf } from "./writes.js";
 
 /** One embedding request for the slice: every bare chunk, then the contextual text of each chunk that has a context. */
 export async function embedSlice(

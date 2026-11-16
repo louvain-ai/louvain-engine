@@ -14,7 +14,7 @@
  */
 import { EmbeddingsSettings } from "@louvain/embeddings";
 import { z } from "zod";
-import { jitSetting, planCacheModeSetting, planCacheScopeSetting } from "../db-settings.js";
+import { jitSetting, planCacheModeSetting, planCacheScopeSetting } from "../store/settings.js";
 
 /** The database when `DATABASE_URL` is unset: local, with no credential (`./engine` sets `DATABASE_URL` from `.engine/db-password`). */
 export const DEFAULT_DATABASE_URL = "postgres://localhost:5432/engine";
@@ -157,7 +157,7 @@ const AtLoad = z.object({
 
 /** Read at each call: one process can serve both arms of a measurement. */
 const Live = z.object({
-  // Also read once, at load, by `kg/read/question.ts`.
+  // Also read once, at load, by `read/question.ts`.
   LOUVAIN_ASK_DEADLINE_MS: raw
     .transform((v) => Math.max(1_000, orDefault(v, 25_000)))
     .describe(

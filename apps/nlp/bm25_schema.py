@@ -61,7 +61,7 @@ def _schema(
     # `LOUVAIN_BM25_TITLE_BOOST`, 0 by default.
     sb.add_text_field("title", stored=False, tokenizer_name=stem, index_option="position")
     if header:
-        # The record's header (`memory/passage-context.ts` `recordHeader`): a chat's channel and author, a mail's
+        # The record's header (`ingest/passage-context.ts` `recordHeader`): a chat's channel and author, a mail's
         # subject and route, a ticket's key and status, a document's title — what situates the record, built from
         # its own presentation and listing row. Its own field, scored at `LOUVAIN_BM25_HEADER_BOOST` (0.5 by
         # default): a query that names the thing finds it, and a header word never outweighs the body's own.
@@ -74,7 +74,7 @@ def _schema(
         sb.add_text_field("variants", stored=False, tokenizer_name=stem, index_option="basic")
     if app:
         # Every app a search may name this record by, raw like `org`, one term each: the set the passage legs' app filter
-        # matches, computed by the engine (`kg/read/bm25.ts` `appsOf`). A filtered search then ranks with the filter
+        # matches, computed by the engine (`store/keyword-index.ts` `appsOf`). A filtered search then ranks with the filter
         # inside the query, not paging after it. A narrowing, never the fence: the engine re-states every filter in SQL.
         sb.add_text_field("app", stored=False, tokenizer_name="raw", index_option="basic")
     if exact:

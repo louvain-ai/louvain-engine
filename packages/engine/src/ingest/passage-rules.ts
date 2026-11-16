@@ -6,8 +6,8 @@
  * is its text's, and a context is text only.
  */
 import type { PendingQuery, Row } from "postgres";
-import type { Queryable } from "../kg/core/sql.js";
-import { type HeaderRecord, passageHeaders, recordHeader } from "../memory/passage-context.js";
+import type { Queryable } from "../store/sql.js";
+import { type HeaderRecord, passageHeaders, recordHeader } from "./passage-context.js";
 
 type Fragment = PendingQuery<Row[]>;
 

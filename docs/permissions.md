@@ -6,7 +6,7 @@ does not, and how each guarantee is checked.
 
 ## Who can read what
 
-- **Every read is fenced, one way.** A read calls `fence()` (`packages/engine/src/kg/read/fence.ts`), which resolves
+- **Every read is fenced, one way.** A read calls `fence()` (`packages/engine/src/read/fence.ts`), which resolves
   the reader's **readable set** (the collections they may see) once per call from the resolver its read context
   carries (the host's `readableSet`) and returns a `Reader`. Only `readContextOf` makes a context, so no read can be
   handed a resolver it was not made with. Only `fence()` can make a `Reader`, so no read can build a set of its own.
@@ -32,7 +32,7 @@ What a deployment decides, the engine reads through one `Host` (`packages/engine
 Each entry point hands its host to the engine it builds (`createEngine({ host: openHost(store.sql), … })`), and every
 read runs on the engine's context, which carries that host's `readableSet` (`fence(context, viewer)`): nothing binds
 it, and no read reaches a resolver its context was not made with. A deployment whose work is owned by a queue hands
-the queue's work to the engine it builds as a write hook (`WriteHooks.work`, `packages/engine/src/memory/work-seam.ts`),
+the queue's work to the engine it builds as a write hook (`WriteHooks.work`, `packages/engine/src/ingest/work.ts`),
 and its writes check the claim and commit through it; this build has none, so its writes commit plainly. The
 embedder an entry makes for its host (`embedderFor(host)`) is a part of the engine it builds, and the engine carries it
 on its context and its writes: a read or a write that embeds asks the engine's own (`embedderOf`), and nothing binds
@@ -45,7 +45,7 @@ and its scope as a description to pass to an index of its own. Before fusion (`p
 the engine:
 
 1. keeps a row the reading handed out with its passage, and reads any other record a retriever returns again, as its
-   own keyword index's hits are read (`kg/read/records-as-passages.ts`): the version current as of the search, every
+   own keyword index's hits are read (`read/records/as-passages.ts`): the version current as of the search, every
    narrowing, the first passage the reader may read, read back by id under the fence;
 2. reads every row's record again under the fence, by id, and drops any outside it;
 3. counts each drop as `search.retriever_foreign_dropped`.

@@ -1,10 +1,10 @@
-import type { Bm25Doc } from "../kg/read/bm25-doc.js";
-import { documentEntryId } from "../sources/keyword-documents.js";
-import { displayApp } from "../sources/read-core.js";
-import { type Writes, writeHooksOf } from "../writes.js";
+import { displayApp } from "../read/listing/core.js";
+import { documentEntryId } from "../read/listing/keyword-documents.js";
+import type { Bm25Doc } from "../store/keyword-document.js";
+import { type Writes, writeHooksOf } from "./writes.js";
 
 /**
- * A document's keyword entry, written with its current revision's (`sources/keyword-documents.ts` says what the entries
+ * A document's keyword entry, written with its current revision's (`read/listing/keyword-documents.ts` says what the entries
  * are): where the build's index holds them (`KeywordIndex.documents`), named by the build's app rule
  * (`AddedFilters.app`), both from the write's own hooks.
  */

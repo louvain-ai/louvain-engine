@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SEARCH_USAGE, searchArgs } from "../src/open/search-args.js";
+import { SEARCH_USAGE, searchArgs } from "../src/cli/search-args.js";
 
 test("the words are every argument that is not a flag", () => {
   assert.deepEqual(searchArgs(["lease", "renewal"]), { words: "lease renewal", fullIds: false });

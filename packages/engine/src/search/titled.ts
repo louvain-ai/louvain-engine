@@ -1,10 +1,10 @@
 import type { Viewer } from "@louvain/engine-core";
-import type { documentOrder } from "../ask/document-order.js";
-import { pageOf } from "../ask/evidence.js";
-import { telemetryOf } from "../given.js";
-import type { ReadContext } from "../kg/read/fence.js";
-import { hooksOf } from "../kg/read/hooks.js";
+import { telemetryOf } from "../host/given.js";
+import type { ReadContext } from "../read/fence.js";
+import { hooksOf } from "../read/hooks.js";
 import type { SearchOptions } from "./document.js";
+import type { documentOrder } from "./document-order.js";
+import { pageOf } from "./evidence.js";
 import type { Staged } from "./stage.js";
 
 type Ranked = Awaited<ReturnType<typeof documentOrder>>["order"];

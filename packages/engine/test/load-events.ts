@@ -1,12 +1,12 @@
-import { OpenAcceptRefused } from "../src/ingest/accept-open.js";
-import { indexOpen } from "../src/ingest/index-open.js";
+import { OpenAcceptRefused } from "../src/ingest/accept.js";
+import { indexOpen } from "../src/ingest/indexer.js";
+import { acceptInto, openLoadState } from "../src/ingest/load.js";
 import type { Revision } from "../src/ingest/revision.js";
-import { acceptInto, openLoadState } from "../src/open/load-core.js";
-import type { Writes } from "../src/writes.js";
+import type { Writes } from "../src/ingest/writes.js";
 
 /**
  * Revisions through the open accept path and index step, one at a time, counted: how a test loads a corpus of
- * revisions it wrote by hand. Ingest itself loads items (`open/ingest/run.ts`), each made a revision by `itemEvent`.
+ * revisions it wrote by hand. Ingest itself loads items (`ingest/ingest.ts`), each made a revision by `itemEvent`.
  */
 export type LoadSummary = {
   accepted: number;

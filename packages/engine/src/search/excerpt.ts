@@ -1,4 +1,4 @@
-import type { AskRow } from "../ask/evidence.js";
+import type { AskRow } from "./evidence.js";
 
 const EXCERPT_CHARS = 600;
 

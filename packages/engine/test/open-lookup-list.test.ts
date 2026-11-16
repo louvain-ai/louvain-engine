@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { containerName } from "../src/open/source-tools/containers.js";
+import { containerName } from "../src/server/tools/collections.js";
 import {
   identifierOf,
   isKeyShaped,
   matchedOn,
   type Stored,
-} from "../src/open/source-tools/identifier.js";
-import { endOf } from "../src/open/source-tools/search-apps.js";
+} from "../src/server/tools/identifier.js";
+import { endOf } from "../src/server/tools/search-apps.js";
 
 /**
  * The decidable halves of `louvain_lookup_source` and the container listing, with no database: which stored value IS

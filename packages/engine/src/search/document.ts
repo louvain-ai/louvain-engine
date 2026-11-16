@@ -1,12 +1,12 @@
 import type { RelevanceCutoffs, Reranker, Viewer } from "@louvain/engine-core";
-import type { WithIds } from "../ask/evidence.js";
 import type { Settings } from "../config/settings.js";
-import type { Embedder } from "../kg/read/context.js";
-import type { ReadContext } from "../kg/read/fence.js";
-import type { RecordFilters } from "../kg/read/filters.js";
-import type { Neighbour } from "../kg/read/passages.js";
-import type { SpeakerNamer } from "../kg/read/passages-around.js";
-import type { RecordSummary } from "../kg/read/record-read.js";
+import type { Embedder } from "../read/context.js";
+import type { ReadContext } from "../read/fence.js";
+import type { RecordFilters } from "../read/filters.js";
+import type { SpeakerNamer } from "../read/passages/around.js";
+import type { Neighbour } from "../read/passages/search.js";
+import type { RecordSummary } from "../read/records/read.js";
+import type { WithIds } from "./evidence.js";
 
 /**
  * The one document shape a search returns, and what it is asked with. Every stage of `search.ts` reads or writes these,

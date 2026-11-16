@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Revision } from "../src/ingest/revision.js";
-import { type SourceRules, sourceMetadata } from "../src/sources/metadata.js";
+import { type SourceRules, sourceMetadata } from "../src/read/originals/metadata.js";
 
 /**
  * The open writer is generic; a build's rules are asked first (`SourceOrigin.rules`). Without rules a source is what it

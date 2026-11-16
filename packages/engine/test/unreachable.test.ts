@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { EmbeddingFailed, EmbeddingUnavailable } from "@louvain/embeddings";
-import { isUnreachable } from "../src/unreachable.js";
+import { isUnreachable } from "../src/observability/unreachable.js";
 
 /**
  * A lane that is down is not work that is wrong: an embedding sidecar that could not answer is known by its type, also

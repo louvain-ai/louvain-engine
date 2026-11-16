@@ -9,7 +9,7 @@ import {
   planCacheModeSetting,
   planCachePolicy,
   planCacheScopeSetting,
-} from "../src/db-settings.js";
+} from "../src/store/settings.js";
 
 /**
  * WHERE `plan_cache_mode` IS APPLIED. A prepared statement switched

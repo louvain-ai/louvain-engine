@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { settingsOf } from "../src/config/settings.js";
-import { authorized } from "../src/open/engine-token.js";
-import { mcpRoute, type ToolRun } from "../src/open/mcp-protocol.js";
-import { listedTools } from "../src/open/source-tools/open-tool-schema.js";
-import { ToolInputError } from "../src/open/source-tools/tool-helpers.js";
+import { mcpRoute, type ToolRun } from "../src/server/protocol.js";
+import { authorized } from "../src/server/token.js";
+import { ToolInputError } from "../src/server/tools/arguments.js";
+import { listedTools } from "../src/server/tools/schema.js";
 import { askServer } from "./mcp-answer.js";
 
 /** The open tool server's protocol, with no database: the tool run is a stand-in. */

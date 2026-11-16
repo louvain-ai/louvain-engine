@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { WithIds } from "../src/ask/evidence.js";
+import type { WithIds } from "../src/search/evidence.js";
 import { fused } from "../src/search/fused.js";
 
 const row = (id: string): WithIds =>

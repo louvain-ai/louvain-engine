@@ -1,7 +1,7 @@
 import { Duplex } from "node:stream";
 import postgres from "postgres";
 import type { Engine } from "../../src/engine.js";
-import { openStore, type Store, storeOf } from "../../src/store.js";
+import { openStore, type Store, storeOf } from "../../src/store/pool.js";
 
 /**
  * The open build's engine as a test builds it, as an open entry does (`packages/cli/src/engine.ts`): over a store it
@@ -27,9 +27,9 @@ async function build(): Promise<Engine> {
       ? openStore(config.databaseUrl, storeSettings)
       : refusedStore(config.databaseUrl, refusal);
   const { createEngine } = await import("../../src/engine.js");
-  const { embedderFor } = await import("../../src/open/embedder.js");
+  const { embedderFor } = await import("../../src/host/embedder.js");
   const { settingsOf } = await import("../../src/config/settings.js");
-  const { openHost } = await import("../../src/kg/read/open-readable-set.js");
+  const { openHost } = await import("../../src/host/standalone.js");
   const host = openHost(store.sql);
   const engine = createEngine({
     store,

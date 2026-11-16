@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createPluginRegistry, defineEngine, definePlugin, source } from "@louvain/engine-core";
 import { z } from "zod";
-import { ingestDoor } from "../src/open/ingest-http.js";
-import { IngestSourceRefused, openSource } from "../src/open/ingest-sources/index.js";
-import type { Writes } from "../src/writes.js";
+import { IngestSourceRefused, openSource } from "../src/ingest/sources/index.js";
+import type { Writes } from "../src/ingest/writes.js";
+import { ingestDoor } from "../src/server/ingest-route.js";
 
 /**
  * The sources a configuration names, as the engine opens them: two doors are refused, since the server has one; a

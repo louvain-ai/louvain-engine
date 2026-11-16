@@ -7,7 +7,7 @@ import { type Engine, openEngine } from "./engine.js";
 import { eventOf, inFolder } from "./events.js";
 
 /**
- * The keyword index's document entries (`sources/keyword-documents.ts`), as the open build writes them: one per
+ * The keyword index's document entries (`read/listing/keyword-documents.ts`), as the open build writes them: one per
  * document, its current revision's, replaced by a newer revision, written again from the revision a withdrawal leaves
  * current, and deleted with the document. Read from a stand-in index that keeps what it is sent, upserts and deletes
  * in order. Its own database and corpus, every document invented.
@@ -83,8 +83,8 @@ const documentOf = async (key: string) =>
 const entryOf = async (key: string) => held.get(`doc:${await documentOf(key)}`);
 
 async function withdraw(event: (typeof EVENTS)[number]) {
-  const { withdrawOpen } = await import("../../src/ingest/withdraw-open.js");
-  const { openOrgId } = await import("../../src/open/org.js");
+  const { withdrawOpen } = await import("../../src/ingest/withdraw.js");
+  const { openOrgId } = await import("../../src/store/tenant.js");
   return withdrawOpen(engine.writes, await openOrgId(engine.sql), [
     { id: event.id, connector: "http", workspace: "folder", recordKey: null },
   ]);

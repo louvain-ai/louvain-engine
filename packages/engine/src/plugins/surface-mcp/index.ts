@@ -1,5 +1,5 @@
 import { definePlugin } from "@louvain/engine-core";
-import { engineVersion, mcpRoute } from "../../open/mcp-protocol.js";
+import { engineVersion, mcpRoute } from "../../server/protocol.js";
 
 /** MCP as a surface: the engine's tools at `POST /mcp`, behind the read token, run for the reader the server checked. */
 export const mcp = definePlugin({

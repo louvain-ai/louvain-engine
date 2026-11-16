@@ -81,7 +81,7 @@ function who(property: Property): string {
  * The one event an invite is, as the file states it, or null. What a mail's `invite.ics` shares with a calendar's own
  * event: its UID, its start as an instant (a date alone for an all-day event is that day's UTC midnight; a TZID `Intl`
  * does not know, or a floating time, names no instant), and the organiser's address. A repeating event is a series, not one event, and has none. Sender-written: it only lets two
- * readable records count as one witness (`kg/read/context.ts`), never groups a listing.
+ * readable records count as one witness (`read/context.ts`), never groups a listing.
  */
 /**
  * An IANA zone for a TZID `Intl` does not know: Outlook and Exchange write the Windows name ("Pacific Standard Time"),

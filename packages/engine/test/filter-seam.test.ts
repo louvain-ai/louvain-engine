@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import postgres from "postgres";
-import { recordPredicates } from "../src/kg/read/filters.js";
+import { recordPredicates } from "../src/read/filters.js";
 import {
   type AddedFilters,
   arrived,
@@ -9,7 +9,7 @@ import {
   genreIn,
   markedBy,
   noAddedFilters,
-} from "../src/sources/filter-seam.js";
+} from "../src/read/listing/filter-seam.js";
 
 /** A tag the fragments are written with; nothing here runs a statement, so it never connects. */
 const sql = postgres("postgres://fragments@127.0.0.1:1/none", { onnotice: () => {} });

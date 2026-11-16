@@ -8,14 +8,14 @@ import type {
   Started,
   Viewer,
 } from "@louvain/engine-core";
-import { attempt } from "../ask/degrade.js";
-import type { WithIds } from "../ask/evidence.js";
-import { fence, type ReadContext } from "../kg/read/fence.js";
-import { passages } from "../kg/read/passages-api.js";
-import { readableRecords } from "../kg/read/readable-records.js";
-import { recordsAsPassages } from "../kg/read/records-as-passages.js";
-import { telemetry } from "../telemetry.js";
+import { telemetry } from "../observability/telemetry.js";
+import { fence, type ReadContext } from "../read/fence.js";
+import { passages } from "../read/passages/index.js";
+import { readableRecords } from "../read/readable-records.js";
+import { recordsAsPassages } from "../read/records/as-passages.js";
+import { attempt } from "./degraded.js";
 import type { SearchOptions, SearchPool } from "./document.js";
+import type { WithIds } from "./evidence.js";
 import { fused } from "./fused.js";
 import { stage } from "./stage.js";
 import { withQuestion } from "./with-question.js";

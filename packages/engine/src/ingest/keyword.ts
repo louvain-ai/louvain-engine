@@ -5,17 +5,17 @@
  */
 
 import type { Sql } from "postgres";
-import { bm25GroupCommitOn } from "../kg/read/bm25.js";
-import { appsOf, keywordDoc } from "../kg/read/bm25-doc.js";
-import { passageContextMode, writesPassageContext } from "../kg/read/passage-context-mode.js";
-import type { HeaderRecord } from "../memory/passage-context.js";
-import { documentOfEntry } from "../sources/keyword-documents.js";
-import { displayApp } from "../sources/read-core.js";
-import { telemetry } from "../telemetry.js";
-import { type Writes, writeHooksOf } from "../writes.js";
+import { telemetry } from "../observability/telemetry.js";
+import { displayApp } from "../read/listing/core.js";
+import { documentOfEntry } from "../read/listing/keyword-documents.js";
+import { passageContextMode, writesPassageContext } from "../store/context-mode.js";
+import { appsOf, keywordDoc } from "../store/keyword-document.js";
+import { bm25GroupCommitOn } from "../store/keyword-index.js";
 import { documentEntryOf, entryOfCurrent } from "./document-entry.js";
+import type { HeaderRecord } from "./passage-context.js";
 import { indexableEvent } from "./passage-rules.js";
 import { bestEffort } from "./stage.js";
+import { type Writes, writeHooksOf } from "./writes.js";
 
 /** The record's keyword entry, written once (`keyword_indexed_at`) for a record that still stands. */
 export async function indexKeywords(

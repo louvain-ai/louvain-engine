@@ -10,8 +10,8 @@ const DEFAULTS = settingsOf(undefined);
  * a filter would return an unfiltered page that looked like a match. No database: the check reads only the schema
  * the server serves.
  */
-const { toolArgs } = await import("../src/open/tool-input.js");
-const { ToolInputError } = await import("../src/open/source-tools/tool-helpers.js");
+const { toolArgs } = await import("../src/server/tools/input.js");
+const { ToolInputError } = await import("../src/server/tools/arguments.js");
 
 test("a declared argument passes, and an undefined one is left out", () => {
   assert.deepEqual(

@@ -1,15 +1,15 @@
 import type { Embedder } from "@louvain/embeddings";
 import type { Host, PluginRegistry } from "@louvain/engine-core";
 import type { Settings } from "./config/settings.js";
-import { guarded } from "./guarded.js";
-import { type ReadContext, readContextOf } from "./kg/read/fence.js";
-import type { ReadHooks } from "./kg/read/hooks.js";
-import { openKeywordIndex } from "./kg/read/keyword-index.js";
+import type { EngineHooks, Writes } from "./ingest/writes.js";
+import { guarded } from "./observability/guarded.js";
 import { type Logger, openLogger } from "./observability/logging.js";
-import { openPresentation } from "./open/source-tools/presentation-seam.js";
-import type { Store } from "./store.js";
-import type { Telemetry } from "./telemetry.js";
-import type { EngineHooks, Writes } from "./writes.js";
+import type { Telemetry } from "./observability/telemetry.js";
+import { type ReadContext, readContextOf } from "./read/fence.js";
+import type { ReadHooks } from "./read/hooks.js";
+import { openKeywordIndex } from "./read/keyword/titled.js";
+import { openPresentation } from "./server/tools/presentation.js";
+import type { Store } from "./store/pool.js";
 
 /**
  * The engine: one value, built by its caller from parts it chose and handed to whatever serves, ingests or searches.

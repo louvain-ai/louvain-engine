@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { datedAs } from "../src/open/source-tools/dated.js";
+import { datedAs } from "../src/server/tools/dated.js";
 
 /**
- * A date goes to an agent only as far as its source knew it (`open/source-tools/dated.ts`): no date at all for a source with
+ * A date goes to an agent only as far as its source knew it (`server/tools/dated.ts`): no date at all for a source with
  * none (the stand-in instant a loader chose is never sent), the year or the month alone where only that is known, the
  * day without an invented time, and an instant as before. Pure.
  */

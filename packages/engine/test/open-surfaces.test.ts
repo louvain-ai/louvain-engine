@@ -3,10 +3,10 @@ import { request as httpRequest, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, test } from "node:test";
 import type { Reading, Route } from "@louvain/engine-core";
-import { engineVersion } from "../src/open/mcp-protocol.js";
-import { RouteClash, routeTable } from "../src/open/routes.js";
-import { canonicalPath, type ServeSettings, serve } from "../src/open/serve.js";
 import { mcp } from "../src/plugins/surface-mcp/index.js";
+import { engineVersion } from "../src/server/protocol.js";
+import { RouteClash, routeTable } from "../src/server/routes.js";
+import { canonicalPath, type ServeSettings, serve } from "../src/server/serve.js";
 
 /**
  * The server serves what the configuration's surfaces declare, and its own rules come first: the read token before any

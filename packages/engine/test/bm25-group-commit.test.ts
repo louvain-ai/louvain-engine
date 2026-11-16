@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 
 /**
- * The BM25 group commit (`kg/read/bm25.ts`): a burst of index jobs shares a commit, a job never rides a
+ * The BM25 group commit (`store/keyword-index.ts`): a burst of index jobs shares a commit, a job never rides a
  * commit that started before its document was added, and a failed commit fails only the jobs that were waiting on it.
  */
 test("a burst shares commits; a late arrival waits for the next; a failure is its own waiters'", async () => {
@@ -36,7 +36,7 @@ test("a burst shares commits; a late arrival waits for the next; a failure is it
   });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   process.env.LOUVAIN_BM25_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const { bm25 } = await import("../src/kg/read/bm25.js");
+  const { bm25 } = await import("../src/store/keyword-index.js");
   try {
     // Ten jobs at once: the first commits now, the other nine share ONE following commit.
     await Promise.all(Array.from({ length: 10 }, () => bm25.groupCommit()));
@@ -92,7 +92,7 @@ test("an add and its commit from different sidecar processes are a restart: the 
   });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   process.env.LOUVAIN_BM25_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const { bm25, Bm25Restarted, resetBm25Settings } = await import("../src/kg/read/bm25.js");
+  const { bm25, Bm25Restarted, resetBm25Settings } = await import("../src/store/keyword-index.js");
   resetBm25Settings();
   const doc = {
     id: "e1",

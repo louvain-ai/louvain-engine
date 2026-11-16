@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { WorkHooks } from "../src/memory/work-seam.js";
-import { type Writes, writeHooksOf } from "../src/writes.js";
+import type { WorkHooks } from "../src/ingest/work.js";
+import { type Writes, writeHooksOf } from "../src/ingest/writes.js";
 
 /**
  * The indexer's work is a write hook (`writes.ts` `WriteHooks.work`). A build that hands none owns nothing: nothing to
