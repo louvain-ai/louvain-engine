@@ -3,7 +3,7 @@
 #
 # No torch and no spaCy: they would pull a GPU build into an image that needs neither. `LOUVAIN_EMBEDDING_BACKEND=torch`
 # is for a native run beside a GPU (`pip install torch transformers` there), never a container.
-onnxruntime==1.31.0
+onnxruntime==1.32.0
 tokenizers==0.23.3
 huggingface_hub==0.36.2
-numpy==2.5.4
+numpy==2.5.5
