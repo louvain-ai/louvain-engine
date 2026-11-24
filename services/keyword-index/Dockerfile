@@ -1,7 +1,7 @@
 # The BM25 sidecar: a Tantivy index at the document grain, the keyword leg for a collection too large for Postgres
 # `ts_rank` to rank a page from (bm25.py). python:3.12-slim and one wheel: no model, no torch, no network at boot.
 # The index lives on a volume and is derived from the documents, so losing it costs speed until a reindex, never a row.
-FROM python:3.12-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
+FROM python:3.12.16-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1

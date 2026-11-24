@@ -1,4 +1,6 @@
-/** The argument helpers the source tools share: pure, no import, and one refusal class (`ToolInputError`). */
+/** The argument helpers the source tools share: pure, no runtime import, and one refusal class (`ToolInputError`). */
+
+import type { Narrow } from "../../read/listing/narrow.js";
 
 export const str = (value: unknown, fallback = ""): string =>
   typeof value === "string" ? value.trim() : fallback;
@@ -47,7 +49,15 @@ export function connectionOf(
  * see, or no client by that id, narrows to nothing, the same empty answer, so the tool never tells anyone a client
  * exists. Resolved by the bound presentation (`clientNarrow`); with no clients, every client narrows to nothing.
  */
-export type ClientNarrow = { ids: string[]; bounded: boolean; records: Set<string> | null };
+export type ClientNarrow = {
+  ids: string[];
+  bounded: boolean;
+  records: Set<string> | null;
+  /** A build's own narrowing of the listing, whole (a place it knows), where it narrows by more than identifiers. */
+  listing?: Narrow;
+  /** What the build's narrowing was asked as, opaque: another is another search, so its cursors are refused. */
+  key?: string;
+};
 
 /** A client that narrows to nothing: unknown, unreadable, or none bound. */
 export const NO_CLIENT: () => ClientNarrow = () => ({
@@ -60,7 +70,7 @@ export const NO_CLIENT: () => ClientNarrow = () => ({
 export const clientListing = (client: ClientNarrow | undefined) =>
   client
     ? {
-        narrow: {
+        narrow: client.listing ?? {
           include: client.ids,
           exclude: [],
           added: [],

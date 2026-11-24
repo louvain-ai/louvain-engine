@@ -7,6 +7,12 @@ tool's output or the configuration; its entry says how.
 
 ## [Unreleased]
 
+### Changed
+
+- **Schema.** `passage` gains `instruction_marker`. An install made by 0.1.0 is refused by `./engine up` until it is
+  upgraded: run `./engine reindex` once (it applies `db/upgrades/001-passage-instruction-marker.sql` in one
+  transaction, keeping your documents), then `./engine up`.
+
 ## [0.1.0] - 2026-11-16
 
 The first release: a search engine you run over your own documents, with a permission check on every read and

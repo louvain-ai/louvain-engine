@@ -82,10 +82,12 @@ export async function searchSources(
   context: ReadContext,
   {
     owner,
-    input,
+    input: given,
     embed = sourceQueryVectorOf(embedderOf(context)),
   }: { owner: Owner; input: SearchInput; embed?: (query: string) => Promise<number[] | null> },
 ): Promise<SourceSearch> {
+  // A direction is judged for the owner, whoever asked (the route, an agent's tool): never a reader a request names.
+  const input = given.direction ? { ...given, sentByReader: owner.principal } : given;
   const { keyword, filters } = hooksOf(context);
   if (input.q !== "" && !keyword.documents)
     return filters.words

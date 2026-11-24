@@ -245,7 +245,7 @@ keyword index.
 
 A release that changes the schema ships its upgrades in `db/upgrades/`, and `reindex` applies them first, in name
 order, in one transaction that commits only if the result has that release's schema; otherwise it rolls back whole and
-says so. This release ships none.
+says so. This release ships one, for an install made by 0.1.0: `passage.instruction_marker`, added empty.
 
 An upgrade never deletes a document, passage or revision. A database `reindex` cannot upgrade starts again:
 

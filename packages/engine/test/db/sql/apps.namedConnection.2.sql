@@ -1,5 +1,5 @@
 -- apps.namedConnection, found by its text
--- parameters: 19
+-- parameters: 15
 -- under: set local statement_timeout = 15000; set local jit = off; set local plan_cache_mode = force_custom_plan
 -- read by: the list view over a range nothing matches; a reader's list view, every page; listing: a collection, every page; listing by staff: a collection, every page; listing by staff: inside a hidden collection
 -- plan on Postgres 17: Sort > Aggregate > Sort > Subquery Scan > Limit > Result (Sort > Hash Join (Seq Scan on event_log, Hash > Hash Join (Seq Scan on event_log, Hash > Hash Join (Seq Scan on source_revision, Hash > Seq Scan on source_document))), Seq Scan on container_parent)
@@ -18,12 +18,12 @@ select app, "connectionId", count(*)::int as count from (
     and true and true 
     and d.id = any($8::text[])
     
-    and ($9 = '' or r.kind = $10)
-    and ($11 = '' or position(lower($12) in lower(coalesce(r.author, ''))) > 0)
     
     
     
     
-    and ($13::date is null or d.current_modified_at >= ($14::date::timestamp at time zone $15)) and ($16::date is null or d.current_modified_at < (($17::date + 1)::timestamp at time zone $18)) 
-    order by d.current_modified_at desc, d.id asc limit $19) t
+    
+    
+    and ($9::date is null or d.current_modified_at >= ($10::date::timestamp at time zone $11)) and ($12::date is null or d.current_modified_at < (($13::date + 1)::timestamp at time zone $14)) 
+    order by d.current_modified_at desc, d.id asc limit $15) t
     group by app, "connectionId" order by count(*) desc, app, "connectionId"

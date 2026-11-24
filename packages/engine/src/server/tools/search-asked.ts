@@ -10,7 +10,10 @@ export type SearchAsked = {
   query: string;
   question: string | undefined;
   mode: "hybrid" | "keyword";
-  app: string | undefined;
+  /** The apps a row may come from, any of them; empty is every app. */
+  apps: string[];
+  /** Messages the reader sent or received (`SearchInput.direction`); answered by the listing alone. */
+  direction: "sent" | "received" | undefined;
   after: string | undefined;
   before: string | undefined;
   /** The moment the search reads as of, or undefined for now. */
@@ -24,10 +27,22 @@ export function searchAskedOf(args: Record<string, unknown>): SearchAsked {
     query: str(args.query),
     question: str(args.question) || undefined,
     mode: args.mode === "keyword" ? "keyword" : "hybrid",
-    app: str(args.app) || undefined,
+    apps: strs(args.app),
+    direction: directionOf(args.direction),
     after: str(args.after) || undefined,
     before: str(args.before) || undefined,
     at: asOf(args.asOf),
     excluded: excludedOf(args),
   };
 }
+
+/** `sent` or `received`, or none: any other value is no direction. */
+export const directionOf = (value: unknown): "sent" | "received" | undefined =>
+  value === "sent" || value === "received" ? value : undefined;
+
+/** A filter of several values, any of which a row may match: one string or a list, trimmed, blanks and repeats gone, at most 20. */
+export const strs = (value: unknown): string[] =>
+  [...new Set((Array.isArray(value) ? value : [value]).map((v) => str(v)).filter(Boolean))].slice(
+    0,
+    20,
+  );

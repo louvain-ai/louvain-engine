@@ -16,6 +16,23 @@ export type SearchInput = {
   /** A file's type (`type:` in the search box): `typeOf` over the shared table in `@louvain/engine-core`. */
   type?: FileSearchType | undefined;
   /**
+   * Several values of one filter: a row matches a filter when it matches any of its values, and every filter set must
+   * match (or within a filter, and across them). The single
+   * fields above count as one more value each. `kinds` and `types` are one filter (the Type menu holds both).
+   */
+  apps?: string[] | undefined;
+  kinds?: string[] | undefined;
+  types?: FileSearchType[] | undefined;
+  authors?: string[] | undefined;
+  /**
+   * Messages only (`email`, `message`), by who sent them: `sent`, by the reader; `received`, by anyone else, judged by
+   * the predicate an application binds (`filter-seam.ts` `sentBy`: the reader's own identities and addresses, never a
+   * display name); a build that binds none refuses it. `sentByReader` is the reader it is judged for, set by
+   * `searchSources` from its owner and never from a request.
+   */
+  direction?: "sent" | "received" | undefined;
+  sentByReader?: string | undefined;
+  /**
    * Only what THIS principal marked, by the predicate an application binds (`filter-seam.ts` `markedBy`); a build
    * that binds none refuses it. The caller passes its own principal, never one from a request; a mark grants nothing,
    * and the fence still decides every row.
@@ -38,6 +55,11 @@ export type SearchInput = {
   facets?: "skip" | undefined;
   count?: "skip" | undefined; // no count read: the total is what the page read, a floor (`pageTotal`)
   mode?: "hybrid" | "keyword";
+  /**
+   * `1`: a person choosing what to open asked for Best match, and the build may rerank the listing's head
+   * (`ListingWords.listing`). A caller that types as it goes for a palette, or seeds a model, leaves it out.
+   */
+  rerank?: "1" | undefined;
   sort?: "relevance" | "newest" | "oldest";
   /**
    * The least cosine similarity a meaning match needs (default 0.62, what Search shows a person). A caller that seeds a

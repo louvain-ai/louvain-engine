@@ -18,6 +18,10 @@ the HTTP door are packages under `packages/plugins/` (`reader-documents`, `reade
 `reranker-cohere`, `source-http`); the folder and records sources, the retrievers and `mcp` live in
 `packages/engine/src/plugins/`; `app` and the answerers are the app's, `apps/app`. Each has a README.
 
+Who may read what is not a plugin kind: it is the host's readable set, bound in code by the entry that builds the
+engine, never named in `engine.config.ts` ([Permissions](permissions.md#the-host)). `packages/plugins/engine-pg-rebac`
+is one, which reads it from pg_rebac and SpiceDB.
+
 ## Start one
 
 ```sh

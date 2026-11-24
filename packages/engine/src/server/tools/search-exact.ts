@@ -34,7 +34,8 @@ export type Placed = {
 
 /** The search's own narrowing, applied to what the exact reads find (the head is already narrowed by it). */
 export type Narrowing = {
-  app: string | undefined;
+  /** The apps a row may come from, any of them; empty is every app. */
+  apps: string[];
   after: string | undefined;
   before: string | undefined;
   containers: string[] | undefined;
@@ -136,7 +137,7 @@ async function isIt(context: ReadContext, s: Scope, i: Identifier): Promise<Sour
 /** Within the search's app, dates, client and not already shown. */
 function passes(src: SourceSummary, n: Narrowing): boolean {
   return (
-    (!n.app || src.app === n.app) &&
+    (!n.apps.length || n.apps.includes(src.app)) &&
     (!n.after || src.sourceUpdatedAt >= n.after) &&
     (!n.before || src.sourceUpdatedAt <= `${n.before}T23:59:59.999Z`) &&
     (!n.client?.records || n.client.records.has(src.versionId)) &&

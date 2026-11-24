@@ -1,0 +1,44 @@
+# pg_rebac beside the engine's stack: SpiceDB, pg_rebac's SQL installed into the engine's own Postgres, and rebacd.
+# Laid over the engine's Compose file, so the services share its network and its database (run.sh does this):
+#
+#   docker compose --env-file /dev/null -f docker-compose.yml -f examples/pg-rebac/compose.yml up -d --no-deps rebacd
+#
+# Paths are the engine's repository root's. pg_rebac is built from its public repository at one commit (PG_REBAC_REF).
+# The SpiceDB key is a throwaway for this example, and the in-memory datastore forgets everything when it stops.
+x-pg-rebac: &pg-rebac
+  context: https://github.com/louvain-ai/pg_rebac.git#${PG_REBAC_REF:-9e643e7d169e82d754239c491ca813c2a8515fdd}
+
+services:
+  spicedb:
+    image: authzed/spicedb:v1.56.2
+    command: ["serve", "--grpc-preshared-key", "example-only-key", "--datastore-engine", "memory",
+              "--datastore-bootstrap-files", "/example/spicedb.yaml"]
+    volumes: ["./examples/pg-rebac/spicedb.yaml:/example/spicedb.yaml:ro"]
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 1s
+      retries: 30
+
+  # Installs pg_rebac's SQL into the engine's database, exactly as on any Postgres 14 or later.
+  rebac-schema:
+    build:
+      <<: *pg-rebac
+      dockerfile_inline: |
+        FROM pgvector/pgvector:pg17
+        COPY sql/rebac.sql /rebac.sql
+    environment:
+      PGOPTIONS: "-c client_min_messages=warning"
+      PGPASSWORD: ${LOUVAIN_PG_PASSWORD:?export the engine's database password from .engine/db-password}
+    entrypoint: ["psql", "-v", "ON_ERROR_STOP=1", "-q", "-h", "postgres", "-U", "engine", "-d", "engine", "-f", "/rebac.sql"]
+
+  rebacd:
+    build: *pg-rebac
+    depends_on:
+      spicedb: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgres://engine:${LOUVAIN_PG_PASSWORD:?export the engine's database password}@postgres/engine
+      SPICEDB_TOKEN: example-only-key
+    volumes: ["./examples/pg-rebac/rebac.toml:/etc/rebac.toml:ro"]
+    command: ["--config", "/etc/rebac.toml", "run", "--accept-schema"]
+    ports:
+      - "127.0.0.1:7341:7341"

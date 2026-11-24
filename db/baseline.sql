@@ -136,7 +136,8 @@ create table passage (
   record_has_newer boolean default false not null,
   vector_dropped_at timestamp with time zone,
   superseded_valid_from timestamp with time zone,
-  superseded_known_from timestamp with time zone
+  superseded_known_from timestamp with time zone,
+  instruction_marker text
 ) with (autovacuum_analyze_scale_factor=0.02);
 create table readable_container (
   principal_id text not null,

@@ -13,6 +13,17 @@ export function markedBy(added: AddedFilters, s: Reader, principal: string): Fra
   return by(s, principal);
 }
 
+/** The build's sender predicates for `principal`; refused where the build has none. */
+export function sentBy(
+  added: AddedFilters,
+  sql: Queryable,
+  reader: { orgId: string; principal: string },
+) {
+  const by = added.sentBy;
+  if (by === null) throw new FilterUnsupported("`direction`");
+  return by(sql, reader.orgId, reader.principal);
+}
+
 /** The build's arrivals predicate over the listing's `e` and `r`; refused where the build has none. */
 export function arrived(
   added: AddedFilters,

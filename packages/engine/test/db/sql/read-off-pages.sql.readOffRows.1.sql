@@ -4,6 +4,6 @@
 -- plan on Postgres 17: Seq Scan on passage
 
 
-      select id::text, page, reading from passage
-       where org_id = $1 and id = any($2::uuid[]) and reading in ('ocr', 'vision')
+      select id::text, page, reading, instruction_marker as marker from passage
+       where org_id = $1 and id = any($2::uuid[]) and reading in ('ocr', 'vision', 'link')
          and page is not null
