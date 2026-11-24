@@ -63,9 +63,10 @@ export async function indexListing(
 function unsupportedIn(input: SearchInput): string | null {
   const named = {
     connection: input.connection,
-    kind: input.kind,
-    author: input.author,
-    type: input.type,
+    kind: input.kind || input.kinds?.length,
+    author: input.author || input.authors?.length,
+    type: input.type || input.types?.length,
+    direction: input.direction,
   };
   const set = Object.entries(named).find(([, value]) => value);
   if (set) return set[0];
@@ -88,7 +89,9 @@ async function askList(
     order: sort === "relevance" ? "relevance" : "newest",
     offset: input.offset,
     limit: 24,
-    ...(input.app ? { apps: [input.app] } : {}),
+    ...(input.app || input.apps?.length
+      ? { apps: [...new Set([...(input.app ? [input.app] : []), ...(input.apps ?? [])])] }
+      : {}),
     ...(await windowOf(sql, input)),
     ...(s.reach ? { ids: s.reach.map(documentEntryId) } : {}),
   });

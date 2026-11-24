@@ -25,14 +25,18 @@ export async function readOffPages(
   sql: Queryable,
   orgId: string,
   passageIds: readonly string[],
-): Promise<Map<string, { page: number; by?: "vision" }>> {
+): Promise<Map<string, ReadOff>> {
   if (passageIds.length === 0) return new Map();
   try {
     const rows = await readOffRows(sql, orgId, passageIds);
     return new Map(
       rows.map((r) => [
         r.id,
-        r.reading === "vision" ? { page: r.page, by: "vision" } : { page: r.page },
+        r.reading === "link"
+          ? { page: r.page, by: r.reading, ...(r.marker ? { marker: r.marker } : {}) }
+          : r.reading === "vision"
+            ? { page: r.page, by: r.reading }
+            : { page: r.page },
       ]),
     );
   } catch (err) {
@@ -41,12 +45,30 @@ export async function readOffPages(
   }
 }
 
+/** A second reading of a passage: a page read off an image (`ocr`, `vision`) or a linked page's preview (`link`). */
+type ReadOff = { page: number; by?: "vision" | "link"; marker?: string };
+
+/**
+ * The passage's second-reading field: `readOff` for an image's page, `linkedPage` for a linked page's preview,
+ * so a reader, a receipt and an agent attribute its words to the page, never to the record's author.
+ */
 export const pageOf = (
-  readOff: ReadonlyMap<string, { page: number; by?: "vision" }>,
+  readOff: ReadonlyMap<string, ReadOff>,
   id: string,
-) => {
+): {
+  readOff?: { page: number; by?: "vision" };
+  linkedPage?: { position: number };
+  instructionLike?: { marker: string };
+} => {
   const off = readOff.get(id);
-  return off === undefined ? {} : { readOff: off };
+  if (off === undefined) return {};
+  // A linked page that names itself as instructions is labelled on its own passage only, never the record.
+  if (off.by === "link")
+    return {
+      linkedPage: { position: off.page },
+      ...(off.marker ? { instructionLike: { marker: off.marker } } : {}),
+    };
+  return { readOff: off.by === "vision" ? { page: off.page, by: "vision" } : { page: off.page } };
 };
 
 /**

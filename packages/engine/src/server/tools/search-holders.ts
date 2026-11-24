@@ -12,7 +12,7 @@ import {
   narrowOf,
   type Shown,
 } from "./search.js";
-import { searchAskedOf } from "./search-asked.js";
+import { searchAskedOf, strs } from "./search-asked.js";
 import type { Narrowing } from "./search-exact.js";
 import { excludedOf, headOf } from "./search-exclude.js";
 import { encodeCursor, fillFromListing, idPrefix, type SearchCursor } from "./search-paging.js";
@@ -52,7 +52,7 @@ export async function holdersPage(
   const query = str(args.query);
   const excluded = excludedOf(args);
   const narrowing: Narrowing = {
-    app: str(args.app) || undefined,
+    apps: strs(args.app),
     after: str(args.after) || undefined,
     before: str(args.before) || undefined,
     containers,
@@ -74,7 +74,7 @@ export async function holdersPage(
   );
   const ranked = headOf(
     await asWritten(context, owner, legs.documents),
-    narrowing.app,
+    narrowing.apps,
     client,
     excluded,
   );

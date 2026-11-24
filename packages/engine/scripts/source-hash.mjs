@@ -66,8 +66,12 @@ const tsconfigs = (dir) =>
     .sort()
     .map((n) => join(dir, n));
 
-export function sourceHash(pkgDir) {
-  const hash = createHash("sha256");
+/**
+ * Every file the hash reads, by absolute path (some may not exist). Exported for the check that the build's cache key
+ * covers each of them (`turbo.json` `@louvain/engine#build` `inputs`, `check-engine-dist.test.mjs`): a cache that keys
+ * the engine's build on less than this replays a `dist` recording another source's hash, which the check then refuses.
+ */
+export function sourceInputs(pkgDir) {
   const inputs = [];
   for (const dir of packageDirs(pkgDir))
     inputs.push(
@@ -78,7 +82,12 @@ export function sourceHash(pkgDir) {
     );
   // The settings the tsconfigs extend and the lockfile: a change in either changes what is built. Absent in a fixture.
   inputs.push(join(pkgDir, BASE_TSCONFIG), join(pkgDir, "../..", "pnpm-lock.yaml"));
-  for (const f of inputs)
+  return inputs;
+}
+
+export function sourceHash(pkgDir) {
+  const hash = createHash("sha256");
+  for (const f of sourceInputs(pkgDir))
     if (existsSync(f))
       hash.update(relative(pkgDir, f)).update("\0").update(readFileSync(f)).update("\0");
   return hash.digest("hex");

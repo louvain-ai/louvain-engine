@@ -1,0 +1,14 @@
+# The SpiceDB schema rebacd derives the projected permission from, loaded at start into an in-memory datastore. No
+# relationships here: the demo writes them with rebac.write, in its own transaction, as an application would.
+schema: |-
+  definition user {}
+
+  definition group {
+    relation member: user
+  }
+
+  definition container {
+    relation member: user | group#member
+    permission view = member
+  }
+relationships: ""

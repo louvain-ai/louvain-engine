@@ -115,14 +115,14 @@ const OUTSIDE_WINDOW_SHOWN = 5;
 export function outsideWindowOf(
   wider: readonly ShownHit[],
   inWindow: ReadonlySet<string>,
-  app: string | undefined,
+  apps: readonly string[],
   clientRecords: ReadonlySet<string> | null | undefined,
 ): ShownHit[] {
   return wider
     .filter(
       (d) =>
         !inWindow.has(d.summary.id) &&
-        (!app || d.summary.app === app) &&
+        (!apps.length || apps.includes(d.summary.app)) &&
         (!clientRecords || clientRecords.has(d.recordId)),
     )
     .slice(0, OUTSIDE_WINDOW_SHOWN);

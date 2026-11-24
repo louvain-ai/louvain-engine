@@ -28,11 +28,13 @@
     "@louvain/engine": "workspace:*",
     "@louvain/engine-app": "workspace:*",
     "@louvain/engine-core": "workspace:*",
+    "@louvain/engine-pg-rebac": "workspace:*",
     "@louvain/reader-documents": "workspace:*",
     "@louvain/reader-text": "workspace:*",
     "@louvain/reranker-cohere": "workspace:*",
     "@louvain/reranker-sidecar": "workspace:*",
     "@louvain/source-http": "workspace:*",
+    "postgres": "^3.4.9",
     "zod": "^4.6.7"
   },
   "devDependencies": {

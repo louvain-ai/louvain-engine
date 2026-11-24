@@ -84,7 +84,12 @@ What a deployment decides, the engine reads through one `Host` (`packages/engine
 Each entry point hands its host to the engine it builds (`createEngine({ host: openHost(store.sql, grants), … })`), and
 every read runs on the engine's context, which carries that host's `readableSet` (`fence(context, viewer)`): nothing
 binds it, and no read reaches a resolver its context was not made with. A deployment with access rules of its own
-binds a host whose `readableSet` answers them, in code; a configuration cannot name one. A deployment whose work is
+binds a host whose `readableSet` answers them, in code; a configuration cannot name one. One ships with the engine:
+`@louvain/engine-pg-rebac` reads the set from [pg_rebac](https://github.com/louvain-ai/pg_rebac), SpiceDB's answer
+projected into Postgres, and keeps its three answers apart: a set, a reader never asked (looked up once through
+rebacd), and unavailable, which fails the read and is never an empty set
+([`packages/plugins/engine-pg-rebac`](../packages/plugins/engine-pg-rebac/README.md); the runnable example is
+[`examples/pg-rebac`](../examples/pg-rebac/README.md)). A deployment whose work is
 owned by a queue hands the queue's work to the engine it builds as a write hook (`WriteHooks.work`,
 `packages/engine/src/ingest/work.ts`), and its writes check the claim and commit through it; this build has none, so
 its writes commit plainly. The embedder an entry makes for its host (`embedderFor(host)`) is a part of the engine it

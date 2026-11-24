@@ -20,13 +20,13 @@ export function excludedOf(args: Record<string, unknown>): Set<string> {
 /** The ranked head as shown: narrowed to the app and the client, less what the caller already showed. */
 export function headOf<D extends { recordId: string; summary: { id: string; app: string } }>(
   documents: readonly D[],
-  app: string | undefined,
+  apps: readonly string[],
   client: ClientNarrow | undefined,
   excluded: ReadonlySet<string>,
 ): D[] {
   return documents.filter(
     (d) =>
-      (!app || d.summary.app === app) &&
+      (!apps.length || apps.includes(d.summary.app)) &&
       (!client?.records || client.records.has(d.recordId)) &&
       !excluded.has(d.summary.id),
   );

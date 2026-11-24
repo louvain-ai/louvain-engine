@@ -1,0 +1,4 @@
+# rebacd for this example: SpiceDB by its Compose name, the lookup endpoint inside the Compose network (published on
+# the loopback address by compose.yml, for the demo).
+spicedb_endpoint = "http://spicedb:50051"
+listen = "0.0.0.0:7341"

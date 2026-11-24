@@ -3,7 +3,7 @@ import { test } from "node:test";
 import type { Reranked, Reranker } from "@louvain/engine-core";
 import { settingsOf } from "../src/config/settings.js";
 import type { AskRow } from "../src/search/evidence.js";
-import { rerankedDocuments } from "../src/search/rerank-documents.js";
+import { rerankedDocuments, rerankedRows } from "../src/search/rerank-documents.js";
 
 /** The default engine's reranking settings: its window, feed and blend. */
 const TUNING = settingsOf(undefined).rerank;
@@ -81,4 +81,36 @@ test("with no reranker nothing is asked and nothing is scored", async () => {
   );
   assert.equal(got.relevance, null);
   assert.deepEqual(got.degraded, []);
+});
+
+/**
+ * A listing's head (`rerankedRows`, the Library's Best match): the same scoring and blend rule over rows a fenced
+ * listing already admitted. At blend 1 the reranker's order is the order; a reranker that cannot answer keeps the
+ * listing's own order, says so, and adds or drops nothing.
+ */
+test("a listing's head takes the reranker's order at blend 1, and keeps its own when the reranker fails", async () => {
+  const rows = [{ id: "a" }, { id: "b" }, { id: "c" }];
+  const ask = (reranker: Reranker) => ({
+    query: "q",
+    reranker,
+    blend: 1,
+    idOf: (r: { id: string }) => r.id,
+    textOf: (r: { id: string }) => `text of ${r.id}`,
+  });
+  const got = await rerankedRows(
+    rows,
+    ask(planted(() => ({ ok: true, scores: [0.1, 0.99, 0.5] }))),
+  );
+  assert.deepEqual(
+    got.order.map((r) => r.id),
+    ["b", "c", "a"],
+  );
+  assert.ok(got.relevance, "each row carries its score");
+  const failed = await rerankedRows(rows, ask(planted(() => ({ ok: false, failure: "down" }))));
+  assert.deepEqual(
+    failed.order.map((r) => r.id),
+    ["a", "b", "c"],
+  );
+  assert.equal(failed.relevance, null);
+  assert.deepEqual(failed.degraded, ["rerank:documents"]);
 });

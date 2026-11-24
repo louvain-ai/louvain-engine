@@ -184,7 +184,7 @@ async function surface({ engine, sql, readContext, orgId, ids }: Awaited<ReturnT
     rerankedTool: (name: string, args: Record<string, unknown>) => rerankingTool(name, args),
     /** The same search page, as any reader, in the collections named. */
     search: (reader: Reader, args: Record<string, unknown>, within?: readonly Collection[]) =>
-      searchOrList(readContext, args, owner(reader), containers(within), pool),
+      searchOrList(readContext, args, owner(reader), { containers: containers(within) }, pool),
     read: (reader: Reader, args: { id: string; version?: string }) =>
       readSourcePage(readContext, owner(reader), args),
     /** `louvain_lookup_source`'s page, as any reader. */

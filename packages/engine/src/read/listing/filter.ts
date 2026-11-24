@@ -2,7 +2,7 @@ import { FILE_TYPE_RULES } from "@louvain/engine-core";
 import type { Queryable } from "../../store/sql.js";
 import type { ContainerSetShape } from "../fenced.js";
 import { filterApp, namedConnection } from "./apps.js";
-import { arrived, markedBy } from "./filter-asks.js";
+import { arrived, markedBy, sentBy } from "./filter-asks.js";
 import type { AddedFilters } from "./filter-seam.js";
 import type { Listing, SearchInput } from "./input.js";
 import { documentFence } from "./join.js";
@@ -71,14 +71,64 @@ export function listingFilter(
   return sql`${documentFence(sql, s, shapes.fence)} ${andLeadsItsCopies(listing, shapes.copies)}
     ${s.reach ? sql`and d.id = any(${s.reach as string[]}::text[])` : sql``}
     ${added.words ? sql`and ${added.words.matches(s, input.q)}` : sql``}
-    and (${input.kind ?? ""} = '' or r.kind = ${input.kind ?? ""})
-    and (${input.author ?? ""} = '' or position(lower(${input.author ?? ""}) in lower(coalesce(r.author, ''))) > 0)
-    ${input.type ? sql`and ${typeOf(sql, added.page)} = ${input.type}` : sql``}
+    ${kindOrType(sql, input, added)}
+    ${anyAuthor(sql, input)}
+    ${direction(listing)}
     ${input.starredBy ? sql`and (${markedBy(added, s, input.starredBy)})` : sql``}
     ${input.narrow ? sql`and (${added.narrowed(sql, s, input.narrow)})` : sql``}
     ${input.news ? sql`and (${arrived(added, sql, { alias: "e", revision: "r" })})` : sql``}
     and ${dateWindow(sql, input)}`;
 }
+/** One filter's values: the single field and the list together (`SearchInput` `apps`, `kinds`, …). */
+const valuesOf = <T extends string>(one: T | undefined, many: readonly T[] | undefined): T[] => [
+  ...new Set([...(one ? [one] : []), ...(many ?? [])]),
+];
+
+/**
+ * The type filter, any of its values: a kind (`email`, `message`, `document`) or a file's type (`pdf`, `doc`…), one
+ * filter, so a row matches when it is any of them. Nothing when none is set.
+ */
+function kindOrType(sql: Queryable, input: SearchInput, added: AddedFilters) {
+  const kinds = valuesOf(input.kind, input.kinds);
+  const types = valuesOf(input.type, input.types);
+  if (!kinds.length && !types.length) return sql``;
+  const byKind = kinds.length ? sql`r.kind = any(${kinds}::text[])` : sql`false`;
+  // The build says what `kind=meeting` keeps (`AddedFilters.meeting`): its recording connectors' records and their
+  // attached files, as well as a revision whose own kind is that one.
+  const byMeeting = kinds.includes("meeting") && added.meeting ? sql` or ${added.meeting}` : sql``;
+  const byType = types.length
+    ? sql`${typeOf(sql, added.page)} = any(${types}::text[])`
+    : sql`false`;
+  return sql`and (${byKind}${byMeeting} or ${byType})`;
+}
+
+/** The author filter, any of its people: a row whose author holds any of the names (a substring, as one `author` always matched). */
+function anyAuthor(sql: Queryable, input: SearchInput) {
+  const authors = valuesOf(input.author, input.authors).map((a) => a.toLowerCase());
+  if (!authors.length) return sql``;
+  return sql`and exists (select 1 from unnest(${authors}::text[]) as a(name)
+    where position(a.name in lower(coalesce(r.author, ''))) > 0)`;
+}
+
+/** The kinds that are messages, the only rows a direction applies to. */
+const MESSAGE_KINDS = ["email", "message"];
+
+/**
+ * Sent or received (`direction`): messages only, by whether the revision's sender is the reader, as the build tells it
+ * (`AddedFilters.sentBy`: their own identities and addresses, never a name — two people share names). A message whose
+ * sender cannot be told is in neither direction, so no one is called "not the reader" blind. Inside the fence: it only
+ * narrows.
+ */
+function direction({ sql, s, added, input }: Listing) {
+  if (!input.direction) return sql``;
+  // No reader to judge for is nothing sent and nothing received, never every message.
+  if (!input.sentByReader) return sql`and false`;
+  const { mine, told } = sentBy(added, sql, { orgId: s.orgId, principal: input.sentByReader });
+  return input.direction === "sent"
+    ? sql`and r.kind = any(${MESSAGE_KINDS}::text[]) and ${mine}`
+    : sql`and r.kind = any(${MESSAGE_KINDS}::text[]) and ${told} and not ${mine}`;
+}
+
 /**
  * `after`/`before` on the DOCUMENT's date, as whole days in the reader's time zone: the listing's window, and the
  * semantic leg's when one is set, so the two cannot disagree about what is in the range.
@@ -96,5 +146,6 @@ export function dateWindow(sql: Queryable, input: SearchInput) {
   return sql`${from} and ${through}`;
 }
 export const appFilter = ({ sql, s, added, input }: Listing) =>
-  sql`(${input.app ?? ""} = '' or ${filterApp(sql, added.app)} = ${input.app ?? ""})
+  sql`(cardinality(${valuesOf(input.app, input.apps)}::text[]) = 0
+      or ${filterApp(sql, added.app)} = any(${valuesOf(input.app, input.apps)}::text[]))
     and (${input.connection ?? ""} = '' or ${namedConnection(sql, s, "ce")} = ${input.connection ?? ""})`;

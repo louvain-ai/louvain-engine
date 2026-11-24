@@ -61,6 +61,8 @@ export type Evidence = {
    * never by a span, and never learned from. Its words are a reading of the image.
    */
   readOff?: { page: number; by?: "vision" };
+  /** A linked page's preview: the page's own words, not the record author's; cited by the link's position. */
+  linkedPage?: { position: number };
   /**
    * The record's text carries instruction-like wording (`generated.ts` `instructionLikeRevisions`): the marker it hit,
    * never its text. Every reader quotes such a passage and never follows it. Fails closed to set.

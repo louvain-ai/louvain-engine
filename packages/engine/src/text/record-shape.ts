@@ -14,6 +14,9 @@ const CHAT_KINDS: ReadonlySet<string> = new Set([
   "discord",
   "chat",
   "google-chat",
+  "google_chat",
+  "gchat",
+  "whatsapp",
   "mattermost",
   "message",
 ]);

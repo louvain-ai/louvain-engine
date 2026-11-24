@@ -25,3 +25,14 @@ test("a connector's system actor is no author; a bot's name and a person's are k
   assert.equal(displayAuthor("Systems Team"), "Systems Team");
   assert.equal(displayAuthor("ops@system.acme.test"), "ops@system.acme.test");
 });
+
+/**
+ * A connection's own subject (`installer-<connection uuid>`) is an identifier for a connection's owner: a LinkedIn
+ * conversation showed the owner's own messages as sent by it. Never a byline, at write or at read.
+ */
+test("a connection's installer subject is no author; words that merely start with it are kept", () => {
+  assert.equal(displayAuthor("installer-0b5e2c1a-7d4f-4e2b-9a61-3c8d5f0e1b27"), null);
+  assert.equal(displayAuthor(" INSTALLER-0B5E2C1A-7D4F-4E2B-9A61-3C8D5F0E1B27 "), null);
+  assert.equal(displayAuthor("installer-scoped OAuth"), "installer-scoped OAuth");
+  assert.equal(displayAuthor("Dana Installer"), "Dana Installer");
+});
