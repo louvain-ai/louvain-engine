@@ -90,24 +90,66 @@ export async function rerankedDocuments<T extends Ranked>(
     ask.feed,
     tuning,
   );
-  const candidates = [
-    ...head.map(([id, d]) => ({
-      id,
-      text: whole.value.get(id) ?? d.best.text.slice(0, passageChars),
-    })),
-    ...loose.map((e) => ({ id: `loose:${rowKey(e)}`, text: e.text.slice(0, passageChars) })),
-  ];
-  const asked = await scored(ask.reranker, candidates, query);
-  const degraded = [...whole.degraded, ...asked.degraded];
-  const scores = asked.value;
-  if (!scores) return { order: ranked, relevance: null, degraded };
-  const rank = new Map(scores.map(([id], i) => [id, i]));
-  const blend = Math.min(1, Math.max(0, ask.reranker.blend ?? stated));
-  const blended = new Map<string, number>();
-  ranked.forEach(([id], i) => {
-    const at = rank.get(id);
-    blended.set(id, (1 - blend) / (60 + i + 1) + (at === undefined ? 0 : blend / (60 + at + 1)));
+  const got = await rerankedRows(ranked, {
+    query,
+    reranker: ask.reranker,
+    blend: ask.reranker.blend ?? stated,
+    idOf: ([id]) => id,
+    textOf: ([id, d]) => whole.value.get(id) ?? d.best.text.slice(0, passageChars),
+    scored: window,
+    beside: loose.map((e) => ({ id: `loose:${rowKey(e)}`, text: e.text.slice(0, passageChars) })),
   });
-  const order = [...ranked].sort((a, b) => (blended.get(b[0]) ?? 0) - (blended.get(a[0]) ?? 0));
-  return { order, relevance: new Map(scores), degraded };
+  return {
+    order: got.order,
+    relevance: got.relevance,
+    degraded: [...whole.degraded, ...got.degraded],
+  };
+}
+
+/** What a reranked order is asked with: which rows the reranker reads, and how each is named and told. */
+type RowsAsk<T> = {
+  query: string;
+  reranker: Reranker | null;
+  /** The reranker's share of the order, 0 to 1 (1: its order alone). */
+  blend: number;
+  idOf: (row: T) => string;
+  textOf: (row: T) => string;
+  /** How many of the rows, from the first, the reranker reads; the rest keep only their own share. All, left out. */
+  scored?: number;
+  /** Candidates scored beside the rows that are not themselves ordered (a page's loose rows). */
+  beside?: readonly { id: string; text: string }[];
+};
+
+/**
+ * Rows reordered by the search's reranker, one rule for every caller: a search's documents above, and a listing's head
+ * (the Library's Best match), over rows a fenced read already admitted, so it reorders what
+ * the reader may read and adds nothing. Scored by `scored` (every candidate in [0, 1], else failed and named
+ * `rerank:documents`), then each row's reciprocal rank in its own order at `1 - blend` plus its reciprocal rank in the
+ * reranker's at `blend`; a row the reranker did not score keeps only its own share. Stable for equal scores. Without a
+ * reranker, or when it failed, the order is the rows' own and `relevance` is null.
+ */
+export async function rerankedRows<T>(rows: readonly T[], ask: RowsAsk<T>): Promise<Reranked<T>> {
+  if (!ask.reranker || rows.length === 0)
+    return { order: [...rows], relevance: null, degraded: [] };
+  const read = rows.slice(0, ask.scored ?? rows.length);
+  const candidates = [
+    ...read.map((row) => ({ id: ask.idOf(row), text: ask.textOf(row) })),
+    ...(ask.beside ?? []),
+  ];
+  const asked = await scored(ask.reranker, candidates, ask.query);
+  if (!asked.value) return { order: [...rows], relevance: null, degraded: asked.degraded };
+  const rank = new Map(asked.value.map(([id], i) => [id, i]));
+  const blend = Math.min(1, Math.max(0, ask.blend));
+  const blended = new Map<string, number>();
+  rows.forEach((row, i) => {
+    const at = rank.get(ask.idOf(row));
+    blended.set(
+      ask.idOf(row),
+      (1 - blend) / (60 + i + 1) + (at === undefined ? 0 : blend / (60 + at + 1)),
+    );
+  });
+  const order = [...rows].sort(
+    (a, b) => (blended.get(ask.idOf(b)) ?? 0) - (blended.get(ask.idOf(a)) ?? 0),
+  );
+  return { order, relevance: new Map(asked.value), degraded: asked.degraded };
 }

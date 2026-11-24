@@ -36,6 +36,8 @@ export type Evidence = {
   instructionLike?: { marker: string };
   /** Read off an image of the record's page by OCR: cited by that page, never learned from. */
   readOff?: { page: number; by?: "vision" };
+  /** A linked page's preview: the page's own words, not the record author's. */
+  linkedPage?: { position: number };
   /** Valid time where the tier has one, else the source message time. */
   occurredAt: string;
   /** How much of `occurredAt` the source knew (its precision column); absent is the whole instant. */

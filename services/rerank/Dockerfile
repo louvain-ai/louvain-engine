@@ -2,7 +2,7 @@
 # candidate together and scores how well the candidate answers it. CPU torch from PyTorch's own index (the default
 # wheel on Linux carries CUDA, gigabytes the CPU never uses), and the weights fetched ONCE at build at a pinned hub
 # commit, so a start never waits on the network and a commit, unlike a branch, cannot move under the same name.
-FROM python:3.12-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
+FROM python:3.12.16-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \

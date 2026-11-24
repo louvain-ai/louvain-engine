@@ -28,7 +28,7 @@ export function isPlainObject(v: unknown): v is Record<string, unknown> {
   return proto === Object.prototype || proto === null;
 }
 /** A key in a reported path is cut to this many characters, and a path to this many steps (then
- * "…"): a refusal must not echo the request back, however long its keys or deep its nesting. */
+ * "…"): a refusal must not repeat the request back, however long its keys or deep its nesting. */
 const PATH_KEY_CHARS = 64;
 const PATH_STEPS = 64;
 type Frame = { value: unknown; key: string | number | null; parent: Frame | null };

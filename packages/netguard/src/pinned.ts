@@ -178,7 +178,7 @@ export async function fetchPublic(raw: string, options: FetchPublicOptions): Pro
  * public, a socket pinned to the address that passed, and a redirect followed by hand. A caller adds NO header of
  * its own: it names what it needs — the conditional validators (each one line, `oneLine`) or a byte range (two safe
  * integers, built here) — so no caller can send a cookie or `Authorization`, or change `accept-encoding`.
- * Not exported from the package: a new caller is a new rule, written beside these two.
+ * Not exported from the package: a new caller is a new rule, written beside these (`media.ts`, `preview.ts`).
  */
 export async function vettedGet(
   raw: string,

@@ -1152,7 +1152,7 @@ restart_for_readers() {
 # engine.config.ts says otherwise.
 launch_server() {
   nohup node --import tsx "$SERVER_ENTRY" >"$SERVER_LOG" 2>&1 &
-  echo $! > "$PID_FILE"
+  printf '%s\n' "$!" > "$PID_FILE"
   wait_until 60 1 server_up || die "the tool server did not start (see $SERVER_LOG)"
 }
 

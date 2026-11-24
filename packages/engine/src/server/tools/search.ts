@@ -71,15 +71,15 @@ type AnswersAsked = {
 
 /** What the head and the listing narrow by: an app, a date window, a space's containers (each only narrows the fence). */
 export function narrowOf(within: {
-  app: string | undefined;
+  apps: string[];
   after: string | undefined;
   before: string | undefined;
   containers: string[] | undefined;
 }) {
-  const { app, after, before, containers } = within;
+  const { apps, after, before, containers } = within;
   return {
     // The app each record shows as (or its connector's type): the value the head and the listing compare too.
-    ...(app ? { apps: [app] } : {}),
+    ...(apps.length ? { apps } : {}),
     ...(after || before
       ? {
           window: {
@@ -143,7 +143,7 @@ async function rankedPage(run: Run, cursor: RankedCursor): Promise<Placed> {
   const split = await splitOf(run, found);
   const headIds = split.ordered.map((d) => d.summary.id);
   const known = new Set([...headIds, ...asked.excluded]); // shown, or already shown: never "outside the range"
-  const outside = outsideWindowOf(wider?.documents ?? [], known, asked.app, page.client?.records);
+  const outside = outsideWindowOf(wider?.documents ?? [], known, asked.apps, page.client?.records);
   const shown = split.ordered.slice(cursor.o, cursor.o + page.limit);
   const filled = await pageOfHead(run, { cursor, split, shown, headIds, first });
   return {
@@ -205,16 +205,16 @@ function withoutWindow(
 /** The head as shown, split into the documents that match and the rest; a client narrows it after retrieval. */
 async function splitOf(run: Run, found: Awaited<ReturnType<typeof search>>) {
   const { asked, owner, page } = run;
-  const { app, after, before, at, excluded } = asked;
+  const { apps, after, before, at, excluded } = asked;
   const { containers, client } = page;
   const split: HeadSplit<Shown> = await splitHead(
     run.context,
     owner,
     asked.query,
-    headOf(await asWritten(run.context, owner, found.documents), app, client, excluded),
+    headOf(await asWritten(run.context, owner, found.documents), apps, client, excluded),
     run.mode,
     {
-      ...{ app, after, before, containers, client, asOf: at },
+      ...{ apps, after, before, containers, client, asOf: at },
       excluded,
       reranked: found.reranked,
       ...(run.meaning !== undefined ? { meaning: run.meaning } : {}),

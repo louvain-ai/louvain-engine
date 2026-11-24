@@ -32,13 +32,13 @@ jobs:
           for commit in $(git rev-list "$BASE..$HEAD"); do
             author="$(git log -1 --format='%an <%ae>' "$commit")"
             if ! git log -1 --format='%(trailers:key=Signed-off-by,valueonly)' "$commit" | grep -qixF -- "$author"; then
-              echo "::error::$(git log -1 --format='%h %s' "$commit"): no 'Signed-off-by: $author'"
+              printf '%s\n' "::error::$(git log -1 --format='%h %s' "$commit"): no 'Signed-off-by: $author'"
               missing=1
             fi
           done
           if [ "$missing" -ne 0 ]; then
-            echo "Sign each commit with 'git commit -s' (CONTRIBUTING.md, \"Sign your commits\"). To sign the ones here:"
-            echo "  git rebase --signoff $BASE && git push --force-with-lease"
+            printf '%s\n' "Sign each commit with 'git commit -s' (CONTRIBUTING.md, \"Sign your commits\"). To sign the ones here:"
+            printf '%s\n' "  git rebase --signoff $BASE && git push --force-with-lease"
           fi
           exit "$missing"
   check:
@@ -62,11 +62,11 @@ jobs:
       # The Compose file takes no default credential: this job's database gets a throwaway password of its own.
       - run: |
           password="$(openssl rand -hex 32)"
-          echo "::add-mask::$password"
+          printf '%s\n' "::add-mask::$password"
           {
-            echo "LOUVAIN_PG_PASSWORD=$password"
-            echo "LOUVAIN_SIDECAR_TOKEN=$(openssl rand -hex 32)"
-            echo "TEST_AUTH_DATABASE_URL=postgres://engine:$password@127.0.0.1:5434/engine"
+            printf '%s\n' "LOUVAIN_PG_PASSWORD=$password"
+            printf '%s\n' "LOUVAIN_SIDECAR_TOKEN=$(openssl rand -hex 32)"
+            printf '%s\n' "TEST_AUTH_DATABASE_URL=postgres://engine:$password@127.0.0.1:5434/engine"
           } >> "$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
@@ -79,7 +79,7 @@ jobs:
       - run: docker compose up -d --wait postgres
       # The open engine reads through its keyword index, so each test file starts its own container of the index's
       # image (packages/engine/test/db/keyword-index.ts), built here from the tree's own Dockerfile, by its id.
-      - run: echo "LOUVAIN_TEST_BM25_IMAGE=$(docker build -q -f services/keyword-index/Dockerfile .)" >> "$GITHUB_ENV"
+      - run: printf '%s\n' "LOUVAIN_TEST_BM25_IMAGE=$(docker build -q -f services/keyword-index/Dockerfile .)" >> "$GITHUB_ENV"
       - run: pnpm --filter @louvain/engine test:db
       - if: always()
         run: docker compose down -v

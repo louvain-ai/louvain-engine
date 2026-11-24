@@ -1,5 +1,6 @@
 import type { JSONValue } from "postgres";
 import type { Revision } from "../../ingest/revision.js";
+import type { ChatTitleInput } from "./chat-title.js";
 
 /**
  * How a source's presentation is read, which the build supplies: what a source shows is the build's to say, and a
@@ -32,6 +33,11 @@ export type SourceRules = {
   recoveredLink?: (event: Revision, recoveredId: string) => string | undefined;
   scopesNativeId?: (event: Revision) => boolean;
   titleText?: (event: Revision, text: string) => string;
+  /**
+   * A chat message's title where the build writes its own (a model's summary of the thread, say); null takes the
+   * generic opening sentence (`chat-title.ts`). Given the text after `titleText` and the place the source names.
+   */
+  chatTitle?: (read: ChatTitleInput, event: Revision) => string | null;
   kind?: (event: Revision) => string | undefined;
 };
 

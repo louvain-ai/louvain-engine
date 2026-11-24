@@ -42,6 +42,15 @@ export type AddedFilters = {
   markedBy: ((s: Reader, principal: string) => Fragment) | null;
   /** Whether `e` (an `event_log` row) names this identifier as a participant; null: only its actor is matched. */
   participant: ((sql: Queryable, named: Named) => Fragment) | null;
+  /**
+   * Who sent a message, over the listing's `e` (its event) and `r` (its revision), for `principal`: `mine`, sent by one
+   * of their own identities or addresses; `told`, a message whose sender the reader can be told from at all (a
+   * connector they hold an identity on, or mail where they have an address). Never by a display name. Null: a build
+   * that knows no one's identities, and `direction` is refused.
+   */
+  sentBy:
+    | ((sql: Queryable, orgId: string, principal: string) => { mine: Fragment; told: Fragment })
+    | null;
   /** Whether `e` (an `event_log` row) carries one of these genres. */
   genreIn: ((sql: Queryable, orgId: string, genres: string[]) => Fragment) | null;
   /** Whether `e` (the event) and `r` (its revision) are what an arrivals view counts (`SearchInput.news`). */
@@ -75,6 +84,12 @@ export type AddedFilters = {
    */
   page: Fragment | null;
   /**
+   * Whether the listing's row is of the kind `kind=meeting` names, over its `d` (document), `r` (revision) and `e`
+   * (event): what the build's recording connectors and their attached files declare, beyond a revision's own kind. A
+   * narrowing after the fence, never an access input. Null: only a revision whose own kind is that one.
+   */
+  meeting: Fragment | null;
+  /**
    * What a ranked document order keeps one of (`search/original.ts`): the group a readable summary belongs to. Null: each
    * document is its own.
    */
@@ -107,6 +122,7 @@ export class FilterUnsupported extends Error {
 export const noAddedFilters: AddedFilters = {
   markedBy: null,
   participant: null,
+  sentBy: null,
   genreIn: null,
   arrived: null,
   narrowed: (sql) => sql`false`,
@@ -116,6 +132,7 @@ export const noAddedFilters: AddedFilters = {
   app: null,
   occurrence: null,
   page: null,
+  meeting: null,
   groupOf: null,
   wholeKeys: ["whole"],
   words: null,

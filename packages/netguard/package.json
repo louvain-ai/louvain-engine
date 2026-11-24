@@ -27,6 +27,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "ipaddr.js": "2.5.0"
+    "ipaddr.js": "2.5.0",
+    "@louvain/doctext": "workspace:*"
   }
 }
